@@ -1,18 +1,28 @@
 <!-- Plugin Configuration File. Read more: https://plugins.jetbrains.com/docs/intellij/plugin-configuration-file.html -->
 <idea-plugin>
     <id>com.github.warningimhack3r.npmupdatedependencies</id>
-    <name>IntelliJ Platform Plugin npm-update-dependencies</name>
-    <vendor>warningimhack3r</vendor>
+    <name>NPM Update Dependencies</name>
+    <vendor url="https://github.com/WarningImHack3r">WarningImHack3r</vendor>
 
     <depends>com.intellij.modules.platform</depends>
 
-    <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.services.MyApplicationService"/>
-        <projectService serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.services.MyProjectService"/>
-    </extensions>
+    <actions>
+        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.UpdateActionGroup"
+               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.UpdateActionGroup"
+               popup="true"
+               text="Update NPM Dependencies"
+               description="Action group for npm-update-dependencies"
+               icon="com.github.warningimhack3r.npmupdatedependencies.ui.icons.NUDIcons.NPM">
+            <!-- Add to the “Tools” menu -->
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
+            <!-- Add to the right-click context menu -->
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+        </group>
+    </actions>
 
-    <applicationListeners>
-        <listener class="com.github.warningimhack3r.npmupdatedependencies.listeners.MyProjectManagerListener"
-                  topic="com.intellij.openapi.project.ProjectManagerListener"/>
-    </applicationListeners>
+    <extensions defaultExtensionNs="com.intellij">
+        <externalAnnotator
+                language="JSON"
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotator.UpdatesAnnotator"/>
+    </extensions>
 </idea-plugin>
