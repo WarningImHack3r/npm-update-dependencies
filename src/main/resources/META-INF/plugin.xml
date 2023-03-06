@@ -23,6 +23,8 @@
     <extensions defaultExtensionNs="com.intellij">
         <externalAnnotator
                 language="JSON"
-                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotator.UpdatesAnnotator"/>
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator"/>
+        <daemon.externalAnnotatorsFilter
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotatorFilter"/>
     </extensions>
 </idea-plugin>
