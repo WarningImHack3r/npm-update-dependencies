@@ -3,6 +3,13 @@
 # npm-update-dependencies Changelog
 
 ## [Unreleased]
+### Added
+- Enlarge plugin compatibility range
+
+### Fixed
+- Fix plugin crash when failing to fetch package info from npm registry
+- Fix blocked UI when fetching package info from npm registry
+- Fix satisfying version being the same as the current one
 
 ## [1.0.0]
 ### Added
