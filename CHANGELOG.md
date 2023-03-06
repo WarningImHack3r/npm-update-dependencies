@@ -3,8 +3,6 @@
 # npm-update-dependencies Changelog
 
 ## [Unreleased]
-
-## [1.0.1]
 ### Added
 - Enlarge plugin compatibility range
 
