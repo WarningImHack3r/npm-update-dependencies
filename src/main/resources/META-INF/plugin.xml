@@ -7,10 +7,11 @@
     <depends>com.intellij.modules.platform</depends>
 
     <actions>
-        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.UpdateActionGroup"
-               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.UpdateActionGroup"
+        <!-- Main action group -->
+        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.MainActionGroup"
+               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.MainActionGroup"
                popup="true"
-               text="Update NPM Dependencies"
+               text="NPM Update Dependencies"
                description="Action group for npm-update-dependencies"
                icon="com.github.warningimhack3r.npmupdatedependencies.ui.icons.NUDIcons.NPM">
             <!-- Add to the “Tools” menu -->
@@ -18,13 +19,31 @@
             <!-- Add to the right-click context menu -->
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
         </group>
+        <!-- Scan action group -->
+        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
+               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
+               text="Scan Dependencies"
+               description="Action group to trigger dependencies scan"/>
+        <!-- Update action group -->
+        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
+               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
+               text="Update Dependencies"
+               description="Action group to update your dependencies"/>
+        <!-- Deprecation action group -->
+        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
+               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
+               text="Replace Dependencies"
+               description="Action group to replace deprecated dependencies"/>
     </actions>
 
     <extensions defaultExtensionNs="com.intellij">
         <externalAnnotator
                 language="JSON"
                 implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator"/>
+        <externalAnnotator
+                language="JSON"
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator"/>
         <daemon.externalAnnotatorsFilter
-                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotatorFilter"/>
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.AnnotatorsFilter"/>
     </extensions>
 </idea-plugin>
