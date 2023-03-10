@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.0] - 2023-03-10
+
 ### Added
 - Add detection of deprecated dependencies, with an option to replace them by recommended ones
 - Add an option to manually invalidate the cache (both for updates and deprecations)
@@ -34,6 +36,7 @@
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.1...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/commits/v1.0.0
