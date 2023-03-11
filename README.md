@@ -14,7 +14,7 @@
 <!-- Plugin description -->
 Update your npm dependencies with a single click.
 
-This plugin will update all the dependencies in your package.json file to the latest version, or the satisfying version depending on your choice.
+This plugin will update all the dependencies in your `package.json` file to the latest version, or the satisfying version depending on your choice.
 
 ## Features
 - Update a dependency to the latest or satisfying version
@@ -23,20 +23,16 @@ This plugin will update all the dependencies in your package.json file to the la
 - Batch update all dependencies (latest or satisfying), all deprecated dependencies
 - Manually invalidate the cache in case of issues
 
-> Works by fetching [registry.npmjs.org](https://registry.npmjs.org).  
-> Rewrite of the existing [npm-dependency-checker](https://github.com/unger1984/npm-dependency-checker) plugin.
-<!-- Plugin description end -->
-
 ## Usage
 
 There are 3 ways to update your dependencies:
-- Hover over the dependency and click the update button:
-    <img src="assets/popup.png" style="max-width: 400px">
-    <img src="assets/popup-details.png" style="max-width: 400px">
-- Right click in the package.json file and select the extension from the context menu:
-    <img src="assets/right-click-menu.png" style="max-width: 400px">
-- Use the Tools menu:
-    <img src="assets/tools-menubar.png" style="max-width: 400px">
+- Hover over the dependency and click the update button
+- Right click in the package.json file and select the extension from the context menu
+- Use the Tools menu
+
+> Works by fetching [registry.npmjs.org](https://registry.npmjs.org).  
+> Rewrite of the existing [npm-dependency-checker](https://github.com/unger1984/npm-dependency-checker) plugin.
+<!-- Plugin description end -->
 
 ## Installation
 
