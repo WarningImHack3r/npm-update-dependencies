@@ -4,6 +4,8 @@
 
 ## [Unreleased]
 
+## [1.1.1] - 2023-03-11
+
 ### Fixed
 - Fix updated dependencies still being marked as outdated
 
@@ -39,7 +41,8 @@
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.1...HEAD
+[1.1.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.1...v1.1.0
 [1.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.0...v1.0.1
 [1.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/commits/v1.0.0
