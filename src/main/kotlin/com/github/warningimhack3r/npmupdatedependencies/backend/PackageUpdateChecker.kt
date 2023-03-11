@@ -16,20 +16,26 @@ object PackageUpdateChecker {
         return true
     }
 
+    private fun isVersionMoreRecentThanComparator(version: String, comparator: String): Boolean {
+        return comparator.split(" ").any { comp ->
+            val comparatorVersion = NUDHelper.Regex.semverPrefix.replace(comp, "")
+            if (comparatorVersion.trim().isEmpty()) return@any false
+            Semver(version, SemverType.NPM).isGreaterThan(comparatorVersion)
+        }
+    }
+
     fun hasUpdateAvailable(name: String, currentComparator: String): Pair<Boolean, Versions?> {
         // Check if an update has already been found
-        if (availableUpdates.containsKey(name)) return Pair(true, availableUpdates[name])
+        if (availableUpdates.containsKey(name) && isVersionMoreRecentThanComparator(availableUpdates[name]!!.latest, currentComparator)) {
+            return Pair(true, availableUpdates[name])
+        }
 
         // Check if current version is an upgradable version
         if (!isVersionUpgradable(currentComparator)) return Pair(false, null)
 
         // Check if update is available
         val newVersion = NPMJSClient.getLatestVersion(name) ?: return Pair(false, null)
-        val updateAvailable = currentComparator.split(" ").any { comparator ->
-            val comparatorVersion = NUDHelper.Regex.semverPrefix.replace(comparator, "")
-            if (comparatorVersion.trim().isEmpty()) return@any false
-            Semver(newVersion, SemverType.NPM).isGreaterThan(comparatorVersion)
-        }
+        val updateAvailable = isVersionMoreRecentThanComparator(newVersion, currentComparator)
 
         // Find satisfying version
         var satisfyingVersion: String? = null
