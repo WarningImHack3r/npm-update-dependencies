@@ -48,7 +48,7 @@ object PackageUpdateChecker {
                     version.satisfies(currentComparator)
                             && !currentComparator.contains(version.originalValue)
                             && version != newVersionSemver
-                }.maxOrNull()!!.originalValue
+                }.maxOrNull()?.originalValue
             }
         }
         val versions = Versions(newVersion, satisfyingVersion)

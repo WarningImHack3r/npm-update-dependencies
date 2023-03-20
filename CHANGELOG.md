@@ -4,6 +4,9 @@
 
 ## [Unreleased]
 
+### Fixed
+- Fix a rare crash occurring when scanning for updates
+
 ## [1.1.1] - 2023-03-11
 
 ### Fixed
