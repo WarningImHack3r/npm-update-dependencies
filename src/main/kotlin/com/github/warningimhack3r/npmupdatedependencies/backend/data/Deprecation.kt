@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend
+package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
 data class Deprecation(
     val reason: String,
@@ -8,4 +8,9 @@ data class Deprecation(
         val name: String,
         val version: String
     )
+
+    enum class Action(val text: String) {
+        REPLACE("Replace"),
+        REMOVE("Remove")
+    }
 }

@@ -4,12 +4,6 @@
 [![Version](https://img.shields.io/jetbrains/plugin/v/com.github.warningimhack3r.npmupdatedependencies.svg)](https://plugins.jetbrains.com/plugin/com.github.warningimhack3r.npmupdatedependencies)
 [![Downloads](https://img.shields.io/jetbrains/plugin/d/com.github.warningimhack3r.npmupdatedependencies.svg)](https://plugins.jetbrains.com/plugin/com.github.warningimhack3r.npmupdatedependencies)
 
-## Upcoming features
-- Add update check progress in status bar
-- Add editor banner with update buttons
-- Keyboard shortcuts
-- Auto update dependencies on save
-
 ## Description
 <!-- Plugin description -->
 Update your npm dependencies with a single click.
@@ -19,16 +13,22 @@ This plugin will update all the dependencies in your `package.json` file to the 
 ## Features
 - Update a dependency to the latest or satisfying version
 - Keep comparators (e.g. `^`, `~`, `>`, `<`, `>=`, `<=`) when replacing versions
-- Detect and replace deprecated dependencies
+- Detect and replace/remove deprecated dependencies
 - Batch update all dependencies (latest or satisfying), all deprecated dependencies
+- Get notified of deprecated dependencies with a banner
+- See your outdated dependencies at a glance in the status bar
+- Configure everything in the settings
 - Manually invalidate the cache in case of issues
+- ...and more!
 
 ## Usage
 
-There are 3 ways to update your dependencies:
-- Hover over the dependency and click the update button
+There are 3 ways to invoke the extension menu:
+- Hover over an annotated dependency and click the action you want to perform
 - Right click in the package.json file and select the extension from the context menu
 - Use the Tools menu
+
+Configuration options are available in the settings.
 
 > Works by fetching [registry.npmjs.org](https://registry.npmjs.org).  
 > Rewrite of the existing [npm-dependency-checker](https://github.com/unger1984/npm-dependency-checker) plugin.

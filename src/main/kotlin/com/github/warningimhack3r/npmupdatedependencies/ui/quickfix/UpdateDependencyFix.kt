@@ -1,32 +1,42 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.quickfix
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.Versions
-import com.github.warningimhack3r.npmupdatedependencies.ui.helper.NUDHelper
-import com.github.warningimhack3r.npmupdatedependencies.backend.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.json.psi.JsonProperty
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
+import com.jetbrains.rd.util.printlnError
 
 class UpdateDependencyFix(
     private val kind: Versions.Kind,
     private val property: JsonProperty,
     private val newVersion: String,
-    private val order: Int?
+    private val showOrder: Boolean
 ): BaseIntentionAction() {
-    override fun getText() = "${if (order != null) "$order. " else ""}Update to ${kind.text} version ($newVersion)"
+    override fun getText(): String {
+        val baseText = "Update to ${kind.text} version ($newVersion)"
+        return (if (showOrder) QuickFixesCommon.getPositionPrefix(
+            kind,
+            NUDSettingsState.instance.defaultUpdateType
+        ) else "") + baseText
+    }
     override fun getFamilyName() = "Update dependency"
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
-        return editor != null && file?.name == "package.json"
-    }
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = QuickFixesCommon.getAvailability(editor, file)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+        if (file == null) {
+            printlnError("Trying to update dependency but file is null")
+            return
+        }
         val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-        val tempFile = "\"$prefix$newVersion\""
-        val newElement = NUDHelper.createElement(project, tempFile, "JSON")
-        NUDHelper.asyncWrite(project) {
+        val newElement = NUDHelper.createElement(project, "\"$prefix$newVersion\"", "JSON")
+        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $newVersion") {
             property.value?.replace(newElement)
         }
     }

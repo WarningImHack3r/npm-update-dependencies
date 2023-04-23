@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend
+package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
 data class Versions(
     val latest: String,
@@ -14,10 +14,13 @@ data class Versions(
         Kind.SATISFIES -> satisfies
     }
 
-    fun orderedAvailableKinds(): List<Kind> = listOfNotNull(
+    fun orderedAvailableKinds(placeFirst: Kind? = null): List<Kind> = listOfNotNull(
         Kind.SATISFIES.takeIf { satisfies != null },
         Kind.LATEST
-    )
+    ).let {
+        if (placeFirst == null) it
+        else listOf(placeFirst) + it.filter { kind -> kind != placeFirst }
+    }
 
     fun isEqualToAny(other: String): Boolean = latest == other || satisfies == other
 }

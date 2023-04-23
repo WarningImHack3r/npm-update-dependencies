@@ -1,19 +1,18 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend
+package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.ui.helper.NUDHelper
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.vdurmont.semver4j.Semver
 import com.vdurmont.semver4j.Semver.SemverType
 
 object PackageUpdateChecker {
-    val availableUpdates = mutableMapOf<String, Versions>()
-    val deprecations = mutableMapOf<String, Deprecation>()
-
     private fun isVersionUpgradable(version: String): Boolean {
-        if (version.startsWith("http")
-            || version.startsWith("git")
-            || version.contains("/")
-            || !version.any { it.isDigit() }) return false
-        return true
+        return !(version.startsWith("http")
+                || version.startsWith("git")
+                || version.contains("/")
+                || !version.any { it.isDigit() })
     }
 
     private fun isVersionMoreRecentThanComparator(version: String, comparator: String): Boolean {
@@ -24,14 +23,28 @@ object PackageUpdateChecker {
         }
     }
 
+    private fun areVersionsMatchingComparatorNeeds(versions: Versions, comparator: String): Boolean {
+        return if (Semver(versions.latest, SemverType.NPM).satisfies(comparator)) {
+            versions.satisfies == null
+        } else {
+            versions.satisfies != null
+                    && Semver(versions.satisfies, SemverType.NPM).satisfies(comparator)
+                    && isVersionMoreRecentThanComparator(versions.satisfies, comparator)
+        } && isVersionMoreRecentThanComparator(versions.latest, comparator)
+    }
+
     fun hasUpdateAvailable(name: String, currentComparator: String): Pair<Boolean, Versions?> {
-        // Check if an update has already been found
-        if (availableUpdates.containsKey(name) && isVersionMoreRecentThanComparator(availableUpdates[name]!!.latest, currentComparator)) {
-            return Pair(true, availableUpdates[name])
+        if (deprecations.containsKey(name) // Check if the dependency is not deprecated
+            || !isVersionUpgradable(currentComparator)) { // Check if current version is an upgradable version
+            if (availableUpdates.containsKey(name)) availableUpdates.remove(name)
+            return Pair(false, null)
         }
 
-        // Check if current version is an upgradable version
-        if (!isVersionUpgradable(currentComparator)) return Pair(false, null)
+        // Check if an update has already been found
+        if (availableUpdates.containsKey(name)
+            && areVersionsMatchingComparatorNeeds(availableUpdates[name]!!, currentComparator)) {
+            return Pair(true, availableUpdates[name])
+        }
 
         // Check if update is available
         val newVersion = NPMJSClient.getLatestVersion(name) ?: return Pair(false, null)
@@ -46,7 +59,7 @@ object PackageUpdateChecker {
                     Semver(version, SemverType.NPM)
                 }.filter { version ->
                     version.satisfies(currentComparator)
-                            && !currentComparator.contains(version.originalValue)
+                            && isVersionMoreRecentThanComparator(version.originalValue, currentComparator)
                             && version != newVersionSemver
                 }.maxOrNull()?.originalValue
             }

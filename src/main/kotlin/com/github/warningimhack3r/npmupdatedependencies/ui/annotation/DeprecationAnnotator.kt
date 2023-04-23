@@ -1,10 +1,14 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.NPMJSClient
-import com.github.warningimhack3r.npmupdatedependencies.backend.PackageUpdateChecker
-import com.github.warningimhack3r.npmupdatedependencies.backend.parallelMap
-import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.ReplaceDependencyFix
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.isScanningForDeprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.DeprecatedDependencyFix
+import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
@@ -12,9 +16,10 @@ import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
 import com.intellij.openapi.project.DumbAware
 import com.intellij.psi.PsiFile
+import com.intellij.ui.EditorNotifications
 import com.intellij.util.applyIf
 
-class DeprecationAnnotator: DumbAware, ExternalAnnotator<List<Property>, Map<JsonProperty, Deprecation>>() {
+class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonProperty, Deprecation>>() {
 
     override fun collectInformation(file: PsiFile): List<Property>? = AnnotatorsCommon.getInfo(file)
 
@@ -22,42 +27,66 @@ class DeprecationAnnotator: DumbAware, ExternalAnnotator<List<Property>, Map<Jso
         if (collectedInfo.isNullOrEmpty()) return emptyMap()
 
         return collectedInfo
-            .parallelMap { property ->
-                PackageUpdateChecker.deprecations[property.name]?.let { deprecation ->
+            .also {
+                // Remove from the cache all deprecations that are no longer in the file
+                val fileDependenciesNames = it.map { property -> property.name }
+                deprecations.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
+                // Update the status bar widget
+                isScanningForDeprecations = true
+                StatusBarHelper.updateWidget()
+            }.parallelMap { property ->
+                deprecations[property.name]?.let { deprecation ->
+                    // If the deprecation is already in the cache, we don't need to check the NPM registry
                     Pair(property.jsonProperty, deprecation)
                 } ?: NPMJSClient.getPackageDeprecation(property.name)?.let { reason ->
+                    // Get the deprecation reason and check if it contains a package name
                     reason.split(" ").map { word ->
+                        // Remove punctuation at the end of the word
                         word.replace(Regex("[,;.]$"), "")
                     }.filter { word ->
+                        // Try to find a word that looks like a package name
                         word.startsWith("@") || word.contains("/") || word.contains("-")
                     }.parallelMap innerMap@ { potentialPackage ->
+                        // Confirm that the word is a package name by trying to get its latest version
                         val version = NPMJSClient.getLatestVersion(potentialPackage) ?: return@innerMap null
                         Pair(potentialPackage, version)
                     }.filterNotNull().firstOrNull()?.let { (name, version) ->
+                        // We found a package name and its latest version, so we can create a replacement
                         Pair(property.jsonProperty, Deprecation(reason, Deprecation.Replacement(name, version)))
-                    } ?: Pair(property.jsonProperty, Deprecation(reason, null))
+                    } ?: Pair(property.jsonProperty, Deprecation(reason, null)) // No replacement found in the deprecation reason
                 }.also { pair ->
                     pair?.let {
-                        PackageUpdateChecker.deprecations[property.name] = it.second
+                        // Add the deprecation to the cache if any
+                        deprecations[property.name] = it.second
                     } ?: run {
-                        if (PackageUpdateChecker.deprecations.containsKey(property.name)) {
-                            PackageUpdateChecker.deprecations.remove(property.name)
+                        // Remove the deprecation from the cache if no deprecation is found
+                        if (deprecations.containsKey(property.name)) {
+                            deprecations.remove(property.name)
                         }
                     }
                 }
-            }.filterNotNull().toMap()
+            }.filterNotNull().toMap().also {
+                isScanningForDeprecations = false
+                StatusBarHelper.updateWidget()
+            }
     }
 
     override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Deprecation>, holder: AnnotationHolder) {
-        annotationResult.forEach { result ->
-            holder.newAnnotation(HighlightSeverity.ERROR, result.value.reason)
-                .range(result.key.textRange)
+        annotationResult.forEach { (property, deprecation) ->
+            holder.newAnnotation(HighlightSeverity.ERROR, deprecation.reason)
+                .range(property.textRange)
                 .highlightType(ProblemHighlightType.LIKE_DEPRECATED)
-                .applyIf(result.value.replacement != null) {
-                    withFix(ReplaceDependencyFix(result.key, result.value.replacement!!.name, result.value.replacement!!.version))
+                .applyIf(deprecation.replacement != null) {
+                    withFix(DeprecatedDependencyFix(property, deprecation.replacement!!.name, deprecation.replacement.version, Deprecation.Action.REPLACE, true))
                 }
+                .withFix(DeprecatedDependencyFix(property, "", "", Deprecation.Action.REMOVE, Deprecation.Action.values().size.run {
+                    this - (if (deprecation.replacement == null) 1 else 0)
+                } > 1))
                 .needsUpdateOnTyping()
                 .create()
+        }
+        if (annotationResult.isNotEmpty()) {
+            EditorNotifications.getInstance(file.project).updateAllNotifications()
         }
     }
 }

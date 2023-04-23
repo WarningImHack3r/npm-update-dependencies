@@ -1,15 +1,10 @@
-package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
+package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.intellij.json.psi.JsonProperty
 import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
-
-data class Property(
-    val jsonProperty: JsonProperty,
-    val name: String,
-    val comparator: String?
-)
 
 object AnnotatorsCommon {
     fun getInfo(file: PsiFile): List<Property>? {

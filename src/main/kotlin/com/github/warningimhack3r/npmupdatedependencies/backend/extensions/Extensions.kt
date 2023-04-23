@@ -1,11 +1,9 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend
+package com.github.warningimhack3r.npmupdatedependencies.backend.extensions
 
 import com.intellij.json.psi.JsonValue
 import kotlinx.coroutines.*
 
-fun JsonValue.stringValue(): String {
-    return this.text.replace("\"", "")
-}
+fun JsonValue.stringValue(): String = text.replace("\"", "")
 
 // Credit: https://jivimberg.io/blog/2018/05/04/parallel-map-in-kotlin/
 fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B) = runBlocking(Dispatchers.Default) {

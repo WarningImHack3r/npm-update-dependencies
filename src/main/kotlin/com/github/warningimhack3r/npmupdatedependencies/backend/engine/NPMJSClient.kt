@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend
+package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser

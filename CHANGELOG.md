@@ -1,8 +1,36 @@
 <!-- Keep a Changelog guide -> https://keepachangelog.com -->
+<!-- Types of changes memo:
+— “Added” for new features.
+— “Changed” for changes in existing functionality.
+— “Deprecated” for soon-to-be removed features.
+— “Removed” for now removed features.
+— “Fixed” for any bug fixes.
+— “Security” in case of vulnerabilities.
+-->
 
 # npm-update-dependencies Changelog
 
 ## [Unreleased]
+
+### Added
+- Add the option to remove a deprecated dependency
+- Add a banner to notify of deprecated dependencies
+- Add the ability to automatically reorder dependencies after replacing deprecated ones
+- Add a status bar widget indicating the scan progress and the list of outdated and deprecated dependencies
+- Add an option to auto-fix on save (applying the default update type and deprecation action)
+  - A tooltip will be displayed when the file is modified by auto-fix
+- Add settings (in `Settings > Tools`) related to the new features but also to:
+  - Choose default update type
+  - Choose default deprecation action
+- Add keyboard shortcuts for menu actions
+
+### Changed
+- All write actions performed by the plugin now have a label in the undo stack
+- Globally improve updates scanning engine
+- Improve satisfying version detection
+
+### Fixed
+- Fix a bug where the plugin would prevent other annotators from working (#6)
 
 ## [1.1.2] - 2023-03-20
 
