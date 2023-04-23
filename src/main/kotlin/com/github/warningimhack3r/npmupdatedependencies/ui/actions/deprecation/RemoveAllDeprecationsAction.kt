@@ -6,13 +6,13 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 
-class ReplaceAllDeprecationsAction : AnAction() {
+class RemoveAllDeprecationsAction : AnAction() {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = deprecations.isNotEmpty()
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        ActionsCommon.replaceAllDeprecations(file)
+        ActionsCommon.deleteAllDeprecations(file)
     }
 }

@@ -13,37 +13,100 @@
                popup="true"
                text="NPM Update Dependencies"
                description="Action group for npm-update-dependencies"
-               icon="com.github.warningimhack3r.npmupdatedependencies.ui.icons.NUDIcons.NPM">
+               icon="icons.NUDIcons.LOGO">
             <!-- Add to the “Tools” menu -->
             <add-to-group group-id="ToolsMenu" anchor="last"/>
             <!-- Add to the right-click context menu -->
             <add-to-group group-id="EditorPopupMenu" anchor="last"/>
+
+            <!-- Update group -->
+            <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
+                   class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
+                   text="Updates"
+                   description="Action group for updating dependencies">
+                <!-- Update all latest -->
+                <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
+                        class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
+                        text="Update All (Latest)"
+                        description="Bump all dependencies to their latest version, ignoring their satisfying range"
+                        icon="AllIcons.Actions.TraceInto">
+                    <!-- Shortcut -->
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt U"/>
+                </action>
+                <!-- Update all satisfies -->
+                <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
+                        class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
+                        text="Update All (Satisfying)"
+                        description="Bump all dependencies matching their satisfying range"
+                        icon="AllIcons.Actions.Download">
+                    <!-- Shortcut -->
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt S"/>
+                </action>
+            </group>
+            <separator/>
+            <!-- Deprecation group -->
+            <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
+                   class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
+                   text="Deprecations"
+                   description="Action group for replacing or removing deprecated dependencies">
+                <!-- Replace all deprecations -->
+                <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.ReplaceAllDeprecationsAction"
+                        class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.ReplaceAllDeprecationsAction"
+                        text="Replace All Deprecations"
+                        description="Replace all deprecated dependencies with their recommended alternatives"
+                        icon="AllIcons.Actions.SwapPanels">
+                    <!-- Shortcut -->
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt R"/>
+                </action>
+                <!-- Remove all deprecations -->
+                <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.RemoveAllDeprecationsAction"
+                        class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.RemoveAllDeprecationsAction"
+                        text="Remove All Deprecations"
+                        description="Remove all deprecated dependencies"
+                        icon="AllIcons.Actions.DeleteTagHover">
+                    <!-- Shortcut -->
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt D"/>
+                </action>
+            </group>
+            <separator/>
+            <!-- Scan group -->
+            <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
+                   class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
+                   text="Scan"
+                   description="Action group to invalidate the caches">
+                <!-- Invalidate caches -->
+                <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.InvalidateCachesAction"
+                        class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.InvalidateCachesAction"
+                        text="Invalidate Scan Caches"
+                        description="Clear temporary caches used to store scan results"
+                        icon="CollaborationToolsIcons.DeleteHovered"/>
+            </group>
         </group>
-        <!-- Scan action group -->
-        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
-               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
-               text="Scan Dependencies"
-               description="Action group to trigger dependencies scan"/>
-        <!-- Update action group -->
-        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
-               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
-               text="Update Dependencies"
-               description="Action group to update your dependencies"/>
-        <!-- Deprecation action group -->
-        <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
-               class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
-               text="Replace Dependencies"
-               description="Action group to replace deprecated dependencies"/>
     </actions>
+
+    <projectListeners>
+        <listener
+                topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
+                class="com.github.warningimhack3r.npmupdatedependencies.ui.listeners.OnSaveListener"/>
+    </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
         <externalAnnotator
                 language="JSON"
-                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator"/>
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator"/>
         <externalAnnotator
                 language="JSON"
-                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator"/>
-        <daemon.externalAnnotatorsFilter
-                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.AnnotatorsFilter"/>
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator"/>
+        <statusBarWidgetFactory
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarFactory"/>
+        <editorNotificationProvider
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.DeprecationBanner"/>
+        <applicationConfigurable
+                parentId="tools"
+                displayName="NPM Update Dependencies"
+                id="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable"
+                instance="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable"/>
+        <applicationService
+                serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState"/>
     </extensions>
 </idea-plugin>
