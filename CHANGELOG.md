@@ -12,14 +12,13 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2023-04-23
+
 ### Added
 - Add the option to remove a deprecated dependency
 - Add a banner to notify of deprecated dependencies
 - Add the ability to automatically reorder dependencies after replacing deprecated ones
-- Add a status bar widget indicating the scan progress and the list of outdated and deprecated dependencies
-- Add an option to auto-fix on save (applying the default update type and deprecation action)
-  - A tooltip will be displayed when the file is modified by auto-fix
-- Add settings (in `Settings > Tools`) related to the new features but also to:
+- - A tooltip will be displayed when the file is modified by auto-fix
   - Choose default update type
   - Choose default deprecation action
 - Add keyboard shortcuts for menu actions
@@ -74,7 +73,8 @@
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.1...v1.1.0
