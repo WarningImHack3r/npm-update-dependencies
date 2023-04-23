@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2023-04-23
+
 ### Added
 - Add the option to remove a deprecated dependency
 - Add a banner to notify of deprecated dependencies
@@ -74,7 +76,8 @@
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...v1.1.1
 [1.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.0.1...v1.1.0
