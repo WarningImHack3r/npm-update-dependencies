@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 object NUDCache {
     val availableUpdates = mutableMapOf<String, Versions>()
     val deprecations = mutableMapOf<String, Deprecation>()
+    val packageRegistries = mutableMapOf<String, String>()
 
     var isScanningForUpdates = false
     var isScanningForDeprecations = false
