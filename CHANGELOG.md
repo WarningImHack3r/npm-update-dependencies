@@ -12,6 +12,12 @@
 
 ## [Unreleased]
 
+### Added
+- Automatically fetch package's NPM registry info on scan, adding support for custom registries (#7)
+
+### Fixed
+- Fix changelog for 1.2.0 release, visit [v1.2.0 release](https://github.com/WarningImHack3r/npm-update-dependencies/releases/tag/v1.2.0) for the actual changes
+
 ## [1.2.0] - 2023-04-23
 
 ### Added
