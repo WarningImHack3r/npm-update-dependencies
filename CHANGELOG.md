@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2023-05-12
+
 ### Added
 - Automatically fetch package's NPM registry info on scan, adding support for custom registries (#7)
 
@@ -82,7 +84,8 @@
 ### Added
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.1...v1.1.2
 [1.1.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.0...v1.1.1
