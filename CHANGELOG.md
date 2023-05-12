@@ -27,8 +27,10 @@
 - Add a banner to notify of deprecated dependencies
 - Add the ability to automatically reorder dependencies after replacing deprecated ones
 - Add a status bar widget indicating the scan progress and the list of outdated and deprecated dependencies
-- - A tooltip will be displayed when the file is modified by auto-fix
-- - Choose default update type
+- Add an option to auto-fix on save (applying the default update type and deprecation action)
+  - A tooltip will be displayed when the file is modified by auto-fix
+- Add settings (in `Settings > Tools`) related to the new features but also to:
+  - Choose default update type
   - Choose default deprecation action
 - Add keyboard shortcuts for menu actions
 
