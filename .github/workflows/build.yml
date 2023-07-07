@@ -122,6 +122,21 @@ jobs:
         with:
           files: ${{ github.workspace }}/build/reports/kover/xml/report.xml
 
+  # Run plugin structure verification along with IntelliJ Plugin Verifier
+  verify:
+    name: Verify plugin
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      # Check out current repository
+      - name: Fetch Sources
+        uses: actions/checkout@v3
+
+      # Setup Gradle
+      - name: Setup Gradle
+        uses: gradle/gradle-build-action@v2
+
       # Cache Plugin Verifier IDEs
       - name: Setup Plugin Verifier IDEs Cache
         uses: actions/cache@v3
