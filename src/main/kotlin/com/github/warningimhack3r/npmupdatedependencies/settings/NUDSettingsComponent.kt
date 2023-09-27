@@ -12,12 +12,10 @@ import com.intellij.ui.dsl.builder.Cell
 import com.intellij.ui.dsl.builder.panel
 import com.intellij.ui.dsl.builder.selected
 import com.intellij.util.containers.ContainerUtil.zip
-import com.intellij.util.containers.map2Array
 import java.awt.Component
 import javax.swing.JCheckBox
 import javax.swing.JComboBox
 
-@Suppress("UnstableApiUsage") // Should not normally be needed because we are targeting 213
 class NUDSettingsComponent {
     var values: MutableMap<String, Any> = NUDSettingsState.instance.mapped.toMutableMap()
         set(newValues) {
@@ -40,7 +38,7 @@ class NUDSettingsComponent {
             row("Default update type:") {
                 comboBox(
                     Versions.Kind.values()
-                    .map2Array { version ->
+                    .map { version ->
                         version.text.replaceFirstChar { it.uppercase() }
                     })
                     .applyToComponent {
@@ -52,7 +50,7 @@ class NUDSettingsComponent {
                     }
             }
             row("Default deprecation action:") {
-                comboBox(Deprecation.Action.values().map2Array { it.text })
+                comboBox(Deprecation.Action.values().map { it.text })
                     .applyToComponent {
                         componentsList.add(this)
                         selectedIndex = values["defaultDeprecationAction"] as Int
@@ -100,7 +98,7 @@ class NUDSettingsComponent {
                     }
             }
             row("Status Bar mode:") {
-                comboBox(arrayOf("Full", "Compact"))
+                comboBox(listOf("Full", "Compact"))
                     .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
                     .applyToComponent {
                         componentsList.add(this)
