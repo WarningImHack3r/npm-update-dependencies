@@ -131,12 +131,13 @@ class NUDSettingsComponent {
                 }
             }
         }
-        separator()
-        row {
-            browserLink("Source code", "https://github.com/WarningImHack3r/npm-update-dependencies")
-            browserLink("Plugin homepage", "https://plugins.jetbrains.com/plugin/21105-npm-update-dependencies")
-            browserLink("Issue tracker", "https://github.com/WarningImHack3r/npm-update-dependencies/issues")
-            browserLink("Rate plugin", "https://plugins.jetbrains.com/plugin/21105-npm-update-dependencies/reviews")
+        group("Links") {
+            row {
+                browserLink("Source code", "https://github.com/WarningImHack3r/npm-update-dependencies")
+                browserLink("Plugin homepage", "https://plugins.jetbrains.com/plugin/21105-npm-update-dependencies")
+                browserLink("Issue tracker", "https://github.com/WarningImHack3r/npm-update-dependencies/issues")
+                browserLink("Rate plugin", "https://plugins.jetbrains.com/plugin/21105-npm-update-dependencies/reviews")
+            }
         }
     }
 }
