@@ -12,6 +12,12 @@
 
 ## [Unreleased]
 
+### Added
+- Add support for 2023.3 IDEs
+
+### Removed
+- Remove support for 2021 IDEs
+
 ## [1.3.0] - 2023-05-12
 
 ### Added
