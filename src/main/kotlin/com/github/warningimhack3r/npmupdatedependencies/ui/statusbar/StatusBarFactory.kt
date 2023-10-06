@@ -61,6 +61,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     override fun getClickConsumer(): Consumer<MouseEvent>? = null
 
+    // Replaced with getPopup() in 2023.1
     override fun getPopupStep(): ListPopup? {
         if (project.isDisposed || currentStatus != Status.READY) return null
 

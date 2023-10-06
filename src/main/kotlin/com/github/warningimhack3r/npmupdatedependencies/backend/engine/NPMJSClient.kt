@@ -14,7 +14,7 @@ object NPMJSClient {
 
     private fun getRegistry(packageName: String): String {
         return packageRegistries[packageName] ?: ShellRunner.execute(
-            "npm v $packageName dist.tarball"
+            arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
             try {
                 URI(dist).let { uri ->
