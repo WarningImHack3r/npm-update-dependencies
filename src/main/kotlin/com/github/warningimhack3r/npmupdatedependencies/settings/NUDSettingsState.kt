@@ -33,17 +33,16 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState> {
         get() = javaClass.declaredFields.filter {
                 !Modifier.isStatic(it.modifiers) && it.type != Map::class.java
             }.associate { f ->
-                f.name to f.get(this)
+                f.name to f[this]
             }
         set(values) {
             field = values
             values.forEach { (key, value) ->
                 javaClass.declaredFields.first { field ->
                     field.name == key
-                }.set(this, value).also {
-                    if (key.lowercase().contains("statusbar")) {
-                        StatusBarHelper.updateWidget()
-                    }
+                }[this] = value
+                if (key.lowercase().contains("statusbar")) {
+                    StatusBarHelper.updateWidget()
                 }
             }
         }

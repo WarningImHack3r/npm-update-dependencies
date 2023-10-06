@@ -1,4 +1,4 @@
-@file:SuppressWarnings("kotlin:S1128") // Suppress "Unused imports should be removed" for Pair destructuring
+@file:Suppress("kotlin:S1128") // Suppress "Unused imports should be removed" for Pair destructuring
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
@@ -21,8 +21,8 @@ class NUDSettingsComponent {
         set(newValues) {
             field = newValues
             // Update all components
-            if (componentsList.size != newValues.size) {
-                throw IllegalStateException("The number of components (${componentsList.size}) does not match the number of values (${newValues.size})")
+            check(componentsList.size == newValues.size) {
+                "The number of components (${componentsList.size}) does not match the number of values (${newValues.size})"
             }
             zip(componentsList, newValues.values).forEach { (component, value) ->
                 when (component) {
