@@ -29,13 +29,22 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         val deprecationsCount = deprecations.size
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
+            val availableActions = Deprecation.Action.values().filter { action ->
+                (action == Deprecation.Action.REPLACE && deprecations.any { (_, deprecation) ->
+                    deprecation.replacement != null
+                }) || action != Deprecation.Action.REPLACE
+            }
             // Description text & icon
-            val actionsTitles = Deprecation.Action.values().mapIndexed { index, action ->
+            val actionsTitles = availableActions.mapIndexed { index, action ->
                 action.text.applyIf(index > 0) {
                     lowercase()
                 }
             }
-            val actionsString = actionsTitles.dropLast(1).joinToString(", ") + " or " + actionsTitles.last()
+            val actionsString = if (actionsTitles.size > 1) {
+                actionsTitles.dropLast(1).joinToString(", ") + " or " + actionsTitles.last()
+            } else {
+                actionsTitles.first()
+            }
             text(if (deprecationsCount > 1) {
                 "You have $deprecationsCount deprecated packages. $actionsString them"
             } else {
@@ -44,11 +53,11 @@ class DeprecationBanner : EditorNotificationProvider {
             icon(AllIcons.General.Warning)
 
             // Actions
-            listOf(Deprecation.Action.values().first {
-                it.ordinal == NUDSettingsState.instance.defaultDeprecationAction
-            }).plus(Deprecation.Action.values().filter { action ->
+            listOf(availableActions.firstOrNull { action ->
+                action.ordinal == NUDSettingsState.instance.defaultDeprecationAction
+            }).plus(availableActions.filter { action ->
                 action.ordinal != NUDSettingsState.instance.defaultDeprecationAction
-            }).forEach { action ->
+            }).filterNotNull().forEach { action ->
                 createActionLabel(action.text + if (deprecationsCount > 1) " them" else " it") {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)

@@ -45,7 +45,9 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
                         word.replace(Regex("[,;.]$"), "")
                     }.filter { word ->
                         // Try to find a word that looks like a package name
-                        word.startsWith("@") || word.contains("/") || word.contains("-")
+                        word.startsWith("@") || (if (word.contains("/")) {
+                            word.split("/").size == 2
+                        } else false) || word.contains("-")
                     }.parallelMap innerMap@ { potentialPackage ->
                         // Confirm that the word is a package name by trying to get its latest version
                         val version = NPMJSClient.getLatestVersion(potentialPackage) ?: return@innerMap null
