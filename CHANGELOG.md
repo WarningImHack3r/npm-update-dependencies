@@ -12,26 +12,34 @@
 
 ## [Unreleased]
 
+## [2.0.0] - 2023-10-08
+
 ### Added
+
 - Add support for 2023.3 IDEs
 
 ### Removed
+
 - Remove support for 2021 IDEs
 
 ### Fixed
+
 - Fix the deprecation banner displaying all actions, no matter if they were actually available or not
 
 ## [1.3.0] - 2023-05-12
 
 ### Added
+
 - Automatically fetch package's NPM registry info on scan, adding support for custom registries (#7)
 
 ### Fixed
+
 - Fix changelog for 1.2.0 release, visit [v1.2.0 release](https://github.com/WarningImHack3r/npm-update-dependencies/releases/tag/v1.2.0) for the actual changes
 
 ## [1.2.0] - 2023-04-23
 
 ### Added
+
 - Add the option to remove a deprecated dependency
 - Add a banner to notify of deprecated dependencies
 - Add the ability to automatically reorder dependencies after replacing deprecated ones
@@ -44,36 +52,43 @@
 - Add keyboard shortcuts for menu actions
 
 ### Changed
+
 - All write actions performed by the plugin now have a label in the undo stack
 - Globally improve updates scanning engine
 - Improve satisfying version detection
 
 ### Fixed
+
 - Fix a bug where the plugin would prevent other annotators from working (#6)
 
 ## [1.1.2] - 2023-03-20
 
 ### Fixed
+
 - Fix a rare crash occurring when scanning for updates
 
 ## [1.1.1] - 2023-03-11
 
 ### Fixed
+
 - Fix updated dependencies still being marked as outdated
 
 ## [1.1.0] - 2023-03-10
 
 ### Added
+
 - Add detection of deprecated dependencies, with an option to replace them by recommended ones
 - Add an option to manually invalidate the cache (both for updates and deprecations)
 
 ### Changed
+
 - **Rework the plugin's icon and asset**
 - Redesign the menu group actions
 - Drastically improve speed of scans
 - Improve performance of batch updates (when using “Update all” buttons)
 
 ### Fixed
+
 - Fix 'Update All (Satisfying)' button replacing versions with “null”
 - Fix cache not always being used when it should
 - Fix some typos
@@ -81,9 +96,11 @@
 ## [1.0.1] - 2023-03-06
 
 ### Added
+
 - Enlarge plugin compatibility range
 
 ### Fixed
+
 - Fix plugin crash when failing to fetch package info from npm registry
 - Fix blocked UI when fetching package info from npm registry
 - Fix satisfying version being the same as the current one
@@ -91,9 +108,11 @@
 ## [1.0.0] - 2023-02-20
 
 ### Added
+
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.3.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.0.0...HEAD
+[2.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.3.0...v2.0.0
 [1.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.2...v1.2.0
 [1.1.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v1.1.1...v1.1.2
