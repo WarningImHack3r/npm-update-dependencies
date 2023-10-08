@@ -18,6 +18,9 @@
 ### Removed
 - Remove support for 2021 IDEs
 
+### Fixed
+- Fix the deprecation banner displaying all actions, no matter if they were actually available or not
+
 ## [1.3.0] - 2023-05-12
 
 ### Added
