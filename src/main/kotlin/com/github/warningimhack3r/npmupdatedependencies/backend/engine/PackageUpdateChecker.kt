@@ -4,8 +4,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
-import com.vdurmont.semver4j.Semver
-import com.vdurmont.semver4j.Semver.SemverType
+import org.semver4j.Semver
 
 object PackageUpdateChecker {
     private fun isVersionUpgradable(version: String): Boolean {
@@ -19,16 +18,16 @@ object PackageUpdateChecker {
         return comparator.split(" ").any { comp ->
             val comparatorVersion = NUDHelper.Regex.semverPrefix.replace(comp, "")
             if (comparatorVersion.trim().isEmpty()) return@any false
-            Semver(version, SemverType.NPM).isGreaterThan(comparatorVersion)
+            Semver(version).isGreaterThan(comparatorVersion)
         }
     }
 
     private fun areVersionsMatchingComparatorNeeds(versions: Versions, comparator: String): Boolean {
-        return if (Semver(versions.latest, SemverType.NPM).satisfies(comparator)) {
+        return if (Semver(versions.latest).satisfies(comparator)) {
             versions.satisfies == null
         } else {
             versions.satisfies != null
-                    && Semver(versions.satisfies, SemverType.NPM).satisfies(comparator)
+                    && Semver(versions.satisfies).satisfies(comparator)
                     && isVersionMoreRecentThanComparator(versions.satisfies, comparator)
         } && isVersionMoreRecentThanComparator(versions.latest, comparator)
     }
@@ -52,16 +51,16 @@ object PackageUpdateChecker {
 
         // Find satisfying version
         var satisfyingVersion: String? = null
-        if (!Semver(newVersion, SemverType.NPM).satisfies(currentComparator)) {
-            val newVersionSemver = Semver(newVersion, SemverType.NPM)
+        if (!Semver(newVersion).satisfies(currentComparator)) {
+            val newVersionSemver = Semver(newVersion)
             satisfyingVersion = NPMJSClient.getAllVersions(name)?.let { versions ->
                 versions.map { version ->
-                    Semver(version, SemverType.NPM)
+                    Semver(version)
                 }.filter { version ->
                     version.satisfies(currentComparator)
-                            && isVersionMoreRecentThanComparator(version.originalValue, currentComparator)
+                            && isVersionMoreRecentThanComparator(version.version, currentComparator)
                             && version != newVersionSemver
-                }.maxOrNull()?.originalValue
+                }.maxOrNull()?.version
             }
         }
         val versions = Versions(newVersion, satisfyingVersion)
