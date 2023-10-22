@@ -12,6 +12,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve replacement package detection algorithm for deprecated dependencies
+
+### Fixed
+
+- Fix a rare crash due to an old dependency (#41)
+- Fix menu icons not being displayed with the New UI
+
 ## [2.0.0] - 2023-10-08
 
 ### Added

@@ -91,6 +91,7 @@
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
+        <iconMapper mappingFile="NUDIconMappings.json" />
         <externalAnnotator
                 language="JSON"
                 implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator" />
