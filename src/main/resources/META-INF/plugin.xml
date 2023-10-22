@@ -13,7 +13,7 @@
                popup="true"
                text="NPM Update Dependencies"
                description="Action group for npm-update-dependencies"
-               icon="icons.NUDIcons.LOGO">
+               icon="NUDIcons.Logo">
             <!-- Add to the “Tools” menu -->
             <add-to-group group-id="ToolsMenu" anchor="last" />
             <!-- Add to the right-click context menu -->

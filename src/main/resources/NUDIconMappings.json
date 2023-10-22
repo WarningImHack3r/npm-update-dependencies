@@ -1,7 +1,9 @@
 {
   "icons": {
     "expui": {
-      "npm_16.svg": "icons/npm_16.svg"
+      "actions": {
+        "npm_16.svg": "icons/npm_16.svg"
+      }
     }
   }
 }
