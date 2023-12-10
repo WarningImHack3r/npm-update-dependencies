@@ -16,6 +16,7 @@ object NPMJSClient {
         return packageRegistries[packageName] ?: ShellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
+            if (dist.isEmpty()) return@let null
             try {
                 URI(dist).let { uri ->
                     val registry = "${uri.scheme}://${uri.host}"
@@ -47,7 +48,11 @@ object NPMJSClient {
             return null
         }
         return try {
-            JsonParser.parseString(responseBody).asJsonObject
+            if (JsonParser.parseString(responseBody).isJsonObject) {
+                JsonParser.parseString(responseBody).asJsonObject
+            } else {
+                null
+            }
         } catch (e: Exception) {
             printlnError("Error while parsing response body from $uri: ${e.message}")
             null
@@ -56,16 +61,30 @@ object NPMJSClient {
 
     fun getLatestVersion(packageName: String): String? {
         val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName/latest")
-        return json?.get("version")?.asString
+        return json?.get("version")?.asString ?: ShellRunner.execute(
+            arrayOf("npm", "v", packageName, "version")
+        )?.trim()?.let { it.ifEmpty { null } }
     }
 
     fun getAllVersions(packageName: String): List<String>? {
         val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName")
-        return json?.get("versions")?.asJsonObject?.keySet()?.toList()
+        return json?.get("versions")?.asJsonObject?.keySet()?.toList() ?: ShellRunner.execute(
+            arrayOf("npm", "v", packageName, "versions", "--json")
+        )?.trim()?.let { versions ->
+            if (versions.isEmpty()) {
+                return null
+            } else if (versions.startsWith("[")) {
+                JsonParser.parseString(versions).asJsonArray.map { it.asString }
+            } else {
+                listOf(versions.replace("\"", ""))
+            }
+        }
     }
 
     fun getPackageDeprecation(packageName: String): String? {
         val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName/latest")
-        return json?.get("deprecated")?.asString
+        return json?.get("deprecated")?.asString ?: ShellRunner.execute(
+            arrayOf("npm", "v", packageName, "deprecated")
+        )?.trim()?.let { it.ifEmpty { null } }
     }
 }

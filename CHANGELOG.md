@@ -12,6 +12,15 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add support for private packages (#27)
+
+### Fixed
+
+- Fix a crash when parsing x-range versions (#51)
+- Fix a potential error when fetching package info from npm registry
+
 ## [2.0.1] - 2023-10-24
 
 ### Changed
