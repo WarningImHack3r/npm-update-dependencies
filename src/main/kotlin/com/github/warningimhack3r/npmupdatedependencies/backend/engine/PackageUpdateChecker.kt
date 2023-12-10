@@ -18,7 +18,7 @@ object PackageUpdateChecker {
         return comparator.split(" ").any { comp ->
             val comparatorVersion = NUDHelper.Regex.semverPrefix.replace(comp, "")
             if (comparatorVersion.trim().isEmpty()) return@any false
-            Semver(version).isGreaterThan(comparatorVersion)
+            Semver.coerce(comparatorVersion)?.let { Semver(version).isGreaterThan(it) } == true
         }
     }
 
