@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.1.0] - 2023-12-15
+
 ### Added
 
 - Add support for private packages (#27)
