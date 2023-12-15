@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 

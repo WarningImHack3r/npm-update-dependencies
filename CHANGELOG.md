@@ -12,14 +12,13 @@
 
 ## [Unreleased]
 
-## [2.1.0] - 2023-12-11
-
 ### Added
 
 - Add support for private packages (#27)
 
 ### Fixed
 
+- Fix support for custom registries
 - Fix a crash when parsing x-range versions (#51)
 - Fix a potential error when fetching package info from npm registry
 

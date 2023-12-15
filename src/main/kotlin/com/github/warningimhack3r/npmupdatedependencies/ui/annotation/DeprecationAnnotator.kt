@@ -1,14 +1,16 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.isScanningForDeprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForDeprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.DeprecatedDependencyFix
-import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
@@ -26,6 +28,16 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
     override fun doAnnotate(collectedInfo: List<Property>?): Map<JsonProperty, Deprecation> {
         if (collectedInfo.isNullOrEmpty()) return emptyMap()
 
+        if (!isScanningForRegistries && packageRegistries.isEmpty()) {
+            isScanningForRegistries = true
+            RegistriesScanner.scan()
+            isScanningForRegistries = false
+        }
+
+        while (isScanningForRegistries) {
+            // Wait for the registries to be scanned
+        }
+
         return collectedInfo
             .also {
                 // Remove from the cache all deprecations that are no longer in the file
@@ -33,7 +45,6 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
                 deprecations.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
                 isScanningForDeprecations = true
-                StatusBarHelper.updateWidget()
             }.parallelMap { property ->
                 deprecations[property.name]?.let { deprecation ->
                     // If the deprecation is already in the cache, we don't need to check the NPM registry
@@ -80,7 +91,6 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
                 }
             }.filterNotNull().toMap().also {
                 isScanningForDeprecations = false
-                StatusBarHelper.updateWidget()
             }
     }
 

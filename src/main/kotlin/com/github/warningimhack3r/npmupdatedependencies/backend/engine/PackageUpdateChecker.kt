@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import org.semver4j.Semver

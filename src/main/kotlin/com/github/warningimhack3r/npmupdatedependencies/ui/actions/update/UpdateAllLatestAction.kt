@@ -1,6 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.update
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.AnAction
