@@ -1,15 +1,17 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.isScanningForUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
-import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
@@ -26,6 +28,16 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonPr
     override fun doAnnotate(collectedInfo: List<Property>?): Map<JsonProperty, Versions> {
         if (collectedInfo.isNullOrEmpty()) return emptyMap()
 
+        if (!isScanningForRegistries && packageRegistries.isEmpty()) {
+            isScanningForRegistries = true
+            RegistriesScanner.scan()
+            isScanningForRegistries = false
+        }
+
+        while (isScanningForRegistries) {
+            // Wait for the registries to be scanned
+        }
+
         return collectedInfo
             .also {
                 // Remove from the cache all properties that are no longer in the file
@@ -33,7 +45,6 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonPr
                 availableUpdates.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
                 isScanningForUpdates = true
-                StatusBarHelper.updateWidget()
             }.parallelMap { property ->
                 val value = property.comparator ?: return@parallelMap null
                 val (isUpdateAvailable, newVersion) = PackageUpdateChecker.hasUpdateAvailable(property.name, value)
@@ -43,7 +54,6 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonPr
                 ) else null
             }.filterNotNull().toMap().also {
                 isScanningForUpdates = false
-                StatusBarHelper.updateWidget()
             }
     }
 

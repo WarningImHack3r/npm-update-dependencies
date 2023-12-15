@@ -1,6 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent

@@ -1,6 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner.registries
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
 import com.jetbrains.rd.util.printlnError
@@ -16,17 +18,18 @@ object NPMJSClient {
         return packageRegistries[packageName] ?: ShellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
-            if (dist.isEmpty()) return@let null
-            try {
-                URI(dist).let { uri ->
-                    val registry = "${uri.scheme}://${uri.host}"
-                    packageRegistries[packageName] = registry
-                    registry
-                }
-            } catch (e: Exception) {
-                printlnError("Error while getting registry from \"$dist\": ${e.message}")
-                NPMJS_REGISTRY
+            val computedRegistry = dist.ifEmpty {
+                registries.parallelMap { registry ->
+                    ShellRunner.execute(
+                        arrayOf("npm", "v", packageName, "dist.tarball", "--registry=$registry")
+                    )?.trim()?.let { regDist ->
+                        regDist.ifEmpty { null }
+                    }
+                }.firstNotNullOfOrNull { it } ?: return@let null
             }
+            val registry = "${computedRegistry.substringBefore("/$packageName")}/"
+            packageRegistries[packageName] = registry
+            registry
         } ?: NPMJS_REGISTRY
     }
 
@@ -60,16 +63,18 @@ object NPMJSClient {
     }
 
     fun getLatestVersion(packageName: String): String? {
-        val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName/latest")
+        val registry = getRegistry(packageName)
+        val json = getBodyAsJSON("${registry}/$packageName/latest")
         return json?.get("version")?.asString ?: ShellRunner.execute(
-            arrayOf("npm", "v", packageName, "version")
+            arrayOf("npm", "v", packageName, "version", "--registry=$registry")
         )?.trim()?.let { it.ifEmpty { null } }
     }
 
     fun getAllVersions(packageName: String): List<String>? {
-        val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName")
+        val registry = getRegistry(packageName)
+        val json = getBodyAsJSON("${registry}/$packageName")
         return json?.get("versions")?.asJsonObject?.keySet()?.toList() ?: ShellRunner.execute(
-            arrayOf("npm", "v", packageName, "versions", "--json")
+            arrayOf("npm", "v", packageName, "versions", "--json", "--registry=$registry")
         )?.trim()?.let { versions ->
             if (versions.isEmpty()) {
                 return null
@@ -82,9 +87,10 @@ object NPMJSClient {
     }
 
     fun getPackageDeprecation(packageName: String): String? {
-        val json = getBodyAsJSON("${getRegistry(packageName)}/$packageName/latest")
+        val registry = getRegistry(packageName)
+        val json = getBodyAsJSON("${registry}/$packageName/latest")
         return json?.get("deprecated")?.asString ?: ShellRunner.execute(
-            arrayOf("npm", "v", packageName, "deprecated")
+            arrayOf("npm", "v", packageName, "deprecated", "--registry=$registry")
         )?.trim()?.let { it.ifEmpty { null } }
     }
 }

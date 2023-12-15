@@ -32,6 +32,10 @@ Configuration options are available in the settings.
 
 > Works by fetching [registry.npmjs.org](https://registry.npmjs.org).  
 > Rewrite of the existing [npm-dependency-checker](https://github.com/unger1984/npm-dependency-checker) plugin.
+
+## Planned Features
+- Show changelog for each dependency
+- Automatically install upgraded dependencies when saving the package.json file?
 <!-- Plugin description end -->
 
 ## Installation

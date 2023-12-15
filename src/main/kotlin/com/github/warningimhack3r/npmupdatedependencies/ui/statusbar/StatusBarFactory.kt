@@ -1,9 +1,10 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.statusbar
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.deprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.isScanningForDeprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDCache.isScanningForUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForDeprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForUpdates
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.dvcs.ui.LightActionGroup
 import com.intellij.ide.DataManager
@@ -43,7 +44,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     enum class Status {
         UNAVAILABLE,
-        SCANNING,
+        GATHERING_REGISTRIES,
+        SCANNING_PACKAGES,
         READY
     }
 
@@ -55,7 +57,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
     // MultipleTextValuesPresentation
     override fun getTooltipText(): String = when (currentStatus) {
         Status.UNAVAILABLE -> "NPM Update Dependencies is not available"
-        Status.SCANNING -> "Scanning for updates..."
+        Status.GATHERING_REGISTRIES -> "Gathering package registries..."
+        Status.SCANNING_PACKAGES -> "Scanning for updates..."
         Status.READY -> "Click to see available updates"
     }
 
@@ -130,7 +133,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         if (!NUDSettingsState.instance.showStatusBarWidget) return null
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
-            Status.SCANNING -> "Scanning dependencies..."
+            Status.GATHERING_REGISTRIES -> "Gathering registries..."
+            Status.SCANNING_PACKAGES -> "Scanning dependencies..."
             Status.READY -> {
                 val outdated = availableUpdates.size
                 val deprecated = deprecations.size
@@ -159,7 +163,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
     fun update() {
         currentStatus = when {
             project.isDisposed || !NUDSettingsState.instance.showStatusBarWidget -> Status.UNAVAILABLE
-            isScanningForUpdates || isScanningForDeprecations -> Status.SCANNING
+            isScanningForRegistries -> Status.GATHERING_REGISTRIES
+            isScanningForUpdates || isScanningForDeprecations -> Status.SCANNING_PACKAGES
             else -> Status.READY
         }
         myStatusBar.updateWidget(ID())
