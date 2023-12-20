@@ -16,7 +16,7 @@
 
 ### Fixed
 
-- Fix running the npm command on Windows (thanks @DefiCzech as well as for 2.1.0)
+- Fix running the npm command on Windows
 
 ## [2.1.0] - 2023-12-15
 
