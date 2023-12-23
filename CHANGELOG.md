@@ -12,6 +12,21 @@
 
 ## [Unreleased]
 
+## [2.1.2] - 2023-12-23
+
+### Added
+
+- Add progress indicator to the status bar widget for more granularity (#59)
+
+### Changed
+
+- Revert updates not being checked on deprecated packages
+- Indent the status bar mode setting to make it clearer that it's a sub-setting
+
+### Fixed
+
+- Prevent concurrent updates or deprecations scans from running at the same time
+
 ## [2.1.1] - 2023-12-20
 
 ### Fixed

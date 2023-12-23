@@ -97,17 +97,19 @@ class NUDSettingsComponent {
                         }
                     }
             }
-            row("Status Bar mode:") {
-                comboBox(listOf("Full", "Compact"))
-                    .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
-                    .applyToComponent {
-                        componentsList.add(this)
-                        selectedIndex = values["statusBarMode"] as Int
-                        addItemListener {
-                            values["statusBarMode"] = selectedIndex
+            indent {
+                row("Status Bar mode:") {
+                    comboBox(listOf("Full", "Compact"))
+                        .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
+                        .applyToComponent {
+                            componentsList.add(this)
+                            selectedIndex = values["statusBarMode"] as Int
+                            addItemListener {
+                                values["statusBarMode"] = selectedIndex
+                            }
                         }
-                    }
-            }.enabledIf(statusBarEnabled.selected)
+                }.enabledIf(statusBarEnabled.selected)
+            }
         }
         group("Auto-Fix") {
             row {

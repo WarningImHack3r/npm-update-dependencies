@@ -12,6 +12,7 @@ This plugin will update all the dependencies in your `package.json` file to the 
 
 ## Features
 - Update a dependency to the latest or satisfying version
+- Support for custom registries and private packages
 - Keep comparators (e.g. `^`, `~`, `>`, `<`, `>=`, `<=`) when replacing versions
 - Detect and replace/remove deprecated dependencies
 - Batch update all dependencies (latest or satisfying), all deprecated dependencies

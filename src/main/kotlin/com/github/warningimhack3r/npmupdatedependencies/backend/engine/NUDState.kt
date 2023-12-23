@@ -9,12 +9,27 @@ object NUDState {
     val deprecations = mutableMapOf<String, Deprecation>()
     val packageRegistries = mutableMapOf<String, String>()
 
+    var totalPackages = 0
+        set(value) {
+            field = value
+            StatusBarHelper.updateWidget()
+        }
     var isScanningForUpdates = false
         set(value) {
             field = value
             StatusBarHelper.updateWidget()
         }
+    var scannedUpdates = 0
+        set(value) {
+            field = value
+            StatusBarHelper.updateWidget()
+        }
     var isScanningForDeprecations = false
+        set(value) {
+            field = value
+            StatusBarHelper.updateWidget()
+        }
+    var scannedDeprecations = 0
         set(value) {
             field = value
             StatusBarHelper.updateWidget()
