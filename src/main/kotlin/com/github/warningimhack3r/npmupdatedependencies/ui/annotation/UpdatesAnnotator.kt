@@ -7,6 +7,8 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForUpdates
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.totalPackages
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
@@ -34,8 +36,8 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonPr
             isScanningForRegistries = false
         }
 
-        while (isScanningForRegistries) {
-            // Wait for the registries to be scanned
+        while (isScanningForRegistries || isScanningForUpdates) {
+            // Wait for the registries to be scanned and avoid multiple scans at the same time
         }
 
         return collectedInfo
@@ -44,10 +46,13 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<JsonPr
                 val fileDependenciesNames = it.map { property -> property.name }
                 availableUpdates.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
+                totalPackages = it.size
+                scannedUpdates = 0
                 isScanningForUpdates = true
             }.parallelMap { property ->
                 val value = property.comparator ?: return@parallelMap null
                 val (isUpdateAvailable, newVersion) = PackageUpdateChecker.hasUpdateAvailable(property.name, value)
+                scannedUpdates++
                 if (isUpdateAvailable && !newVersion!!.isEqualToAny(value)) Pair(
                     property.jsonProperty,
                     newVersion

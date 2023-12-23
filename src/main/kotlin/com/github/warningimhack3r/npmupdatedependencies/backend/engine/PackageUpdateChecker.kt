@@ -1,7 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import org.semver4j.Semver
@@ -33,8 +32,7 @@ object PackageUpdateChecker {
     }
 
     fun hasUpdateAvailable(name: String, currentComparator: String): Pair<Boolean, Versions?> {
-        if (deprecations.containsKey(name) // Check if the dependency is not deprecated
-            || !isVersionUpgradable(currentComparator)) { // Check if current version is an upgradable version
+        if (!isVersionUpgradable(currentComparator)) { // Check if current version is an upgradable version
             if (availableUpdates.containsKey(name)) availableUpdates.remove(name)
             return Pair(false, null)
         }

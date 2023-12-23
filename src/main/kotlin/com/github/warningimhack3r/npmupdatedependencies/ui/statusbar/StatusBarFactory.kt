@@ -5,6 +5,9 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForDeprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedDeprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedUpdates
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.totalPackages
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.dvcs.ui.LightActionGroup
 import com.intellij.ide.DataManager
@@ -46,6 +49,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         UNAVAILABLE,
         GATHERING_REGISTRIES,
         SCANNING_PACKAGES,
+        SCANNING_FOR_UPDATES,
+        SCANNING_FOR_DEPRECATIONS,
         READY
     }
 
@@ -58,7 +63,9 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
     override fun getTooltipText(): String = when (currentStatus) {
         Status.UNAVAILABLE -> "NPM Update Dependencies is not available"
         Status.GATHERING_REGISTRIES -> "Gathering package registries..."
-        Status.SCANNING_PACKAGES -> "Scanning for updates..."
+        Status.SCANNING_PACKAGES -> "Scanning packages..."
+        Status.SCANNING_FOR_UPDATES -> "Scanning for updates..."
+        Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations..."
         Status.READY -> "Click to see available updates"
     }
 
@@ -95,7 +102,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                         line.contains("\"$dependencyName\":")
                     }
                 } ?: 0
-                // Find the column number of at the end of the dependency line
+                // Find the column number at the end of the dependency line
                 val columnNumber = document?.let {
                     it.text.split("\n").getOrNull(lineNumber)?.replace("\t", "    ")?.indexOfFirst { char ->
                         char == ','
@@ -134,7 +141,9 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
             Status.GATHERING_REGISTRIES -> "Gathering registries..."
-            Status.SCANNING_PACKAGES -> "Scanning dependencies..."
+            Status.SCANNING_PACKAGES -> "Scanning packages (${scannedUpdates + scannedDeprecations}/$totalPackages)..."
+            Status.SCANNING_FOR_UPDATES -> "Scanning for updates ($scannedUpdates/$totalPackages)..."
+            Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations ($scannedDeprecations/$totalPackages)..."
             Status.READY -> {
                 val outdated = availableUpdates.size
                 val deprecated = deprecations.size
@@ -164,7 +173,9 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         currentStatus = when {
             project.isDisposed || !NUDSettingsState.instance.showStatusBarWidget -> Status.UNAVAILABLE
             isScanningForRegistries -> Status.GATHERING_REGISTRIES
-            isScanningForUpdates || isScanningForDeprecations -> Status.SCANNING_PACKAGES
+            isScanningForUpdates && isScanningForDeprecations -> Status.SCANNING_PACKAGES
+            isScanningForUpdates -> Status.SCANNING_FOR_UPDATES
+            isScanningForDeprecations -> Status.SCANNING_FOR_DEPRECATIONS
             else -> Status.READY
         }
         myStatusBar.updateWidget(ID())

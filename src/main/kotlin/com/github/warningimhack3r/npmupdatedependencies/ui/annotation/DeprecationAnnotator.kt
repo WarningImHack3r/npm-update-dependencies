@@ -7,6 +7,8 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForDeprecations
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedDeprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.totalPackages
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
@@ -34,8 +36,8 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
             isScanningForRegistries = false
         }
 
-        while (isScanningForRegistries) {
-            // Wait for the registries to be scanned
+        while (isScanningForRegistries || isScanningForDeprecations) {
+            // Wait for the registries to be scanned and avoid multiple scans at the same time
         }
 
         return collectedInfo
@@ -44,9 +46,12 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
                 val fileDependenciesNames = it.map { property -> property.name }
                 deprecations.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
+                totalPackages = it.size
+                scannedDeprecations = 0
                 isScanningForDeprecations = true
             }.parallelMap { property ->
                 deprecations[property.name]?.let { deprecation ->
+                    scannedDeprecations++
                     // If the deprecation is already in the cache, we don't need to check the NPM registry
                     Pair(property.jsonProperty, deprecation)
                 } ?: NPMJSClient.getPackageDeprecation(property.name)?.let { reason ->
@@ -74,7 +79,9 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<List<Property>, Map<Js
                         // Confirm that the word is a package name by trying to get its latest version
                         val version = NPMJSClient.getLatestVersion(potentialPackage) ?: return@innerMap null
                         Pair(potentialPackage, version)
-                    }.filterNotNull().firstOrNull()?.let { (name, version) ->
+                    }.filterNotNull().also {
+                        scannedDeprecations++
+                    }.firstOrNull()?.let { (name, version) ->
                         // We found a package name and its latest version, so we can create a replacement
                         Pair(property.jsonProperty, Deprecation(reason, Deprecation.Replacement(name, version)))
                     } ?: Pair(property.jsonProperty, Deprecation(reason, null)) // No replacement found in the deprecation reason
