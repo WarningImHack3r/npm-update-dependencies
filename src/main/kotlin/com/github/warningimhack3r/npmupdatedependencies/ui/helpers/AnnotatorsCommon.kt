@@ -7,8 +7,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.util.PsiTreeUtil
 
 object AnnotatorsCommon {
-    fun getInfo(file: PsiFile): List<Property>? {
-        if (file.name != "package.json") return null
+    fun getInfo(file: PsiFile): List<Property> {
+        if (file.name != "package.json") return emptyList()
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .filter { child ->
                 (child.parent.parent as? JsonProperty)?.name in listOf("dependencies", "devDependencies")

@@ -1,21 +1,27 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.packageRegistries
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner.registries
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.printlnError
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
 
-object NPMJSClient {
-    private const val NPMJS_REGISTRY = "https://registry.npmjs.org"
+@Service(Service.Level.PROJECT)
+class NPMJSClient(private val project: Project) {
+    companion object {
+        private const val NPMJS_REGISTRY = "https://registry.npmjs.org"
+    }
 
     private fun getRegistry(packageName: String): String {
-        return packageRegistries[packageName] ?: ShellRunner.execute(
+        val registryForPackage = project.service<NUDState>().packageRegistries
+        return registryForPackage[packageName] ?: ShellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
             val computedRegistry = dist.ifEmpty {
@@ -28,7 +34,7 @@ object NPMJSClient {
                 }.firstNotNullOfOrNull { it } ?: return@let null
             }
             val registry = "${computedRegistry.substringBefore("/$packageName")}/"
-            packageRegistries[packageName] = registry
+            registryForPackage[packageName] = registry
             registry
         } ?: NPMJS_REGISTRY
     }

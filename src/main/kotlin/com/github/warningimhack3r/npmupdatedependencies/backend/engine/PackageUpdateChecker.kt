@@ -1,11 +1,14 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
+import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
+import com.intellij.openapi.project.Project
 import org.semver4j.Semver
 
-object PackageUpdateChecker {
+@Service(Service.Level.PROJECT)
+class PackageUpdateChecker(private val project: Project) {
     private fun isVersionUpgradable(version: String): Boolean {
         return !(version.startsWith("http")
                 || version.startsWith("git")
@@ -32,26 +35,29 @@ object PackageUpdateChecker {
     }
 
     fun hasUpdateAvailable(name: String, currentComparator: String): Pair<Boolean, Versions?> {
+        val availableUpdates = project.service<NUDState>().availableUpdates
         if (!isVersionUpgradable(currentComparator)) { // Check if current version is an upgradable version
             if (availableUpdates.containsKey(name)) availableUpdates.remove(name)
             return Pair(false, null)
         }
 
         // Check if an update has already been found
-        if (availableUpdates.containsKey(name)
-            && areVersionsMatchingComparatorNeeds(availableUpdates[name]!!, currentComparator)) {
-            return Pair(true, availableUpdates[name])
+        availableUpdates[name]?.let {
+            if (areVersionsMatchingComparatorNeeds(it, currentComparator)) {
+                return Pair(true, availableUpdates[name])
+            }
         }
 
         // Check if update is available
-        val newVersion = NPMJSClient.getLatestVersion(name) ?: return Pair(false, null)
+        val npmjsClient = project.service<NPMJSClient>()
+        val newVersion = npmjsClient.getLatestVersion(name) ?: return Pair(false, null)
         val updateAvailable = isVersionMoreRecentThanComparator(newVersion, currentComparator)
 
         // Find satisfying version
         var satisfyingVersion: String? = null
         if (!Semver(newVersion).satisfies(currentComparator)) {
             val newVersionSemver = Semver(newVersion)
-            satisfyingVersion = NPMJSClient.getAllVersions(name)?.let { versions ->
+            satisfyingVersion = npmjsClient.getAllVersions(name)?.let { versions ->
                 versions.map { version ->
                     Semver(version)
                 }.filter { version ->

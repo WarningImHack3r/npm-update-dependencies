@@ -1,11 +1,11 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -24,18 +24,13 @@ object ActionsCommon {
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
         getAllDependencies(file)
             .mapNotNull { property ->
-                if (availableUpdates.containsKey(property.name)) {
-                    val versions = availableUpdates[property.name] ?: return@mapNotNull null
-                    val newVersion = versions.from(kind) ?: versions.orderedAvailableKinds(kind).firstOrNull {
-                        it != kind
-                    }?.let {
-                        versions.from(it)
-                    } ?: return@mapNotNull null
+                file.project.service<NUDState>().availableUpdates[property.name]?.let { versions ->
+                    val newVersion = versions.from(kind) ?: versions.orderedAvailableKinds(kind)
+                        .firstOrNull { it != kind }?.let { versions.from(it) } ?: return@mapNotNull null
                     val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
-                    return@mapNotNull Pair(property, newElement)
+                    Pair(property, newElement)
                 }
-                return@mapNotNull null
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Update all dependencies", false) {
@@ -48,16 +43,16 @@ object ActionsCommon {
     }
 
     fun replaceAllDeprecations(file: PsiFile) {
+        val deprecations = file.project.service<NUDState>().deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
-                if (deprecations.containsKey(property.name) && deprecations[property.name]?.replacement != null) {
-                    val replacement = deprecations[property.name]?.replacement ?: return@mapNotNull null
+                deprecations[property.name]?.let { deprecation ->
+                    val replacement = deprecation.replacement ?: return@mapNotNull null
                     val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newNameElement = NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
                     val newVersionElement = NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
-                    return@mapNotNull Triple(property, newNameElement, newVersionElement)
+                    Triple(property, newNameElement, newVersionElement)
                 }
-                return@mapNotNull null
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Replace all deprecations", false) {
@@ -116,9 +111,10 @@ object ActionsCommon {
     }
 
     fun deleteAllDeprecations(file: PsiFile) {
+        val deprecations = file.project.service<NUDState>().deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
-                return@mapNotNull if (deprecations.containsKey(property.name)) property else null
+                if (deprecations.containsKey(property.name)) property else null
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Delete all deprecations", false) {

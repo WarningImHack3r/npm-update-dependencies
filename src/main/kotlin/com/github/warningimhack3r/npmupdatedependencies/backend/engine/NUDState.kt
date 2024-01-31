@@ -3,8 +3,10 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
+import com.intellij.openapi.components.Service
 
-object NUDState {
+@Service(Service.Level.PROJECT)
+class NUDState {
     val availableUpdates = mutableMapOf<String, Versions>()
     val deprecations = mutableMapOf<String, Deprecation>()
     val packageRegistries = mutableMapOf<String, String>()

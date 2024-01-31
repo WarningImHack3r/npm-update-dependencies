@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.quickfix
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
@@ -9,6 +9,7 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -66,7 +67,7 @@ class DeprecatedDependencyFix(
                 property.delete()
             }
         }
-        deprecations.remove(property.name)
+        project.service<NUDState>().deprecations.remove(property.name)
         ActionsCommon.deprecationsCompletion(project)
     }
 }

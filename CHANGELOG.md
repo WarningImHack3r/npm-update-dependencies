@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix support for multiple open projects/windows
+
 ## [2.1.2] - 2023-12-23
 
 ### Added
