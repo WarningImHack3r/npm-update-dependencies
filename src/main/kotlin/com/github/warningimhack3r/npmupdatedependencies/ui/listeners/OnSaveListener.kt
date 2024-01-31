@@ -2,12 +2,12 @@ package com.github.warningimhack3r.npmupdatedependencies.ui.listeners
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,16 +21,17 @@ import javax.swing.JLabel
 class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
     override fun beforeDocumentSaving(document: Document) {
+        val state = project.service<NUDState>()
         // Initial checks
         val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
         if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
-            || (availableUpdates.isEmpty() && deprecations.isEmpty())) return
+            || (state.availableUpdates.isEmpty() && state.deprecations.isEmpty())) return
 
         // Create a set of actions to perform
         val actionsToPerform = mutableSetOf<() -> Unit>()
 
         // Fix updates if any
-        if (availableUpdates.isNotEmpty()) {
+        if (state.availableUpdates.isNotEmpty()) {
             actionsToPerform.add {
                 ActionsCommon.updateAll(file, Versions.Kind.values().first {
                     it.ordinal == NUDSettingsState.instance.defaultUpdateType
@@ -39,7 +40,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         }
 
         // Fix deprecations if any
-        if (deprecations.isNotEmpty()) {
+        if (state.deprecations.isNotEmpty()) {
             when (Deprecation.Action.values().first {
                 it.ordinal == NUDSettingsState.instance.defaultDeprecationAction
             }) {

@@ -1,10 +1,11 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.banner
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -24,6 +25,7 @@ class DeprecationBanner : EditorNotificationProvider {
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?> = Function { _ ->
         val psiFile = PsiManager.getInstance(project).findFile(file)
+        val deprecations = project.service<NUDState>().deprecations
         if (psiFile == null || file.name != "package.json" || deprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
             return@Function null
         }

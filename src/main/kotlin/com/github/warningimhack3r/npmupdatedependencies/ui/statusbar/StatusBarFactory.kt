@@ -1,16 +1,10 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.statusbar
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.availableUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.deprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForDeprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForRegistries
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.isScanningForUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedDeprecations
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.scannedUpdates
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState.totalPackages
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.dvcs.ui.LightActionGroup
 import com.intellij.ide.DataManager
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -76,9 +70,10 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         if (project.isDisposed || currentStatus != Status.READY) return null
 
         fun openPackageJson(dependencyName: String) {
-            FilenameIndex.getVirtualFilesByName("package.json", GlobalSearchScope.allScope(project)).filter {
-                 !it.path.contains("node_modules")
-            }.run {
+            FilenameIndex.getVirtualFilesByName(
+                "package.json",
+                GlobalSearchScope.projectScope(project)
+            ).filter { !it.path.contains("node_modules") }.run {
                 if (size == 1) first() else {
                     // Filter all files containing the dependency name
                     filter { file ->
@@ -117,13 +112,13 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             "Available Changes",
             LightActionGroup().apply {
                 addSeparator("Updates")
-                addAll(availableUpdates.toSortedMap().map { update ->
+                addAll(project.service<NUDState>().availableUpdates.toSortedMap().map { update ->
                     DumbAwareAction.create(update.key) {
                         openPackageJson(update.key)
                     }
                 })
                 addSeparator("Deprecations")
-                addAll(deprecations.toSortedMap().map { deprecation ->
+                addAll(project.service<NUDState>().deprecations.toSortedMap().map { deprecation ->
                     DumbAwareAction.create(deprecation.key) {
                         openPackageJson(deprecation.key)
                     }
@@ -135,18 +130,18 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         )
     }
 
-    @SuppressWarnings("kotlin:S3776") // nested yes, but not complex
     override fun getSelectedValue(): String? {
         if (!NUDSettingsState.instance.showStatusBarWidget) return null
+        val state = project.service<NUDState>()
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
             Status.GATHERING_REGISTRIES -> "Gathering registries..."
-            Status.SCANNING_PACKAGES -> "Scanning packages (${scannedUpdates + scannedDeprecations}/$totalPackages)..."
-            Status.SCANNING_FOR_UPDATES -> "Scanning for updates ($scannedUpdates/$totalPackages)..."
-            Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations ($scannedDeprecations/$totalPackages)..."
+            Status.SCANNING_PACKAGES -> "Scanning packages (${state.scannedUpdates + state.scannedDeprecations}/${state.totalPackages})..."
+            Status.SCANNING_FOR_UPDATES -> "Scanning for updates (${state.scannedUpdates}/${state.totalPackages})..."
+            Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
             Status.READY -> {
-                val outdated = availableUpdates.size
-                val deprecated = deprecations.size
+                val outdated = state.availableUpdates.size
+                val deprecated = state.deprecations.size
                 when (NUDSettingsState.instance.statusBarMode) {
                     // Full
                     0 -> when {
@@ -170,12 +165,13 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     // Custom
     fun update() {
+        val state = project.service<NUDState>()
         currentStatus = when {
             project.isDisposed || !NUDSettingsState.instance.showStatusBarWidget -> Status.UNAVAILABLE
-            isScanningForRegistries -> Status.GATHERING_REGISTRIES
-            isScanningForUpdates && isScanningForDeprecations -> Status.SCANNING_PACKAGES
-            isScanningForUpdates -> Status.SCANNING_FOR_UPDATES
-            isScanningForDeprecations -> Status.SCANNING_FOR_DEPRECATIONS
+            state.isScanningForRegistries -> Status.GATHERING_REGISTRIES
+            state.isScanningForUpdates && state.isScanningForDeprecations -> Status.SCANNING_PACKAGES
+            state.isScanningForUpdates -> Status.SCANNING_FOR_UPDATES
+            state.isScanningForDeprecations -> Status.SCANNING_FOR_DEPRECATIONS
             else -> Status.READY
         }
         myStatusBar.updateWidget(ID())
