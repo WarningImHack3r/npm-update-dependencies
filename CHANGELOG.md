@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.1.3] - 2024-02-01
+
 ### Added
 
 - Add a button to create prefilled GitHub issues from crashes
@@ -162,7 +164,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.3...HEAD
+[2.1.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.2...v2.1.3
 [2.1.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.1...v2.1.2
 [2.1.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.0...v2.1.1
 [2.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.0.1...v2.1.0
