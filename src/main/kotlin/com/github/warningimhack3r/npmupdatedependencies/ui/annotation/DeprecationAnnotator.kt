@@ -41,22 +41,23 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
             // Wait for the registries to be scanned and avoid multiple scans at the same time
         }
 
+        val state = project.service<NUDState>()
+        val npmjsClient = project.service<NPMJSClient>()
         return info
             .also {
                 // Remove from the cache all deprecations that are no longer in the file
                 val fileDependenciesNames = it.map { property -> property.name }
-                val state = project.service<NUDState>()
                 state.deprecations.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
                 state.totalPackages = it.size
                 state.scannedDeprecations = 0
                 state.isScanningForDeprecations = true
             }.parallelMap { property ->
-                project.service<NUDState>().deprecations[property.name]?.let { deprecation ->
-                    project.service<NUDState>().scannedDeprecations++
+                state.deprecations[property.name]?.let { deprecation ->
+                    state.scannedDeprecations++
                     // If the deprecation is already in the cache, we don't need to check the NPM registry
                     Pair(property.jsonProperty, deprecation)
-                } ?: project.service<NPMJSClient>().getPackageDeprecation(property.name)?.let { reason ->
+                } ?: npmjsClient.getPackageDeprecation(property.name)?.let { reason ->
                     // Get the deprecation reason and check if it contains a package name
                     reason.split(" ").map { word ->
                         // Remove punctuation at the end of the word
@@ -79,17 +80,16 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         false
                     }.parallelMap innerMap@ { potentialPackage ->
                         // Confirm that the word is a package name by trying to get its latest version
-                        project.service<NPMJSClient>().getLatestVersion(potentialPackage)?.let {
+                        npmjsClient.getLatestVersion(potentialPackage)?.let {
                             Pair(potentialPackage, it)
                         }
                     }.filterNotNull().also {
-                        project.service<NUDState>().scannedDeprecations++
+                        state.scannedDeprecations++
                     }.firstOrNull()?.let { (name, version) ->
                         // We found a package name and its latest version, so we can create a replacement
                         Pair(property.jsonProperty, Deprecation(reason, Deprecation.Replacement(name, version)))
                     } ?: Pair(property.jsonProperty, Deprecation(reason, null)) // No replacement found in the deprecation reason
                 }.also { pair ->
-                    val state = project.service<NUDState>()
                     pair?.let {
                         // Add the deprecation to the cache if any
                         state.deprecations[property.name] = it.second
@@ -101,7 +101,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                     }
                 }
             }.filterNotNull().toMap().also {
-                project.service<NUDState>().isScanningForDeprecations = false
+                state.isScanningForDeprecations = false
             }
     }
 

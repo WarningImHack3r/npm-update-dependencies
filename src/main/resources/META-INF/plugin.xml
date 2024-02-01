@@ -43,7 +43,7 @@
                     <keyboard-shortcut keymap="$default" first-keystroke="control shift alt S" />
                 </action>
             </group>
-            <separator/>
+            <separator />
             <!-- Deprecation group -->
             <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
                    class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
@@ -68,7 +68,7 @@
                     <keyboard-shortcut keymap="$default" first-keystroke="control shift alt D" />
                 </action>
             </group>
-            <separator/>
+            <separator />
             <!-- Scan group -->
             <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
                    class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
@@ -81,6 +81,11 @@
                         description="Clear temporary caches used to store scan results"
                         icon="CollaborationToolsIcons.DeleteHovered" />
             </group>
+            <action id="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.ErrorThrowingAction"
+                    class="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.ErrorThrowingAction"
+                    text="[Debug] Throw an Error"
+                    description="[Debug] Try out the error handler"
+                    icon="AllIcons.Debugger.Db_exception_breakpoint" />
         </group>
     </actions>
 
@@ -91,7 +96,8 @@
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
-        <iconMapper mappingFile="NUDIconMappings.json" />
+        <iconMapper
+                mappingFile="NUDIconMappings.json" />
         <externalAnnotator
                 language="JSON"
                 implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator" />
@@ -110,5 +116,7 @@
                 instance="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable" />
         <applicationService
                 serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState" />
+        <errorHandler
+                implementation="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.GitHubErrorReportSubmitter" />
     </extensions>
 </idea-plugin>

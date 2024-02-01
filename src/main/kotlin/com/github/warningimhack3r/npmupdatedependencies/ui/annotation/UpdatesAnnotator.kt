@@ -41,11 +41,12 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             // Wait for the registries to be scanned and avoid multiple scans at the same time
         }
 
+        val state = project.service<NUDState>()
+        val updateChecker = project.service<PackageUpdateChecker>()
         return info
             .also {
                 // Remove from the cache all properties that are no longer in the file
                 val fileDependenciesNames = it.map { property -> property.name }
-                val state = project.service<NUDState>()
                 state.availableUpdates.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
                 state.totalPackages = it.size
@@ -53,14 +54,14 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.isScanningForUpdates = true
             }.parallelMap { property ->
                 val value = property.comparator ?: return@parallelMap null
-                val (isUpdateAvailable, newVersion) = project.service<PackageUpdateChecker>().hasUpdateAvailable(property.name, value)
-                project.service<NUDState>().scannedUpdates++
+                val (isUpdateAvailable, newVersion) = updateChecker.hasUpdateAvailable(property.name, value)
+                state.scannedUpdates++
                 if (isUpdateAvailable && !newVersion!!.isEqualToAny(value)) Pair(
                     property.jsonProperty,
                     newVersion
                 ) else null
             }.filterNotNull().toMap().also {
-                project.service<NUDState>().isScanningForUpdates = false
+                state.isScanningForUpdates = false
             }
     }
 
