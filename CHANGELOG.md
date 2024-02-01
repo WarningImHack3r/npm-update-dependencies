@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add a button to create prefilled GitHub issues from crashes
+
 ### Fixed
 
 - Fix support for multiple open projects/windows
