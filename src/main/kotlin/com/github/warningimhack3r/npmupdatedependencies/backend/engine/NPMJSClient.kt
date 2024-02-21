@@ -1,6 +1,5 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner.registries
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.google.gson.JsonObject
 import com.google.gson.JsonParser
@@ -21,11 +20,12 @@ class NPMJSClient(private val project: Project) {
 
     private fun getRegistry(packageName: String): String {
         val registryForPackage = project.service<NUDState>().packageRegistries
+        val availableRegistries = project.service<RegistriesScanner>().registries
         return registryForPackage[packageName] ?: ShellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
             val computedRegistry = dist.ifEmpty {
-                registries.parallelMap { registry ->
+                availableRegistries.parallelMap { registry ->
                     ShellRunner.execute(
                         arrayOf("npm", "v", packageName, "dist.tarball", "--registry=$registry")
                     )?.trim()?.let { regDist ->

@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve caching introduced in 2.1.3
+
 ## [2.1.3] - 2024-02-01
 
 ### Added

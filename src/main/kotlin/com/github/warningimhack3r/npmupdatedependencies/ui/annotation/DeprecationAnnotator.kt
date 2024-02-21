@@ -31,17 +31,18 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
-        if (!project.service<NUDState>().isScanningForRegistries && project.service<NUDState>().packageRegistries.isEmpty()) {
-            project.service<NUDState>().isScanningForRegistries = true
-            RegistriesScanner.scan()
-            project.service<NUDState>().isScanningForRegistries = false
+        var state = project.service<NUDState>()
+        if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
+            state.isScanningForRegistries = true
+            project.service<RegistriesScanner>().scan()
+            state.isScanningForRegistries = false
         }
 
-        while (project.service<NUDState>().isScanningForRegistries || project.service<NUDState>().isScanningForDeprecations) {
+        while (state.isScanningForRegistries || state.isScanningForDeprecations) {
             // Wait for the registries to be scanned and avoid multiple scans at the same time
         }
 
-        val state = project.service<NUDState>()
+        state = project.service<NUDState>()
         val npmjsClient = project.service<NPMJSClient>()
         return info
             .also {

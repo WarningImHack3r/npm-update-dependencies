@@ -1,6 +1,9 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-object RegistriesScanner {
+import com.intellij.openapi.components.Service
+
+@Service(Service.Level.PROJECT)
+class RegistriesScanner {
     var registries: List<String> = emptyList()
 
     fun scan() {
