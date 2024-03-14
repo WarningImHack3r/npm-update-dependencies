@@ -18,7 +18,7 @@
 
 ### Fixed
 
-- Fix support for newer versions, remove support for 2022.1 IDEs
+- Fix support for newer versions (2024.1+)
 
 ## [2.1.3] - 2024-02-01
 

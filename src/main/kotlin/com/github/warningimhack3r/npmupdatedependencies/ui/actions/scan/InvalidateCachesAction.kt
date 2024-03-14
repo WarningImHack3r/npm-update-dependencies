@@ -1,12 +1,12 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
-import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.components.service
 
-class InvalidateCachesAction : AnAction() {
+class InvalidateCachesAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
         val state = e.project?.service<NUDState>()
         e.presentation.isEnabled = if (state != null) {
@@ -18,9 +18,5 @@ class InvalidateCachesAction : AnAction() {
         val state = e.project?.service<NUDState>() ?: return
         state.availableUpdates.clear()
         state.deprecations.clear()
-    }
-
-    override fun getActionUpdateThread(): ActionUpdateThread {
-        return ActionUpdateThread.BGT
     }
 }
