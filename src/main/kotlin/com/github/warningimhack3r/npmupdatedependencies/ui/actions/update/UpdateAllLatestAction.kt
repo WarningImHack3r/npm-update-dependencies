@@ -6,9 +6,10 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.components.service
 
-class UpdateAllLatestAction : AnAction() {
+class UpdateAllLatestAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project?.service<NUDState>()?.availableUpdates?.isNotEmpty() ?: false
     }

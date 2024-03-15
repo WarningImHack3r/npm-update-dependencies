@@ -5,9 +5,10 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.components.service
 
-class RemoveAllDeprecationsAction : AnAction() {
+class RemoveAllDeprecationsAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project?.service<NUDState>()?.deprecations?.isNotEmpty() ?: false
     }
