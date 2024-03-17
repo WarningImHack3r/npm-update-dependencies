@@ -31,7 +31,7 @@ class DeprecatedDependencyFix(
         }
         return (if (showOrder) QuickFixesCommon.getPositionPrefix(
             actionType,
-            NUDSettingsState.instance.defaultDeprecationAction
+            NUDSettingsState.instance.defaultDeprecationAction!!.ordinal
         ) else "") + baseText
     }
     override fun getFamilyName(): String = "Replace or remove deprecated dependency"
@@ -40,7 +40,7 @@ class DeprecatedDependencyFix(
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
-            printlnError("Trying to ${actionType.text.lowercase()} dependency but the file is null")
+            printlnError("Trying to ${actionType.toString().lowercase()} dependency but the file is null")
             return
         }
         when (actionType) {

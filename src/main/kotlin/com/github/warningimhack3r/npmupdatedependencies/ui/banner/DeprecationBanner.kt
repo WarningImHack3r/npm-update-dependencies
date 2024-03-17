@@ -31,14 +31,14 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         val deprecationsCount = deprecations.size
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
-            val availableActions = Deprecation.Action.values().filter { action ->
+            val availableActions = enumValues<Deprecation.Action>().filter { action ->
                 (action == Deprecation.Action.REPLACE && deprecations.any { (_, deprecation) ->
                     deprecation.replacement != null
                 }) || action != Deprecation.Action.REPLACE
             }
             // Description text & icon
             val actionsTitles = availableActions.mapIndexed { index, action ->
-                action.text.applyIf(index > 0) {
+                action.toString().applyIf(index > 0) {
                     lowercase()
                 }
             }
@@ -56,11 +56,11 @@ class DeprecationBanner : EditorNotificationProvider {
 
             // Actions
             listOf(availableActions.firstOrNull { action ->
-                action.ordinal == NUDSettingsState.instance.defaultDeprecationAction
+                action == NUDSettingsState.instance.defaultDeprecationAction
             }).plus(availableActions.filter { action ->
-                action.ordinal != NUDSettingsState.instance.defaultDeprecationAction
+                action != NUDSettingsState.instance.defaultDeprecationAction
             }).filterNotNull().forEach { action ->
-                createActionLabel(action.text + if (deprecationsCount > 1) " them" else " it") {
+                createActionLabel(action.toString() + if (deprecationsCount > 1) " them" else " it") {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
                         Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile)

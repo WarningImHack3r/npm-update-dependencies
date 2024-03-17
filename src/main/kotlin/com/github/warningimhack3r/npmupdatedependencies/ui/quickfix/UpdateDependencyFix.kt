@@ -19,10 +19,10 @@ class UpdateDependencyFix(
     private val showOrder: Boolean
 ): BaseIntentionAction() {
     override fun getText(): String {
-        val baseText = "Update to ${kind.text} version ($newVersion)"
+        val baseText = "Update to $kind version ($newVersion)"
         return (if (showOrder) QuickFixesCommon.getPositionPrefix(
             kind,
-            NUDSettingsState.instance.defaultUpdateType
+            NUDSettingsState.instance.defaultUpdateType!!.ordinal
         ) else "") + baseText
     }
     override fun getFamilyName() = "Update dependency"

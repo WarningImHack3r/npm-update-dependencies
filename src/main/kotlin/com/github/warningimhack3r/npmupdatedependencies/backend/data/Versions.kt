@@ -4,9 +4,16 @@ data class Versions(
     val latest: String,
     val satisfies: String?
 ) {
-    enum class Kind(val text: String) {
-        LATEST("latest"),
-        SATISFIES("satisfying")
+    enum class Kind {
+        LATEST,
+        SATISFIES;
+
+        override fun toString(): String {
+            return when (this) {
+                LATEST -> "Latest"
+                SATISFIES -> "Satisfying"
+            }
+        }
     }
 
     fun from(kind: Kind): String? = when (kind) {

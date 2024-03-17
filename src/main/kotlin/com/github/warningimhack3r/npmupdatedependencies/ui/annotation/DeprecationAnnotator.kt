@@ -114,7 +114,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 .applyIf(deprecation.replacement != null) {
                     withFix(DeprecatedDependencyFix(property, deprecation.replacement!!.name, deprecation.replacement.version, Deprecation.Action.REPLACE, true))
                 }
-                .withFix(DeprecatedDependencyFix(property, "", "", Deprecation.Action.REMOVE, Deprecation.Action.values().size.run {
+                .withFix(DeprecatedDependencyFix(property, "", "", Deprecation.Action.REMOVE,  enumValues<Deprecation.Action>().size.run {
                     this - (if (deprecation.replacement == null) 1 else 0)
                 } > 1))
                 .needsUpdateOnTyping()

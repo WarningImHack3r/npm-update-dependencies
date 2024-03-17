@@ -9,8 +9,15 @@ data class Deprecation(
         val version: String
     )
 
-    enum class Action(val text: String) {
-        REPLACE("Replace"),
-        REMOVE("Remove")
+    enum class Action {
+        REPLACE,
+        REMOVE;
+
+        override fun toString(): String {
+            return when (this) {
+                REPLACE -> "Replace"
+                REMOVE -> "Remove"
+            }
+        }
     }
 }
