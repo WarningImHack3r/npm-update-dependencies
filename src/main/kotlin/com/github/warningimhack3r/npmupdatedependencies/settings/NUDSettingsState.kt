@@ -74,9 +74,6 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
-        var excludedVersions: Map<String, List<String>> = mapOf(
-            "@sveltejs/kit" to listOf("1.*", "2.5.*"),
-            "paypal-rest-sdk" to listOf("*")
-        )
+        var excludedVersions: Map<String, List<String>> = emptyMap()
     )
 }

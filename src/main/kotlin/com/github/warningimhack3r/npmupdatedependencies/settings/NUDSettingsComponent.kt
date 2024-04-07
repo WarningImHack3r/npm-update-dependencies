@@ -50,7 +50,7 @@ class NUDSettingsComponent {
                 override fun valueOf(item: ExcludedVersion?) = item?.packageName
 
                 override fun setValue(item: ExcludedVersion?, value: String?) {
-                    if (item != null && value != null) item.packageName = value
+                    if (item != null && value != null) item.packageName = value.trim()
                 }
 
                 override fun isCellEditable(item: ExcludedVersion?) = item != null
