@@ -1,6 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -34,35 +35,50 @@ class PackageUpdateChecker(private val project: Project) {
         } && isVersionMoreRecentThanComparator(versions.latest, comparator)
     }
 
-    fun hasUpdateAvailable(name: String, currentComparator: String): Pair<Boolean, Versions?> {
+    private fun isVersionExcluded(packageName: String, version: String): Boolean {
+        return NUDSettingsState.instance.excludedVersions[packageName]?.any { Semver(version).satisfies(it) } == true
+    }
+
+    private fun filterExcludedVersions(packageName: String, versions: Versions): Versions? {
+        // TODO: rework all that to find the most appropriate versions instead of just excluding them
+        return if (versions.satisfies != null && isVersionExcluded(packageName, versions.satisfies)) {
+            versions.copy(satisfies = null)
+        } else if (isVersionExcluded(packageName, versions.latest)) {
+            if (versions.satisfies != null) versions.copy(latest = versions.satisfies) else null
+        } else versions
+    }
+
+    fun areUpdatesAvailable(packageName: String, comparator: String): Versions? {
         val availableUpdates = project.service<NUDState>().availableUpdates
-        if (!isVersionUpgradable(currentComparator)) { // Check if current version is an upgradable version
-            if (availableUpdates.containsKey(name)) availableUpdates.remove(name)
-            return Pair(false, null)
+        if (!isVersionUpgradable(comparator)) {
+            if (availableUpdates.containsKey(packageName)) {
+                availableUpdates.remove(packageName)
+            }
+            return null
         }
 
         // Check if an update has already been found
-        availableUpdates[name]?.let {
-            if (areVersionsMatchingComparatorNeeds(it, currentComparator)) {
-                return Pair(true, availableUpdates[name])
+        availableUpdates[packageName]?.let { cachedVersions ->
+            if (areVersionsMatchingComparatorNeeds(cachedVersions, comparator)) {
+                return filterExcludedVersions(packageName, cachedVersions)
             }
         }
 
         // Check if update is available
         val npmjsClient = project.service<NPMJSClient>()
-        val newVersion = npmjsClient.getLatestVersion(name) ?: return Pair(false, null)
-        val updateAvailable = isVersionMoreRecentThanComparator(newVersion, currentComparator)
+        val newVersion = npmjsClient.getLatestVersion(packageName) ?: return null
+        val updateAvailable = isVersionMoreRecentThanComparator(newVersion, comparator)
 
         // Find satisfying version
         var satisfyingVersion: String? = null
-        if (!Semver(newVersion).satisfies(currentComparator)) {
+        if (!Semver(newVersion).satisfies(comparator)) {
             val newVersionSemver = Semver(newVersion)
-            satisfyingVersion = npmjsClient.getAllVersions(name)?.let { versions ->
+            satisfyingVersion = npmjsClient.getAllVersions(packageName)?.let { versions ->
                 versions.map { version ->
                     Semver(version)
                 }.filter { version ->
-                    version.satisfies(currentComparator)
-                            && isVersionMoreRecentThanComparator(version.version, currentComparator)
+                    version.satisfies(comparator)
+                            && isVersionMoreRecentThanComparator(version.version, comparator)
                             && version != newVersionSemver
                 }.maxOrNull()?.version
             }
@@ -71,10 +87,10 @@ class PackageUpdateChecker(private val project: Project) {
 
         // Return appropriate values
         if (updateAvailable) {
-            availableUpdates[name] = versions
-        } else if (availableUpdates.containsKey(name)) {
-            availableUpdates.remove(name)
+            availableUpdates[packageName] = versions
+        } else if (availableUpdates.containsKey(packageName)) {
+            availableUpdates.remove(packageName)
         }
-        return Pair(updateAvailable, versions)
+        return filterExcludedVersions(packageName, versions)
     }
 }

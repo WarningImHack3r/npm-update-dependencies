@@ -17,17 +17,19 @@ class UpdateDependencyFix(
     private val property: JsonProperty,
     private val newVersion: String,
     private val showOrder: Boolean
-): BaseIntentionAction() {
+) : BaseIntentionAction() {
     override fun getText(): String {
-        val baseText = "Update to $kind version ($newVersion)"
+        val baseText = "Update to ${kind.toString().lowercase()} version ($newVersion)"
         return (if (showOrder) QuickFixesCommon.getPositionPrefix(
             kind,
             NUDSettingsState.instance.defaultUpdateType!!.ordinal
         ) else "") + baseText
     }
+
     override fun getFamilyName() = "Update dependency"
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = QuickFixesCommon.getAvailability(editor, file)
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean =
+        QuickFixesCommon.getAvailability(editor, file)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {

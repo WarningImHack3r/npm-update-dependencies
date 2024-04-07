@@ -15,6 +15,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         val instance: NUDSettingsState
             get() = ApplicationManager.getApplication().getService(NUDSettingsState::class.java)
     }
+
     private var settings = Settings()
 
     override fun getState(): Settings = settings
@@ -59,6 +60,11 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.autoFixOnSave = value
         }
+    var excludedVersions: Map<String, List<String>>
+        get() = settings.excludedVersions
+        set(value) {
+            settings.excludedVersions = value
+        }
 
     data class Settings(
         var defaultUpdateType: Versions.Kind = Versions.Kind.SATISFIES,
@@ -67,6 +73,10 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var autoReorderDependencies: Boolean = true,
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
-        var autoFixOnSave: Boolean = false
+        var autoFixOnSave: Boolean = false,
+        var excludedVersions: Map<String, List<String>> = mapOf(
+            "@sveltejs/kit" to listOf("1.*", "2.5.*"),
+            "paypal-rest-sdk" to listOf("*")
+        )
     )
 }
