@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+- Fix missing crash fix for newer versions (2024.1+) (#88)
+
 ## [2.1.4] - 2024-03-15
 
 ### Changed
