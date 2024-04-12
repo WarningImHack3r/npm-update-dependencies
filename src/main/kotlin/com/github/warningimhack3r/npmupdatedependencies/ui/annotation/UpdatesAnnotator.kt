@@ -19,6 +19,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
+import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -58,7 +59,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 val value = property.comparator ?: return@parallelMap null
                 val newVersion = updateChecker.areUpdatesAvailable(property.name, value)
                 state.scannedUpdates++
-                if (newVersion != null && !newVersion.isEqualToAny(value)) Pair(
+                if (newVersion != null && !newVersion.isEqualToAny(Semver(value))) Pair(
                     property.jsonProperty,
                     newVersion
                 ) else null
@@ -79,13 +80,13 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 .range(property.value!!.textRange)
                 .highlightType(ProblemHighlightType.WARNING)
                 .applyIf(versions.satisfies != null) {
-                    withFix(UpdateDependencyFix(Kind.SATISFIES, property, versions.satisfies!!, true))
+                    withFix(UpdateDependencyFix(Kind.SATISFIES, property, versions.satisfies!!.version, true))
                 }
                 .withFix(
                     UpdateDependencyFix(
                         Kind.LATEST,
                         property,
-                        versions.latest,
+                        versions.latest.version,
                         versions.orderedAvailableKinds().size > 1
                     )
                 )

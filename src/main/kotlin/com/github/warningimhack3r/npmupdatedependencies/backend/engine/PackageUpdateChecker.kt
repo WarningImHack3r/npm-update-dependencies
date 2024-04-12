@@ -17,35 +17,26 @@ class PackageUpdateChecker(private val project: Project) {
                 || !version.any { it.isDigit() })
     }
 
-    private fun isVersionMoreRecentThanComparator(version: String, comparator: String): Boolean {
+    private fun isVersionMoreRecentThanComparator(version: Semver, comparator: String): Boolean {
         return comparator.split(" ").any { comp ->
             val comparatorVersion = NUDHelper.Regex.semverPrefix.replace(comp, "")
             if (comparatorVersion.trim().isEmpty()) return@any false
-            Semver.coerce(comparatorVersion)?.let { Semver(version).isGreaterThan(it) } == true
+            Semver.coerce(comparatorVersion)?.let { version.isGreaterThan(it) } == true
         }
     }
 
     private fun areVersionsMatchingComparatorNeeds(versions: Versions, comparator: String): Boolean {
-        return if (Semver(versions.latest).satisfies(comparator)) {
+        return if (versions.latest.satisfies(comparator)) {
             versions.satisfies == null
         } else {
             versions.satisfies != null
-                    && Semver(versions.satisfies).satisfies(comparator)
+                    && versions.satisfies.satisfies(comparator)
                     && isVersionMoreRecentThanComparator(versions.satisfies, comparator)
         } && isVersionMoreRecentThanComparator(versions.latest, comparator)
     }
 
-    private fun isVersionExcluded(packageName: String, version: String): Boolean {
-        return NUDSettingsState.instance.excludedVersions[packageName]?.any { Semver(version).satisfies(it) } == true
-    }
-
-    private fun filterExcludedVersions(packageName: String, versions: Versions): Versions? {
-        // TODO: rework all that to find the most appropriate versions instead of just excluding them
-        return if (versions.satisfies != null && isVersionExcluded(packageName, versions.satisfies)) {
-            versions.copy(satisfies = null)
-        } else if (isVersionExcluded(packageName, versions.latest)) {
-            if (versions.satisfies != null) versions.copy(latest = versions.satisfies) else null
-        } else versions
+    private fun isVersionExcluded(packageName: String, version: Semver): Boolean {
+        return NUDSettingsState.instance.excludedVersions[packageName]?.any { version.satisfies(it) } == true
     }
 
     fun areUpdatesAvailable(packageName: String, comparator: String): Versions? {
@@ -60,37 +51,53 @@ class PackageUpdateChecker(private val project: Project) {
         // Check if an update has already been found
         availableUpdates[packageName]?.let { cachedVersions ->
             if (areVersionsMatchingComparatorNeeds(cachedVersions, comparator)) {
-                return filterExcludedVersions(packageName, cachedVersions)
+                return cachedVersions
             }
         }
 
-        // Check if update is available
+        // Check if an update is available
         val npmjsClient = project.service<NPMJSClient>()
-        val newVersion = npmjsClient.getLatestVersion(packageName) ?: return null
-        val updateAvailable = isVersionMoreRecentThanComparator(newVersion, comparator)
+        var newestVersion = npmjsClient.getLatestVersion(packageName)?.let {
+            Semver.coerce(it)
+        } ?: return null
+        var satisfyingVersion: Semver? = null
+        val updateAvailable = isVersionMoreRecentThanComparator(newestVersion, comparator)
+        if (!updateAvailable) {
+            if (availableUpdates.containsKey(packageName)) {
+                availableUpdates.remove(packageName)
+            }
+            return null
+        }
 
-        // Find satisfying version
-        var satisfyingVersion: String? = null
-        if (!Semver(newVersion).satisfies(comparator)) {
-            val newVersionSemver = Semver(newVersion)
-            satisfyingVersion = npmjsClient.getAllVersions(packageName)?.let { versions ->
-                versions.map { version ->
-                    Semver(version)
-                }.filter { version ->
+        // Check if the latest version is excluded or doesn't satisfy the comparator
+        if (isVersionExcluded(packageName, newestVersion) || !newestVersion.satisfies(comparator)) {
+            val allVersions = npmjsClient.getAllVersions(packageName)?.mapNotNull { version ->
+                Semver.coerce(version)
+            }?.sortedDescending() ?: emptyList()
+
+            // Downgrade the latest version if it's filtered out
+            for (version in allVersions) {
+                if (!isVersionExcluded(packageName, newestVersion)
+                    && isVersionMoreRecentThanComparator(version, comparator)
+                ) {
+                    newestVersion = version
+                    break
+                }
+            }
+
+            // Find satisfying version
+            if (!newestVersion.satisfies(comparator)) {
+                satisfyingVersion = allVersions.firstOrNull { version ->
                     version.satisfies(comparator)
-                            && isVersionMoreRecentThanComparator(version.version, comparator)
-                            && version != newVersionSemver
-                }.maxOrNull()?.version
+                            && isVersionMoreRecentThanComparator(version, comparator)
+                            && version != newestVersion
+                            && !isVersionExcluded(packageName, version)
+                }
             }
         }
-        val versions = Versions(newVersion, satisfyingVersion)
 
-        // Return appropriate values
-        if (updateAvailable) {
-            availableUpdates[packageName] = versions
-        } else if (availableUpdates.containsKey(packageName)) {
-            availableUpdates.remove(packageName)
+        return Versions(newestVersion, satisfyingVersion).also {
+            availableUpdates[packageName] = it
         }
-        return filterExcludedVersions(packageName, versions)
     }
 }

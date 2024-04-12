@@ -1,8 +1,10 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
+import org.semver4j.Semver
+
 data class Versions(
-    val latest: String,
-    val satisfies: String?
+    val latest: Semver,
+    val satisfies: Semver? = null
 ) {
     enum class Kind {
         LATEST,
@@ -16,7 +18,7 @@ data class Versions(
         }
     }
 
-    fun from(kind: Kind): String? = when (kind) {
+    fun from(kind: Kind): Semver? = when (kind) {
         Kind.LATEST -> latest
         Kind.SATISFIES -> satisfies
     }
@@ -29,5 +31,5 @@ data class Versions(
         else listOf(placeFirst) + it.filter { kind -> kind != placeFirst }
     }
 
-    fun isEqualToAny(other: String): Boolean = latest == other || satisfies == other
+    fun isEqualToAny(other: Semver): Boolean = latest == other || satisfies == other
 }
