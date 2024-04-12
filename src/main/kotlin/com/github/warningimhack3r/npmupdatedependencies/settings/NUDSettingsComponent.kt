@@ -3,12 +3,16 @@ package com.github.warningimhack3r.npmupdatedependencies.settings
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
@@ -170,8 +174,18 @@ class NUDSettingsComponent {
             row {
                 button("Show Excluded Versions") {
                     excludedVersionsPanel(settings.excludedVersions) { newVersions ->
+                        if (settings.excludedVersions == newVersions) return@excludedVersionsPanel
                         settings.excludedVersions = newVersions
-                        // TODO: start a new scan
+                        ProjectManager.getInstance().openProjects.forEach { project ->
+                            // if project's currently open file is package.json, re-analyze it
+                            FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+                                PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
+                                    if (file.name == "package.json") {
+                                        DaemonCodeAnalyzer.getInstance(project).restart(file)
+                                    }
+                                }
+                            }
+                        }
                     }.showAndGet()
                 }
             }
