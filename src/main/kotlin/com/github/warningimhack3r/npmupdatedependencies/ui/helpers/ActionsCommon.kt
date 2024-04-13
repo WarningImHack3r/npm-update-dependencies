@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
@@ -24,9 +24,9 @@ object ActionsCommon {
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
         getAllDependencies(file)
             .mapNotNull { property ->
-                file.project.service<NUDState>().availableUpdates[property.name]?.let { versions ->
-                    val newVersion = versions.from(kind) ?: versions.orderedAvailableKinds(kind)
-                        .firstOrNull { it != kind }?.let { versions.from(it) } ?: return@mapNotNull null
+                file.project.service<NUDState>().availableUpdates[property.name]?.let { scanResult ->
+                    val newVersion = scanResult.versions.from(kind) ?: scanResult.versions.orderedAvailableKinds(kind)
+                        .firstOrNull { it != kind }?.let { scanResult.versions.from(it) } ?: return@mapNotNull null
                     val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
                     Pair(property, newElement)
@@ -50,7 +50,8 @@ object ActionsCommon {
                     val replacement = deprecation.replacement ?: return@mapNotNull null
                     val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newNameElement = NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
-                    val newVersionElement = NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
+                    val newVersionElement =
+                        NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
                     Triple(property, newNameElement, newVersionElement)
                 }
             }.run {
