@@ -15,6 +15,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.JBColor
 import com.intellij.util.applyIf
+import com.jetbrains.rd.util.first
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -47,11 +48,13 @@ class DeprecationBanner : EditorNotificationProvider {
             } else {
                 actionsTitles.first()
             }
-            text(if (deprecationsCount > 1) {
-                "You have $deprecationsCount deprecated packages. $actionsString them"
-            } else {
-                "$deprecationsCount package is deprecated. $actionsString it"
-            } + " to avoid issues.")
+            text(
+                if (deprecationsCount > 1) {
+                    "You have $deprecationsCount deprecated packages. $actionsString them"
+                } else {
+                    "$deprecationsCount package is deprecated. $actionsString it"
+                } + " to avoid issues."
+            )
             icon(AllIcons.General.Warning)
 
             // Actions
@@ -60,7 +63,13 @@ class DeprecationBanner : EditorNotificationProvider {
             }).plus(availableActions.filter { action ->
                 action != NUDSettingsState.instance.defaultDeprecationAction
             }).filterNotNull().forEach { action ->
-                createActionLabel(action.toString() + if (deprecationsCount > 1) " them" else " it") {
+                createActionLabel(
+                    action.toString() + if (deprecationsCount > 1) {
+                        " deprecations"
+                    } else {
+                        " \"${deprecations.first().key}\""
+                    }
+                ) {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
                         Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile)
