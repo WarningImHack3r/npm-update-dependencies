@@ -6,6 +6,6 @@ import kotlinx.coroutines.*
 fun JsonValue.stringValue(): String = text.replace("\"", "")
 
 // Credit: https://jivimberg.io/blog/2018/05/04/parallel-map-in-kotlin/
-fun <A, B> Iterable<A>.parallelMap(f: suspend (A) -> B) = runBlocking(Dispatchers.Default) {
-    coroutineScope { map { async { f(it) } }.awaitAll() }
+fun <T, R> Iterable<T>.parallelMap(mapper: suspend (T) -> R) = runBlocking(SupervisorJob() + Dispatchers.Default) {
+    coroutineScope { map { async { mapper(it) } }.awaitAll() }
 }

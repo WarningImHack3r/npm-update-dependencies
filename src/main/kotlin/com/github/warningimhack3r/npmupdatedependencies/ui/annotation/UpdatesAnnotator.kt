@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
@@ -23,13 +23,13 @@ import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
-        Map<JsonProperty, Versions>
+        Map<JsonProperty, ScanResult>
         >() {
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
         Pair(file.project, AnnotatorsCommon.getInfo(file))
 
-    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Versions> {
+    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, ScanResult> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
@@ -59,7 +59,9 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 val value = property.comparator ?: return@parallelMap null
                 val newVersion = updateChecker.areUpdatesAvailable(property.name, value)
                 state.scannedUpdates++
-                if (newVersion != null && !newVersion.isEqualToAny(Semver(value))) Pair(
+
+                val coerced = Semver.coerce(value)
+                if (newVersion != null && coerced != null && !newVersion.versions.isEqualToAny(coerced)) Pair(
                     property.jsonProperty,
                     newVersion
                 ) else null
@@ -68,19 +70,22 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             }
     }
 
-    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Versions>, holder: AnnotationHolder) {
-        annotationResult.forEach { (property, versions) ->
-            holder.newAnnotation(
-                HighlightSeverity.WARNING, "${
-                    if (versions.orderedAvailableKinds().size > 1) "${versions.orderedAvailableKinds().size} u" else "U"
-                }pdate${
-                    if (versions.orderedAvailableKinds().size > 1) "s" else ""
-                } available"
-            )
+    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, ScanResult>, holder: AnnotationHolder) {
+        annotationResult.forEach { (property, scanResult) ->
+            val versions = scanResult.versions
+            val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
+                " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
+            } else ""
+            holder.newAnnotation(HighlightSeverity.WARNING, text)
                 .range(property.value!!.textRange)
                 .highlightType(ProblemHighlightType.WARNING)
                 .applyIf(versions.satisfies != null) {
-                    withFix(UpdateDependencyFix(Kind.SATISFIES, property, versions.satisfies!!.version, true))
+                    withFix(
+                        UpdateDependencyFix(
+                            Kind.SATISFIES, property,
+                            versions.satisfies!!.version, true
+                        )
+                    )
                 }
                 .withFix(
                     UpdateDependencyFix(
@@ -91,7 +96,6 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     )
                 )
                 // TODO: Add Exclude Major/Minor/Exact/All versions
-                // TODO: Mention excluded versions in the tooltip if affected
                 .needsUpdateOnTyping()
                 .create()
         }

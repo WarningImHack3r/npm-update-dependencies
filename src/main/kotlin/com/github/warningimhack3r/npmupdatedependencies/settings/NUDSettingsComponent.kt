@@ -175,7 +175,14 @@ class NUDSettingsComponent {
                 button("Show Excluded Versions") {
                     excludedVersionsPanel(settings.excludedVersions) { newVersions ->
                         if (settings.excludedVersions == newVersions) return@excludedVersionsPanel
-                        settings.excludedVersions = newVersions
+                        settings.excludedVersions = newVersions.let {
+                            // Remove duplicates and empty lists
+                            it.mapValues { (_, versions) ->
+                                versions.distinct().filter { version -> version.isNotBlank() }
+                            }.filterValues { values ->
+                                values.isNotEmpty()
+                            }
+                        }
                         ProjectManager.getInstance().openProjects.forEach { project ->
                             // if project's currently open file is package.json, re-analyze it
                             FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
