@@ -182,7 +182,7 @@ class NUDSettingsComponent {
                             }.filterValues { values ->
                                 values.isNotEmpty()
                             }
-                        }
+                        }.toMutableMap()
                         ProjectManager.getInstance().openProjects.forEach { project ->
                             // if project's currently open file is package.json, re-analyze it
                             FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->

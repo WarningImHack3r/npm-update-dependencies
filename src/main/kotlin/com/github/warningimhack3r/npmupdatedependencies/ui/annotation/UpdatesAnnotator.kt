@@ -7,7 +7,9 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
@@ -76,26 +78,55 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
                 " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
             } else ""
+            val currentVersion = property.value?.stringValue()?.let { Semver.coerce(it) }
             holder.newAnnotation(HighlightSeverity.WARNING, text)
                 .range(property.value!!.textRange)
                 .highlightType(ProblemHighlightType.WARNING)
-                .applyIf(versions.satisfies != null) {
-                    withFix(
-                        UpdateDependencyFix(
-                            Kind.SATISFIES, property,
-                            versions.satisfies!!.version, true
-                        )
-                    )
-                }
                 .withFix(
                     UpdateDependencyFix(
                         Kind.LATEST,
                         property,
-                        versions.latest.version,
-                        versions.orderedAvailableKinds().size > 1
+                        versions.latest.version
                     )
                 )
-                // TODO: Add Exclude Major/Minor/Exact/All versions
+                .applyIf(versions.satisfies != null) {
+                    withFix(
+                        UpdateDependencyFix(
+                            Kind.SATISFIES, property,
+                            versions.satisfies!!.version
+                        )
+                    )
+                }
+                // Exclude next Major/Minor/Exact/all versions
+                .applyIf(currentVersion != null) {
+                    if (currentVersion == null) return@applyIf this
+                    val baseIndex = if (versions.satisfies == null) -1 else 0
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 0, property.name,
+                            "${currentVersion.major + 1}.x.x"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 1, property.name,
+                            "${currentVersion.major}.${currentVersion.minor + 1}.x"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 2, property.name,
+                            versions.satisfies?.version
+                                ?: "${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch + 1}"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 3, property.name,
+                            "*", "ALL versions"
+                        )
+                    )
+                }
                 .needsUpdateOnTyping()
                 .create()
         }

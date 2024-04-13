@@ -15,15 +15,13 @@ import com.jetbrains.rd.util.printlnError
 class UpdateDependencyFix(
     private val kind: Versions.Kind,
     private val property: JsonProperty,
-    private val newVersion: String,
-    private val showOrder: Boolean
+    private val newVersion: String
 ) : BaseIntentionAction() {
     override fun getText(): String {
-        val baseText = "Update to ${kind.toString().lowercase()} version ($newVersion)"
-        return (if (showOrder) QuickFixesCommon.getPositionPrefix(
+        return QuickFixesCommon.getPositionPrefix(
             kind,
             NUDSettingsState.instance.defaultUpdateType!!.ordinal
-        ) else "") + baseText
+        ) + "Update to ${kind.toString().lowercase()} version ($newVersion)"
     }
 
     override fun getFamilyName() = "Update dependency"

@@ -60,7 +60,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.autoFixOnSave = value
         }
-    var excludedVersions: Map<String, List<String>>
+    var excludedVersions: MutableMap<String, List<String>>
         get() = settings.excludedVersions
         set(value) {
             settings.excludedVersions = value
@@ -74,6 +74,6 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
-        var excludedVersions: Map<String, List<String>> = emptyMap()
+        var excludedVersions: MutableMap<String, List<String>> = emptyMap<String, List<String>>().toMutableMap()
     )
 }
