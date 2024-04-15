@@ -59,12 +59,12 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.isScanningForUpdates = true
             }.parallelMap { property ->
                 val value = property.comparator ?: return@parallelMap null
-                val newVersion = updateChecker.areUpdatesAvailable(property.name, value)
+                val scanResult = updateChecker.areUpdatesAvailable(property.name, value)
                 state.scannedUpdates++
 
                 val coerced = Semver.coerce(value)
-                if (newVersion != null && coerced != null && !newVersion.versions.isEqualToAny(coerced)) {
-                    Pair(property.jsonProperty, newVersion)
+                if (scanResult != null && coerced != null && !scanResult.versions.isEqualToAny(coerced)) {
+                    Pair(property.jsonProperty, scanResult)
                 } else null
             }.filterNotNull().toMap().also {
                 state.isScanningForUpdates = false
@@ -90,6 +90,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     if (currentVersion == null) return@applyIf this
 
                     val baseIndex = if (versions.satisfies == null) -1 else 0
+                    // Couldn't find a way to create them in a loop here
                     withFix(
                         BlacklistVersionFix(
                             baseIndex + 0, property.name,

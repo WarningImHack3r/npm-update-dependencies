@@ -74,7 +74,7 @@ class PackageUpdateChecker(private val project: Project) {
             return null
         }
 
-        // Check if the latest version is excluded or doesn't satisfy the comparator
+        // Check if the latest version is excluded, is a beta or doesn't satisfy the comparator
         val filtersAffectingVersions = mutableSetOf<String>()
         if (getVersionExcludingFilter(packageName, newestVersion) != null
             || newestVersion.preRelease.isNotEmpty()
