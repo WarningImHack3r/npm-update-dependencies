@@ -27,7 +27,7 @@ data class Versions(
         Kind.SATISFIES.takeIf { satisfies != null },
         Kind.LATEST
     ).let {
-        if (placeFirst == null) it
+        if (placeFirst == null || (placeFirst == Kind.SATISFIES && satisfies == null)) it
         else listOf(placeFirst) + it.filter { kind -> kind != placeFirst }
     }
 

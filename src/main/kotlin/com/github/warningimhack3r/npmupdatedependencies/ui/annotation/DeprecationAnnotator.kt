@@ -23,9 +23,10 @@ import com.intellij.util.applyIf
 class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
         Map<JsonProperty, Deprecation>
->() {
+        >() {
 
-    override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> = Pair(file.project, AnnotatorsCommon.getInfo(file))
+    override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
+        Pair(file.project, AnnotatorsCommon.getInfo(file))
 
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Deprecation> {
         val (project, info) = collectedInfo
@@ -79,7 +80,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         }
                         // Else if we're unsure, we don't consider it as a package name
                         false
-                    }.parallelMap innerMap@ { potentialPackage ->
+                    }.parallelMap innerMap@{ potentialPackage ->
                         // Confirm that the word is a package name by trying to get its latest version
                         npmjsClient.getLatestVersion(potentialPackage)?.let {
                             Pair(potentialPackage, it)
@@ -89,7 +90,10 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                     }.firstOrNull()?.let { (name, version) ->
                         // We found a package name and its latest version, so we can create a replacement
                         Pair(property.jsonProperty, Deprecation(reason, Deprecation.Replacement(name, version)))
-                    } ?: Pair(property.jsonProperty, Deprecation(reason, null)) // No replacement found in the deprecation reason
+                    } ?: Pair(
+                        property.jsonProperty,
+                        Deprecation(reason, null)
+                    ) // No replacement found in the deprecation reason
                 }.also { pair ->
                     pair?.let {
                         // Add the deprecation to the cache if any
@@ -112,11 +116,23 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 .range(property.textRange)
                 .highlightType(ProblemHighlightType.LIKE_DEPRECATED)
                 .applyIf(deprecation.replacement != null) {
-                    withFix(DeprecatedDependencyFix(property, deprecation.replacement!!.name, deprecation.replacement.version, Deprecation.Action.REPLACE, true))
+                    withFix(
+                        DeprecatedDependencyFix(
+                            property,
+                            Deprecation.Action.REPLACE,
+                            deprecation.replacement,
+                            true
+                        )
+                    )
                 }
-                .withFix(DeprecatedDependencyFix(property, "", "", Deprecation.Action.REMOVE,  enumValues<Deprecation.Action>().size.run {
-                    this - (if (deprecation.replacement == null) 1 else 0)
-                } > 1))
+                .withFix(
+                    DeprecatedDependencyFix(
+                        property,
+                        Deprecation.Action.REMOVE,
+                        null,
+                        deprecation.replacement != null
+                    )
+                )
                 .needsUpdateOnTyping()
                 .create()
         }

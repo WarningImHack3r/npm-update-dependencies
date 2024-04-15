@@ -1,10 +1,12 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.quickfix
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -24,6 +26,7 @@ class BlacklistVersionFix(
         QuickFixesCommon.getAvailability(editor, file)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
+        // Exclude pattern
         NUDSettingsState.instance.excludedVersions[dependencyName] =
             NUDSettingsState.instance.excludedVersions[dependencyName]
                 ?.plus(versionPattern)?.distinct()
@@ -31,5 +34,7 @@ class BlacklistVersionFix(
         file?.let {
             DaemonCodeAnalyzer.getInstance(project).restart(it)
         }
+        // Clear the cache
+        project.service<NUDState>().availableUpdates.remove(dependencyName)
     }
 }

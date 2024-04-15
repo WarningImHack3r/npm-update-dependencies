@@ -37,14 +37,11 @@ class PackageUpdateChecker(private val project: Project) {
     }
 
     private fun getVersionExcludingFilter(packageName: String, version: Semver): String? {
-        NUDSettingsState.instance.excludedVersions[packageName]?.let { excludedVersions ->
-            excludedVersions.forEach { excludedVersion ->
-                if (version.satisfies(excludedVersion)) {
-                    return excludedVersion
-                }
+        return NUDSettingsState.instance.excludedVersions[packageName]?.let { excludedVersions ->
+            excludedVersions.firstOrNull { excludedVersion ->
+                version.satisfies(excludedVersion)
             }
         }
-        return null
     }
 
     fun areUpdatesAvailable(packageName: String, comparator: String): ScanResult? {
@@ -89,6 +86,7 @@ class PackageUpdateChecker(private val project: Project) {
             }?.sortedDescending() ?: emptyList()
 
             // Downgrade the latest version if it's filtered out
+            var latest: Semver? = null
             for (version in allVersions) {
                 val filter = getVersionExcludingFilter(packageName, version)
                 if (filter != null) {
@@ -96,10 +94,11 @@ class PackageUpdateChecker(private val project: Project) {
                 } else if (version.preRelease.isEmpty() && version.build.isEmpty()
                     && isVersionMoreRecentThanComparator(version, comparator)
                 ) {
-                    newestVersion = version
+                    latest = version
                     break
                 }
             }
+            newestVersion = latest ?: return null // No version greater than the comparator and not filtered
 
             // Find satisfying version
             if (!newestVersion.satisfies(comparator)) {

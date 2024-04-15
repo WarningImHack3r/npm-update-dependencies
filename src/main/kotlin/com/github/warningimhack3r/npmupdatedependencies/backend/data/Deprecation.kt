@@ -19,5 +19,12 @@ data class Deprecation(
                 REMOVE -> "Remove"
             }
         }
+
+        companion object {
+            fun orderedActions(placeFirst: Action? = null) = enumValues<Action>().toList().let {
+                if (placeFirst == null) it
+                else listOf(placeFirst) + it.filter { action -> action != placeFirst }
+            }
+        }
     }
 }

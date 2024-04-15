@@ -13,16 +13,16 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.rd.util.printlnError
 
 class UpdateDependencyFix(
+    private val versions: Versions,
     private val kind: Versions.Kind,
-    private val property: JsonProperty,
-    private val newVersion: String
+    private val property: JsonProperty
 ) : BaseIntentionAction() {
-    override fun getText(): String {
-        return QuickFixesCommon.getPositionPrefix(
-            kind,
-            NUDSettingsState.instance.defaultUpdateType!!.ordinal
-        ) + "Update to ${kind.toString().lowercase()} version ($newVersion)"
-    }
+    val version = versions.from(kind)
+
+    override fun getText() = QuickFixesCommon.getPositionPrefix(
+        kind,
+        versions.orderedAvailableKinds(NUDSettingsState.instance.defaultUpdateType!!)
+    ) + "Update to ${kind.toString().lowercase()} version ($version)"
 
     override fun getFamilyName() = "Update dependency"
 
@@ -35,8 +35,8 @@ class UpdateDependencyFix(
             return
         }
         val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-        val newElement = NUDHelper.createElement(project, "\"$prefix$newVersion\"", "JSON")
-        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $newVersion") {
+        val newElement = NUDHelper.createElement(project, "\"$prefix$version\"", "JSON")
+        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $version") {
             property.value?.replace(newElement)
         }
     }

@@ -63,10 +63,9 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.scannedUpdates++
 
                 val coerced = Semver.coerce(value)
-                if (newVersion != null && coerced != null && !newVersion.versions.isEqualToAny(coerced)) Pair(
-                    property.jsonProperty,
-                    newVersion
-                ) else null
+                if (newVersion != null && coerced != null && !newVersion.versions.isEqualToAny(coerced)) {
+                    Pair(property.jsonProperty, newVersion)
+                } else null
             }.filterNotNull().toMap().also {
                 state.isScanningForUpdates = false
             }
@@ -82,24 +81,14 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             holder.newAnnotation(HighlightSeverity.WARNING, text)
                 .range(property.value!!.textRange)
                 .highlightType(ProblemHighlightType.WARNING)
-                .withFix(
-                    UpdateDependencyFix(
-                        Kind.LATEST,
-                        property,
-                        versions.latest.version
-                    )
-                )
+                .withFix(UpdateDependencyFix(versions, Kind.LATEST, property))
                 .applyIf(versions.satisfies != null) {
-                    withFix(
-                        UpdateDependencyFix(
-                            Kind.SATISFIES, property,
-                            versions.satisfies!!.version
-                        )
-                    )
+                    withFix(UpdateDependencyFix(versions, Kind.SATISFIES, property))
                 }
                 // Exclude next Major/Minor/Exact/all versions
                 .applyIf(currentVersion != null) {
                     if (currentVersion == null) return@applyIf this
+
                     val baseIndex = if (versions.satisfies == null) -1 else 0
                     withFix(
                         BlacklistVersionFix(

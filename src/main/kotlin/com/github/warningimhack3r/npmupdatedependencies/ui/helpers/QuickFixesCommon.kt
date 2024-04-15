@@ -4,13 +4,8 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
 object QuickFixesCommon {
-    fun getPositionPrefix(enumValue: Enum<*>, setting: Int): String {
-        val position = if (setting == enumValue.ordinal) 1 else {
-            enumValue.javaClass.enumConstants.filter {
-                it.ordinal != setting
-            }.indexOf(enumValue) + 2
-        }
-        return "$position. "
+    fun <T : Enum<*>> getPositionPrefix(enumValue: T, orderedValues: List<T>): String {
+        return "${orderedValues.indexOf(enumValue) + 1}. "
     }
 
     fun getAvailability(editor: Editor?, file: PsiFile?): Boolean {
