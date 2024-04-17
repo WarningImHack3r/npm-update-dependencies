@@ -13,21 +13,21 @@ import com.intellij.psi.PsiFile
 import com.jetbrains.rd.util.printlnError
 
 class UpdateDependencyFix(
+    private val versions: Versions,
     private val kind: Versions.Kind,
-    private val property: JsonProperty,
-    private val newVersion: String,
-    private val showOrder: Boolean
-): BaseIntentionAction() {
-    override fun getText(): String {
-        val baseText = "Update to ${kind.text} version ($newVersion)"
-        return (if (showOrder) QuickFixesCommon.getPositionPrefix(
-            kind,
-            NUDSettingsState.instance.defaultUpdateType
-        ) else "") + baseText
-    }
+    private val property: JsonProperty
+) : BaseIntentionAction() {
+    val version = versions.from(kind)
+
+    override fun getText() = QuickFixesCommon.getPositionPrefix(
+        kind,
+        versions.orderedAvailableKinds(NUDSettingsState.instance.defaultUpdateType!!)
+    ) + "Update to ${kind.toString().lowercase()} version ($version)"
+
     override fun getFamilyName() = "Update dependency"
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = QuickFixesCommon.getAvailability(editor, file)
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean =
+        QuickFixesCommon.getAvailability(editor, file)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
@@ -35,8 +35,8 @@ class UpdateDependencyFix(
             return
         }
         val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-        val newElement = NUDHelper.createElement(project, "\"$prefix$newVersion\"", "JSON")
-        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $newVersion") {
+        val newElement = NUDHelper.createElement(project, "\"$prefix$version\"", "JSON")
+        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $version") {
             property.value?.replace(newElement)
         }
     }

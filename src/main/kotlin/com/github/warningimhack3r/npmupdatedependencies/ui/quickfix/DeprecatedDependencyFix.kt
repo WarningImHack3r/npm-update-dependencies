@@ -18,11 +18,12 @@ import com.jetbrains.rd.util.printlnError
 
 class DeprecatedDependencyFix(
     private val property: JsonProperty,
-    private val replacementName: String,
-    private val replacementVersion: String,
     private val actionType: Deprecation.Action,
+    replacement: Deprecation.Replacement?,
     private val showOrder: Boolean
-): BaseIntentionAction() {
+) : BaseIntentionAction() {
+    private val replacementName = replacement?.name ?: ""
+    private val replacementVersion = replacement?.version ?: ""
 
     override fun getText(): String {
         val baseText = when (actionType) {
@@ -31,16 +32,18 @@ class DeprecatedDependencyFix(
         }
         return (if (showOrder) QuickFixesCommon.getPositionPrefix(
             actionType,
-            NUDSettingsState.instance.defaultDeprecationAction
+            Deprecation.Action.orderedActions(NUDSettingsState.instance.defaultDeprecationAction!!)
         ) else "") + baseText
     }
+
     override fun getFamilyName(): String = "Replace or remove deprecated dependency"
 
-    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean = QuickFixesCommon.getAvailability(editor, file)
+    override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean =
+        QuickFixesCommon.getAvailability(editor, file)
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
-            printlnError("Trying to ${actionType.text.lowercase()} dependency but the file is null")
+            printlnError("Trying to ${actionType.toString().lowercase()} dependency but the file is null")
             return
         }
         when (actionType) {
@@ -54,6 +57,7 @@ class DeprecatedDependencyFix(
                 }
                 if (NUDSettingsState.instance.autoReorderDependencies) ActionsCommon.reorderAllDependencies(file)
             }
+
             Deprecation.Action.REMOVE -> NUDHelper.safeFileWrite(file, "Delete \"${property.name}\"") {
                 // Delete the comma before or after the property
                 NUDHelper.getClosestElementMatching(

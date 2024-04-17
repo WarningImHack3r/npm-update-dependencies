@@ -15,6 +15,7 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.JBColor
 import com.intellij.util.applyIf
+import com.jetbrains.rd.util.first
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -31,14 +32,14 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         val deprecationsCount = deprecations.size
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
-            val availableActions = Deprecation.Action.values().filter { action ->
+            val availableActions = enumValues<Deprecation.Action>().filter { action ->
                 (action == Deprecation.Action.REPLACE && deprecations.any { (_, deprecation) ->
                     deprecation.replacement != null
                 }) || action != Deprecation.Action.REPLACE
             }
             // Description text & icon
             val actionsTitles = availableActions.mapIndexed { index, action ->
-                action.text.applyIf(index > 0) {
+                action.toString().applyIf(index > 0) {
                     lowercase()
                 }
             }
@@ -47,20 +48,28 @@ class DeprecationBanner : EditorNotificationProvider {
             } else {
                 actionsTitles.first()
             }
-            text(if (deprecationsCount > 1) {
-                "You have $deprecationsCount deprecated packages. $actionsString them"
-            } else {
-                "$deprecationsCount package is deprecated. $actionsString it"
-            } + " to avoid issues.")
+            text(
+                if (deprecationsCount > 1) {
+                    "You have $deprecationsCount deprecated packages. $actionsString them"
+                } else {
+                    "$deprecationsCount package is deprecated. $actionsString it"
+                } + " to avoid issues."
+            )
             icon(AllIcons.General.Warning)
 
             // Actions
             listOf(availableActions.firstOrNull { action ->
-                action.ordinal == NUDSettingsState.instance.defaultDeprecationAction
+                action == NUDSettingsState.instance.defaultDeprecationAction
             }).plus(availableActions.filter { action ->
-                action.ordinal != NUDSettingsState.instance.defaultDeprecationAction
+                action != NUDSettingsState.instance.defaultDeprecationAction
             }).filterNotNull().forEach { action ->
-                createActionLabel(action.text + if (deprecationsCount > 1) " them" else " it") {
+                createActionLabel(
+                    action.toString() + if (deprecationsCount > 1) {
+                        " deprecations"
+                    } else {
+                        " \"${deprecations.first().key}\""
+                    }
+                ) {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
                         Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile)

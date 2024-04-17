@@ -1,13 +1,15 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
@@ -19,15 +21,17 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
+import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
-        Map<JsonProperty, Versions>
->() {
+        Map<JsonProperty, ScanResult>
+        >() {
 
-    override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> = Pair(file.project, AnnotatorsCommon.getInfo(file))
+    override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
+        Pair(file.project, AnnotatorsCommon.getInfo(file))
 
-    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Versions> {
+    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, ScanResult> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
@@ -55,30 +59,64 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.isScanningForUpdates = true
             }.parallelMap { property ->
                 val value = property.comparator ?: return@parallelMap null
-                val (isUpdateAvailable, newVersion) = updateChecker.hasUpdateAvailable(property.name, value)
+                val scanResult = updateChecker.areUpdatesAvailable(property.name, value)
                 state.scannedUpdates++
-                if (isUpdateAvailable && !newVersion!!.isEqualToAny(value)) Pair(
-                    property.jsonProperty,
-                    newVersion
-                ) else null
+
+                val coerced = Semver.coerce(value)
+                if (scanResult != null && coerced != null && !scanResult.versions.isEqualToAny(coerced)) {
+                    Pair(property.jsonProperty, scanResult)
+                } else null
             }.filterNotNull().toMap().also {
                 state.isScanningForUpdates = false
             }
     }
 
-    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Versions>, holder: AnnotationHolder) {
-        annotationResult.forEach { (property, versions) ->
-            holder.newAnnotation(HighlightSeverity.WARNING, "${
-                if (versions.orderedAvailableKinds().size > 1) "${versions.orderedAvailableKinds().size} u" else "U"
-                }pdate${
-                    if (versions.orderedAvailableKinds().size > 1) "s" else ""
-                } available")
+    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, ScanResult>, holder: AnnotationHolder) {
+        annotationResult.forEach { (property, scanResult) ->
+            val versions = scanResult.versions
+            val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
+                " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
+            } else ""
+            val currentVersion = property.value?.stringValue()?.let { Semver.coerce(it) }
+            holder.newAnnotation(HighlightSeverity.WARNING, text)
                 .range(property.value!!.textRange)
                 .highlightType(ProblemHighlightType.WARNING)
+                .withFix(UpdateDependencyFix(versions, Kind.LATEST, property))
                 .applyIf(versions.satisfies != null) {
-                    withFix(UpdateDependencyFix(Kind.SATISFIES, property, versions.satisfies!!, true))
+                    withFix(UpdateDependencyFix(versions, Kind.SATISFIES, property))
                 }
-                .withFix(UpdateDependencyFix(Kind.LATEST, property, versions.latest, versions.orderedAvailableKinds().size > 1))
+                // Exclude next Major/Minor/Exact/all versions
+                .applyIf(currentVersion != null) {
+                    if (currentVersion == null) return@applyIf this
+
+                    val baseIndex = if (versions.satisfies == null) -1 else 0
+                    // Couldn't find a way to create them in a loop here
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 0, property.name,
+                            "${currentVersion.major + 1}.x.x"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 1, property.name,
+                            "${currentVersion.major}.${currentVersion.minor + 1}.x"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 2, property.name,
+                            versions.satisfies?.version
+                                ?: "${currentVersion.major}.${currentVersion.minor}.${currentVersion.patch + 1}"
+                        )
+                    )
+                    withFix(
+                        BlacklistVersionFix(
+                            baseIndex + 3, property.name,
+                            "*", "ALL versions"
+                        )
+                    )
+                }
                 .needsUpdateOnTyping()
                 .create()
         }

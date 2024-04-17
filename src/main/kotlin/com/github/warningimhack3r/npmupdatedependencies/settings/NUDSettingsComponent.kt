@@ -1,87 +1,153 @@
-@file:Suppress("kotlin:S1128") // Suppress "Unused imports should be removed" for Pair destructuring
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.util.component1
-import com.intellij.openapi.util.component2
+import com.intellij.openapi.project.ProjectManager
+import com.intellij.openapi.ui.DialogBuilder
+import com.intellij.openapi.ui.DialogWrapper
+import com.intellij.psi.PsiDocumentManager
+import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.ui.dsl.builder.Cell
-import com.intellij.ui.dsl.builder.panel
-import com.intellij.ui.dsl.builder.selected
-import com.intellij.util.containers.ContainerUtil.zip
+import com.intellij.ui.dsl.builder.*
+import com.intellij.ui.dsl.gridLayout.HorizontalAlign
+import com.intellij.ui.table.TableView
+import com.intellij.util.ui.ColumnInfo
+import com.intellij.util.ui.ListTableModel
 import java.awt.Component
-import javax.swing.JCheckBox
-import javax.swing.JComboBox
+import javax.swing.JTable
+import javax.swing.table.DefaultTableCellRenderer
 
 class NUDSettingsComponent {
-    var values: MutableMap<String, Any> = NUDSettingsState.instance.mapped.toMutableMap()
-        set(newValues) {
-            field = newValues
-            // Update all components
-            check(componentsList.size == newValues.size) {
-                "The number of components (${componentsList.size}) does not match the number of values (${newValues.size})"
-            }
-            zip(componentsList, newValues.values).forEach { (component, value) ->
-                when (component) {
-                    is JComboBox<*> -> component.selectedIndex = value as Int
-                    is JCheckBox -> component.isSelected = value as Boolean
+    private data class ExcludedVersion(
+        var packageName: String,
+        var versions: List<String>
+    )
+
+    private class CellRenderer : DefaultTableCellRenderer.UIResource() {
+        override fun getTableCellRendererComponent(
+            table: JTable?,
+            value: Any?,
+            isSelected: Boolean,
+            hasFocus: Boolean,
+            row: Int,
+            column: Int
+        ): Component {
+            return super.getTableCellRendererComponent(table, value, isSelected, false, row, column)
+        }
+    }
+
+    private fun excludedVersionsPanel(
+        excludedVersions: Map<String, List<String>>,
+        newVersions: (Map<String, List<String>>) -> Unit
+    ): DialogBuilder = DialogBuilder(panel).apply {
+        val model = ListTableModel<ExcludedVersion>(
+            object : ColumnInfo<ExcludedVersion, String>("Package") {
+                override fun getRenderer(item: ExcludedVersion?) = CellRenderer()
+
+                override fun valueOf(item: ExcludedVersion?) = item?.packageName
+
+                override fun setValue(item: ExcludedVersion?, value: String?) {
+                    if (item != null && value != null) item.packageName = value.trim()
                 }
+
+                override fun isCellEditable(item: ExcludedVersion?) = item != null
+            },
+            object : ColumnInfo<ExcludedVersion, String>("Excluded Versions") {
+                override fun getRenderer(item: ExcludedVersion?) = CellRenderer()
+
+                override fun valueOf(item: ExcludedVersion?) = item?.versions?.joinToString(",")
+
+                override fun setValue(item: ExcludedVersion?, value: String?) {
+                    if (item != null && value != null) {
+                        item.versions = value.split(",").map { it.trim() }.filter { it.isNotBlank() }
+                    }
+                }
+
+                override fun isCellEditable(item: ExcludedVersion?) = item != null
+            }
+        ).apply {
+            addRows(excludedVersions.map { ExcludedVersion(it.key, it.value) })
+        }
+        val table = TableView(model).apply {
+            visibleRowCount = 8
+            rowSelectionAllowed = false
+            tableHeader.reorderingAllowed = false
+
+            setExpandableItemsEnabled(false)
+        }
+        val content = panel {
+            row {
+                text(
+                    "This table is a list of versions that should be excluded from updates.<br>The left column is the package name, and the right column is a comma-separated list of version patterns to exclude.<br>Use <code>*</code> to exclude all versions.<br><br>Example: a value of <code>1.2.3,2.*</code> excludes the versions <code>1.2.3</code>, as well as all versions starting with <code>2.</code>.<br>As such, specifying a value as <code>*</code> effectively excludes all versions of the package.<br>For wildcard patterns like this, <code>*</code>, <code>x</code>, and <code>X</code> are supported and have the same meaning."
+                )
+            }
+            row {
+                cell(
+                    ToolbarDecorator.createDecorator(table)
+                        .setAddAction {
+                            model.addRow(ExcludedVersion("", emptyList()))
+                        }
+                        .setRemoveAction {
+                            model.removeRow(table.selectedRow)
+                        }
+                        .disableUpDownActions()
+                        .createPanel()
+                )
+                    .horizontalAlign(HorizontalAlign.FILL)
             }
         }
+        setTitle("Excluded Versions")
+        setCenterPanel(content)
+        setPreferredFocusComponent(content)
+        addOkAction()
+        addCancelAction()
+        runInEdt(ModalityState.any()) { // Edit "OK" button text
+            okAction.apply {
+                setText("Save")
+                (this as DialogBuilder.OkActionDescriptor).getAction(dialogWrapper)
+            }
+        }
+        setOkOperation {
+            newVersions(model.items.associate { it.packageName to it.versions })
+            dialogWrapper.close(DialogWrapper.OK_EXIT_CODE)
+        }
+        setCancelOperation {
+            dialogWrapper.close(DialogWrapper.CANCEL_EXIT_CODE)
+        }
+        dialogWrapper.setSize(400, 300) // Width is not really respected, text width takes over
+    }
 
-    private var componentsList = mutableListOf<Component>()
     val panel = panel {
+        val settings = NUDSettingsState.instance
         group("Annotation Actions") {
             row("Default update type:") {
-                comboBox(
-                    Versions.Kind.values()
-                    .map { version ->
-                        version.text.replaceFirstChar { it.uppercase() }
-                    })
-                    .applyToComponent {
-                        componentsList.add(this)
-                        selectedIndex = values["defaultUpdateType"] as Int
-                        addItemListener {
-                            values["defaultUpdateType"] = selectedIndex
-                        }
-                    }
+                comboBox(enumValues<Versions.Kind>().toList())
+                    .bindItem(settings::defaultUpdateType.toMutableProperty())
             }
             row("Default deprecation action:") {
-                comboBox(Deprecation.Action.values().map { it.text })
-                    .applyToComponent {
-                        componentsList.add(this)
-                        selectedIndex = values["defaultDeprecationAction"] as Int
-                        addItemListener {
-                            values["defaultDeprecationAction"] = selectedIndex
-                        }
-                    }
+                comboBox(enumValues<Deprecation.Action>().toList())
+                    .bindItem(settings::defaultDeprecationAction.toMutableProperty())
             }
         }
         group("Deprecations") {
             row {
                 checkBox("Show deprecation banner")
                     .comment("Show a warning banner when at least one dependency is deprecated.")
-                    .applyToComponent {
-                        componentsList.add(this)
-                        isSelected = values["showDeprecationBanner"] as Boolean
-                        addItemListener {
-                            values["showDeprecationBanner"] = isSelected
-                        }
-                    }
+                    .bindSelected(settings::showDeprecationBanner)
             }
             row {
                 checkBox("Automatically reorder dependencies")
                     .comment("Reorder dependencies after replacing deprecated ones.<br>Useful when a new dependency starts with a different letter than the old one.")
-                    .applyToComponent {
-                        componentsList.add(this)
-                        isSelected = values["autoReorderDependencies"] as Boolean
-                        addItemListener {
-                            values["autoReorderDependencies"] = isSelected
-                        }
-                    }
+                    .bindSelected(settings::autoReorderDependencies)
             }
         }
         group("Status Bar") {
@@ -89,25 +155,13 @@ class NUDSettingsComponent {
             row {
                 statusBarEnabled = checkBox("Show status bar widget")
                     .comment("Show a widget in the status bar that shows the scan status, the number of outdated dependencies, and allows you to open them to update them.")
-                    .applyToComponent {
-                        componentsList.add(this)
-                        isSelected = values["showStatusBarWidget"] as Boolean
-                        addItemListener {
-                            values["showStatusBarWidget"] = isSelected
-                        }
-                    }
+                    .bindSelected(settings::showStatusBarWidget)
             }
             indent {
                 row("Status Bar mode:") {
-                    comboBox(listOf("Full", "Compact"))
+                    comboBox(enumValues<StatusBarMode>().toList())
                         .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
-                        .applyToComponent {
-                            componentsList.add(this)
-                            selectedIndex = values["statusBarMode"] as Int
-                            addItemListener {
-                                values["statusBarMode"] = selectedIndex
-                            }
-                        }
+                        .bindItem(settings::statusBarMode.toMutableProperty())
                 }.enabledIf(statusBarEnabled.selected)
             }
         }
@@ -115,21 +169,47 @@ class NUDSettingsComponent {
             row {
                 checkBox("Auto-fix on save")
                     .comment("Auto-fix applies the default update type and deprecation action to all dependencies when saving <code>package.json</code>.")
-                    .applyToComponent {
-                        componentsList.add(this)
-                        isSelected = values["autoFixOnSave"] as Boolean
-                        addItemListener {
-                            values["autoFixOnSave"] = isSelected
-                        }
-                    }
+                    .bindSelected(settings::autoFixOnSave)
             }
         }
+        group("Exclusions") {
+            row {
+                button("Show Excluded Versions") {
+                    excludedVersionsPanel(settings.excludedVersions) { newVersions ->
+                        if (settings.excludedVersions == newVersions) return@excludedVersionsPanel
+                        settings.excludedVersions = newVersions.let {
+                            // Remove duplicates and empty lists
+                            it.mapValues { (_, versions) ->
+                                versions.distinct().filter { version -> version.isNotBlank() }
+                            }.filterValues { values ->
+                                values.isNotEmpty()
+                            }
+                        }.toMutableMap()
+                        ProjectManager.getInstance().openProjects.forEach { project ->
+                            // Clear the cache for packages with excluded versions
+                            settings.excludedVersions.keys.forEach { packageName ->
+                                project.service<NUDState>().availableUpdates.remove(packageName)
+                            }
+                            // if project's currently open file is package.json, re-analyze it
+                            FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+                                PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
+                                    if (file.name == "package.json") {
+                                        DaemonCodeAnalyzer.getInstance(project).restart(file)
+                                    }
+                                }
+                            }
+                        }
+                    }.showAndGet()
+                }
+            }
+        }
+
         row {
             label("Plugin's keyboard shortcuts can be changed in keymap settings.")
             link("Go to keymap settings") {
                 DataManager.getInstance().dataContextFromFocusAsync.onSuccess { dataContext ->
-                    val settings = Settings.KEY.getData(dataContext) ?: return@onSuccess
-                    settings.select(settings.find("preferences.keymap"))
+                    val jbSettings = Settings.KEY.getData(dataContext) ?: return@onSuccess
+                    jbSettings.select(jbSettings.find("preferences.keymap"))
                 }
             }
         }

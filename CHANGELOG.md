@@ -12,6 +12,14 @@
 
 ## [Unreleased]
 
+### Added
+
+- Introduce the long-awaited blacklist feature
+  - Allows ignoring specific versions or whole dependencies from being updated
+  - Blacklist entries can be added right from the update annotation
+  - The blacklist can be managed from the settings
+  - Supports multiple version selectors for a granular control
+
 ## [2.1.5] - 2024-04-09
 
 ### Fixed

@@ -33,6 +33,17 @@ class StatusBarFactory : StatusBarEditorBasedWidgetFactory() {
     override fun disposeWidget(widget: StatusBarWidget) = Disposer.dispose(widget)
 }
 
+enum class StatusBarMode {
+    FULL, COMPACT;
+
+    override fun toString(): String {
+        return when (this) {
+            FULL -> "Full"
+            COMPACT -> "Compact"
+        }
+    }
+}
+
 class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.MultipleTextValuesPresentation {
     companion object {
         const val ID = "NpmUpdateDependenciesStatusBarWidgetBar"
@@ -143,21 +154,19 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                 val outdated = state.availableUpdates.size
                 val deprecated = state.deprecations.size
                 when (NUDSettingsState.instance.statusBarMode) {
-                    // Full
-                    0 -> when {
+                    StatusBarMode.FULL -> when {
                         outdated == 0 && deprecated == 0 -> null
                         outdated == 0 -> "$deprecated deprecation${if (deprecated == 1) "" else "s"}"
                         deprecated == 0 -> "$outdated update${if (outdated == 1) "" else "s"}"
                         else -> "$outdated update${if (outdated == 1) "" else "s"}, $deprecated deprecation${if (deprecated == 1) "" else "s"}"
                     }
-                    // Compact
-                    1 -> when {
+                    StatusBarMode.COMPACT -> when {
                         outdated == 0 && deprecated == 0 -> null
                         outdated == 0 -> "$deprecated D"
                         deprecated == 0 -> "$outdated U"
                         else -> "$outdated U / $deprecated D"
                     }
-                    else -> null
+                    null -> null
                 }
             }
         }

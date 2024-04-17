@@ -13,7 +13,7 @@ class UpdateAllSatisfiesAction : AnAction() {
         val availableUpdates = e.project?.service<NUDState>()?.availableUpdates
         e.presentation.isEnabled = if (availableUpdates != null) {
             availableUpdates.isNotEmpty()
-                    && availableUpdates.values.mapNotNull { it.satisfies }.any()
+                    && availableUpdates.values.mapNotNull { it.versions.satisfies }.any()
         } else false
     }
 

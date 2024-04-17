@@ -1,15 +1,24 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
+import org.semver4j.Semver
+
 data class Versions(
-    val latest: String,
-    val satisfies: String?
+    val latest: Semver,
+    val satisfies: Semver? = null
 ) {
-    enum class Kind(val text: String) {
-        LATEST("latest"),
-        SATISFIES("satisfying")
+    enum class Kind {
+        LATEST,
+        SATISFIES;
+
+        override fun toString(): String {
+            return when (this) {
+                LATEST -> "Latest"
+                SATISFIES -> "Satisfying"
+            }
+        }
     }
 
-    fun from(kind: Kind): String? = when (kind) {
+    fun from(kind: Kind): Semver? = when (kind) {
         Kind.LATEST -> latest
         Kind.SATISFIES -> satisfies
     }
@@ -18,9 +27,9 @@ data class Versions(
         Kind.SATISFIES.takeIf { satisfies != null },
         Kind.LATEST
     ).let {
-        if (placeFirst == null) it
+        if (placeFirst == null || (placeFirst !in it)) it
         else listOf(placeFirst) + it.filter { kind -> kind != placeFirst }
     }
 
-    fun isEqualToAny(other: String): Boolean = latest == other || satisfies == other
+    fun isEqualToAny(other: Semver): Boolean = latest == other || satisfies == other
 }
