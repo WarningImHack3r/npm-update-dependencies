@@ -2,11 +2,13 @@ package com.github.warningimhack3r.npmupdatedependencies.settings
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
+import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
@@ -85,7 +87,7 @@ class NUDSettingsComponent {
         val content = panel {
             row {
                 text(
-                    "This table is a list of versions that should be excluded from updates.<br/>The left column is the package name, and the right column is a comma-separated list of version patterns to exclude.<br/>Use <code>*</code> to exclude all versions.<br/><br/>Example: a value of <code>1.2.3, 2.*</code> excludes the versions <code>1.2.3</code>, as well as all versions starting with <code>2</code>.<br/>As such, specifying <code>*</code> effectively excludes all versions of a package."
+                    "This table is a list of versions that should be excluded from updates.<br>The left column is the package name, and the right column is a comma-separated list of version patterns to exclude.<br>Use <code>*</code> to exclude all versions.<br><br>Example: a value of <code>1.2.3,2.*</code> excludes the versions <code>1.2.3</code>, as well as all versions starting with <code>2.</code>.<br>As such, specifying a value as <code>*</code> effectively excludes all versions of the package.<br>For wildcard patterns like this, <code>*</code>, <code>x</code>, and <code>X</code> are supported and have the same meaning."
                 )
             }
             row {
@@ -121,11 +123,11 @@ class NUDSettingsComponent {
         setCancelOperation {
             dialogWrapper.close(DialogWrapper.CANCEL_EXIT_CODE)
         }
-        dialogWrapper.setSize(400, 300) // Width is not really respected
+        dialogWrapper.setSize(400, 300) // Width is not really respected, text width takes over
     }
 
     val panel = panel {
-        val settings = NUDSettingsState()
+        val settings = NUDSettingsState.instance
         group("Annotation Actions") {
             row("Default update type:") {
                 comboBox(enumValues<Versions.Kind>().toList())
@@ -184,6 +186,10 @@ class NUDSettingsComponent {
                             }
                         }.toMutableMap()
                         ProjectManager.getInstance().openProjects.forEach { project ->
+                            // Clear the cache for packages with excluded versions
+                            settings.excludedVersions.keys.forEach { packageName ->
+                                project.service<NUDState>().availableUpdates.remove(packageName)
+                            }
                             // if project's currently open file is package.json, re-analyze it
                             FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
                                 PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
