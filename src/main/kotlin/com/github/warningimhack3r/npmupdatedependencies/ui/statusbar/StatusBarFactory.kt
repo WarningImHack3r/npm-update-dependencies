@@ -4,7 +4,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.dvcs.ui.LightActionGroup
 import com.intellij.ide.DataManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -24,6 +23,7 @@ class StatusBarFactory : StatusBarEditorBasedWidgetFactory() {
     companion object {
         const val ID = "NpmUpdateDependenciesStatusBarEditorFactory"
     }
+
     override fun getId(): String = ID
 
     override fun getDisplayName(): String = "NPM Update Dependencies Status Bar"
@@ -48,6 +48,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
     companion object {
         const val ID = "NpmUpdateDependenciesStatusBarWidgetBar"
     }
+
     private var currentStatus = Status.UNAVAILABLE
 
     enum class Status {
@@ -123,13 +124,13 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             "Available Changes",
             LightActionGroup().apply {
                 addSeparator("Updates")
-                addAll(project.service<NUDState>().availableUpdates.toSortedMap().map { update ->
+                addAll(NUDState.getInstance(project).availableUpdates.toSortedMap().map { update ->
                     DumbAwareAction.create(update.key) {
                         openPackageJson(update.key)
                     }
                 })
                 addSeparator("Deprecations")
-                addAll(project.service<NUDState>().deprecations.toSortedMap().map { deprecation ->
+                addAll(NUDState.getInstance(project).deprecations.toSortedMap().map { deprecation ->
                     DumbAwareAction.create(deprecation.key) {
                         openPackageJson(deprecation.key)
                     }
@@ -143,7 +144,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     override fun getSelectedValue(): String? {
         if (!NUDSettingsState.instance.showStatusBarWidget) return null
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
             Status.GATHERING_REGISTRIES -> "Gathering registries..."
@@ -160,12 +161,14 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                         deprecated == 0 -> "$outdated update${if (outdated == 1) "" else "s"}"
                         else -> "$outdated update${if (outdated == 1) "" else "s"}, $deprecated deprecation${if (deprecated == 1) "" else "s"}"
                     }
+
                     StatusBarMode.COMPACT -> when {
                         outdated == 0 && deprecated == 0 -> null
                         outdated == 0 -> "$deprecated D"
                         deprecated == 0 -> "$outdated U"
                         else -> "$outdated U / $deprecated D"
                     }
+
                     null -> null
                 }
             }
@@ -174,7 +177,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     // Custom
     fun update() {
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         currentStatus = when {
             project.isDisposed || !NUDSettingsState.instance.showStatusBarWidget -> Status.UNAVAILABLE
             state.isScanningForRegistries -> Status.GATHERING_REGISTRIES

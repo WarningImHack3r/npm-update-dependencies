@@ -16,7 +16,7 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -27,6 +27,9 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
         Map<JsonProperty, ScanResult>
         >() {
+    companion object {
+        private val log = logger<UpdatesAnnotator>()
+    }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
         Pair(file.project, AnnotatorsCommon.getInfo(file))
@@ -35,19 +38,23 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
-        var state = project.service<NUDState>()
+        var state = NUDState.getInstance(project)
         if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
             state.isScanningForRegistries = true
-            project.service<RegistriesScanner>().scan()
+            log.debug("No registries found, scanning for registries...")
+            RegistriesScanner.getInstance(project).scan()
+            log.debug("Registries scanned")
             state.isScanningForRegistries = false
         }
 
         while (state.isScanningForRegistries || state.isScanningForUpdates) {
             // Wait for the registries to be scanned and avoid multiple scans at the same time
+            log.debug("Waiting for registries to be scanned...")
         }
 
-        state = project.service<NUDState>()
-        val updateChecker = project.service<PackageUpdateChecker>()
+        log.debug("Scanning for updates...")
+        state = NUDState.getInstance(project)
+        val updateChecker = PackageUpdateChecker.getInstance(project)
         return info
             .also {
                 // Remove from the cache all properties that are no longer in the file
@@ -67,11 +74,13 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     Pair(property.jsonProperty, scanResult)
                 } else null
             }.filterNotNull().toMap().also {
+                log.debug("Updates scanned, ${it.size} found")
                 state.isScanningForUpdates = false
             }
     }
 
     override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, ScanResult>, holder: AnnotationHolder) {
+        if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, scanResult) ->
             val versions = scanResult.versions
             val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
@@ -120,5 +129,6 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 .needsUpdateOnTyping()
                 .create()
         }
+        if (annotationResult.isNotEmpty()) log.debug("Annotations created")
     }
 }

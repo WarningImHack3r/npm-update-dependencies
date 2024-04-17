@@ -7,7 +7,6 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -21,11 +20,12 @@ import javax.swing.JLabel
 class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
     override fun beforeDocumentSaving(document: Document) {
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         // Initial checks
         val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
         if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
-            || (state.availableUpdates.isEmpty() && state.deprecations.isEmpty())) return
+            || (state.availableUpdates.isEmpty() && state.deprecations.isEmpty())
+        ) return
 
         // Create a set of actions to perform
         val actionsToPerform = mutableSetOf<() -> Unit>()
@@ -47,6 +47,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
                 Deprecation.Action.REPLACE -> actionsToPerform.add {
                     ActionsCommon.replaceAllDeprecations(file)
                 }
+
                 Deprecation.Action.REMOVE -> actionsToPerform.add {
                     ActionsCommon.deleteAllDeprecations(file)
                 }

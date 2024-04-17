@@ -18,7 +18,8 @@ object NUDHelper {
             WriteCommandAction.runWriteCommandAction(
                 file.project, description,
                 "com.github.warningimhack3r.npmupdatedependencies",
-                action, file)
+                action, file
+            )
         }
         if (async) {
             ApplicationManager.getApplication().invokeLater(writeAction)
@@ -33,7 +34,11 @@ object NUDHelper {
             .firstChild
     }
 
-    fun getClosestElementMatching(match: (PsiElement) -> Boolean, element: PsiElement, cls: Class<out PsiElement> = PsiElement::class.java): PsiElement? {
+    fun getClosestElementMatching(
+        match: (PsiElement) -> Boolean,
+        element: PsiElement,
+        cls: Class<out PsiElement> = PsiElement::class.java
+    ): PsiElement? {
         var sibling = element.nextSibling
         while (sibling != null) {
             if (sibling.javaClass == cls && match(sibling)) {

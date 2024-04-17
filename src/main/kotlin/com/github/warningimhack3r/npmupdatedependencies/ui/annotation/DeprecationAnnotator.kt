@@ -13,7 +13,7 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
-import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -24,6 +24,9 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
         Map<JsonProperty, Deprecation>
         >() {
+    companion object {
+        private val log = logger<DeprecationAnnotator>()
+    }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
         Pair(file.project, AnnotatorsCommon.getInfo(file))
@@ -32,19 +35,23 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
-        var state = project.service<NUDState>()
+        var state = NUDState.getInstance(project)
         if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
             state.isScanningForRegistries = true
-            project.service<RegistriesScanner>().scan()
+            log.debug("No registries found, scanning for registries...")
+            RegistriesScanner.getInstance(project).scan()
+            log.debug("Registries scanned")
             state.isScanningForRegistries = false
         }
 
         while (state.isScanningForRegistries || state.isScanningForDeprecations) {
             // Wait for the registries to be scanned and avoid multiple scans at the same time
+            log.debug("Waiting for registries to be scanned...")
         }
 
-        state = project.service<NUDState>()
-        val npmjsClient = project.service<NPMJSClient>()
+        log.debug("Scanning for deprecations...")
+        state = NUDState.getInstance(project)
+        val npmjsClient = NPMJSClient.getInstance(project)
         return info
             .also {
                 // Remove from the cache all deprecations that are no longer in the file
@@ -106,11 +113,13 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                     }
                 }
             }.filterNotNull().toMap().also {
+                log.debug("Deprecations scanned, ${it.size} found")
                 state.isScanningForDeprecations = false
             }
     }
 
     override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Deprecation>, holder: AnnotationHolder) {
+        if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, deprecation) ->
             holder.newAnnotation(HighlightSeverity.ERROR, deprecation.reason)
                 .range(property.textRange)
@@ -137,6 +146,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 .create()
         }
         if (annotationResult.isNotEmpty()) {
+            log.debug("Annotations created, updating banner")
             EditorNotifications.getInstance(file.project).updateAllNotifications()
         }
     }

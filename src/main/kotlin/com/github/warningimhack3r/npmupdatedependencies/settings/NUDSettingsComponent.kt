@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.project.ProjectManager
@@ -188,7 +187,7 @@ class NUDSettingsComponent {
                         ProjectManager.getInstance().openProjects.forEach { project ->
                             // Clear the cache for packages with excluded versions
                             settings.excludedVersions.keys.forEach { packageName ->
-                                project.service<NUDState>().availableUpdates.remove(packageName)
+                                NUDState.getInstance(project).availableUpdates.remove(packageName)
                             }
                             // if project's currently open file is package.json, re-analyze it
                             FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->

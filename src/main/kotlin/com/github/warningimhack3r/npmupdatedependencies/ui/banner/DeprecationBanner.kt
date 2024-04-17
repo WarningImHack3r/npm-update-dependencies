@@ -5,7 +5,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vfs.VirtualFile
@@ -20,14 +20,22 @@ import java.util.function.Function
 import javax.swing.JComponent
 
 class DeprecationBanner : EditorNotificationProvider {
+    companion object {
+        private val log = logger<DeprecationBanner>()
+    }
 
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?> = Function { _ ->
         val psiFile = PsiManager.getInstance(project).findFile(file)
-        val deprecations = project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(project).deprecations
         if (psiFile == null || file.name != "package.json" || deprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
+            when {
+                psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
+                deprecations.isEmpty() -> log.debug("Leaving: no deprecations found")
+                !NUDSettingsState.instance.showDeprecationBanner -> log.debug("Leaving: deprecation banner is disabled")
+            }
             return@Function null
         }
         val deprecationsCount = deprecations.size

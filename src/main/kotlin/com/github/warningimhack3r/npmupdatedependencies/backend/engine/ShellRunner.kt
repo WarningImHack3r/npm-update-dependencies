@@ -1,8 +1,9 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.jetbrains.rd.util.printlnError
+import com.intellij.openapi.diagnostic.logger
 
 object ShellRunner {
+    private val log = logger<ShellRunner>()
     private val failedCommands = mutableSetOf<String>()
 
     private fun isWindows() = System.getProperty("os.name").lowercase().contains("win")
@@ -11,8 +12,10 @@ object ShellRunner {
         val commandName = command.firstOrNull() ?: return null
         if (isWindows() && failedCommands.contains(commandName)) {
             command[0] = "$commandName.cmd"
+            log.warn("Retrying command with .cmd extension: \"${command.joinToString(" ")}\"")
         }
         return try {
+            log.debug("Executing \"${command.joinToString(" ")}\"")
             val process = ProcessBuilder(*command)
                 .redirectOutput(ProcessBuilder.Redirect.PIPE)
                 .start()
@@ -23,7 +26,7 @@ object ShellRunner {
                 failedCommands.add(commandName)
                 return execute(arrayOf("$commandName.cmd") + command.drop(1).toTypedArray())
             }
-            printlnError("Error while executing \"${command.joinToString(" ")}\": ${e.message}")
+            log.warn("Error while executing \"${command.joinToString(" ")}\"", e)
             null
         }
     }

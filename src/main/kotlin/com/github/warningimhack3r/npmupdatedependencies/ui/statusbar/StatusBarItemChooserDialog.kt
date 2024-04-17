@@ -49,14 +49,17 @@ class StatusBarItemChooserDialog(items: Collection<String>) : JDialog() {
                         selectedItem = null
                         dispose()
                     }
+
                     KeyEvent.VK_ENTER -> {
                         selectedItem = itemList.selectedIndex
                         dispose()
                     }
+
                     KeyEvent.VK_UP -> {
                         itemList.selectedIndex = (itemList.selectedIndex - 1 + items.size) % items.size
                         itemList.ensureIndexIsVisible(itemList.selectedIndex)
                     }
+
                     KeyEvent.VK_DOWN -> {
                         itemList.selectedIndex = (itemList.selectedIndex + 1) % items.size
                         itemList.ensureIndexIsVisible(itemList.selectedIndex)
@@ -117,6 +120,7 @@ class StatusBarItemChooserDialog(items: Collection<String>) : JDialog() {
                         selectedItem = null
                         dispose()
                     }
+
                     KeyEvent.VK_ENTER -> {
                         selectedItem = itemList.selectedIndex
                         dispose()
@@ -124,7 +128,11 @@ class StatusBarItemChooserDialog(items: Collection<String>) : JDialog() {
                 }
             }
         })
-        val scrollPane = JBScrollPane(itemList, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER)
+        val scrollPane = JBScrollPane(
+            itemList,
+            ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
+            ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        )
         scrollPane.preferredSize = Dimension(WIDTH, (itemList.getCellBounds(0, 0)?.height?.plus(1) ?: 20).let {
             if (items.size > 10) it * 10 else it * items.size
         })

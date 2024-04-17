@@ -6,7 +6,6 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
-import com.intellij.openapi.components.service
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -35,6 +34,6 @@ class BlacklistVersionFix(
             DaemonCodeAnalyzer.getInstance(project).restart(it)
         }
         // Clear the cache
-        project.service<NUDState>().availableUpdates.remove(dependencyName)
+        NUDState.getInstance(project).availableUpdates.remove(dependencyName)
     }
 }

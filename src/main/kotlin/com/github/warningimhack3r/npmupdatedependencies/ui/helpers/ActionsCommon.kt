@@ -5,7 +5,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
@@ -24,7 +23,7 @@ object ActionsCommon {
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
         getAllDependencies(file)
             .mapNotNull { property ->
-                file.project.service<NUDState>().availableUpdates[property.name]?.let { scanResult ->
+                NUDState.getInstance(file.project).availableUpdates[property.name]?.let { scanResult ->
                     val newVersion = scanResult.versions.from(kind) ?: scanResult.versions.orderedAvailableKinds(kind)
                         .firstOrNull { it != kind }?.let { scanResult.versions.from(it) } ?: return@mapNotNull null
                     val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
@@ -43,7 +42,7 @@ object ActionsCommon {
     }
 
     fun replaceAllDeprecations(file: PsiFile) {
-        val deprecations = file.project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
                 deprecations[property.name]?.let { deprecation ->
@@ -112,7 +111,7 @@ object ActionsCommon {
     }
 
     fun deleteAllDeprecations(file: PsiFile) {
-        val deprecations = file.project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
                 if (deprecations.containsKey(property.name)) property else null
