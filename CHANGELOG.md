@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.2.0] - 2024-04-17
+
 ### Added
 
 - Introduce the long-awaited blacklist feature
@@ -188,7 +190,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.5...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.0...HEAD
+[2.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.3...v2.1.4
 [2.1.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.2...v2.1.3
