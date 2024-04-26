@@ -6,9 +6,10 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.components.service
 
-class UpdateAllSatisfiesAction : AnAction() {
+class UpdateAllSatisfiesAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
         val availableUpdates = e.project?.service<NUDState>()?.availableUpdates
         e.presentation.isEnabled = if (availableUpdates != null) {

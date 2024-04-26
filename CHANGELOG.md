@@ -12,6 +12,15 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve crash reporter to include more relevant information
+
+### Fixed
+
+- Fix a library crash due to a version parsing logic problem (#94)
+- Fix yet another compatibility issue with newer versions (2024.1+) (#94)
+
 ## [2.2.0] - 2024-04-17
 
 ### Added

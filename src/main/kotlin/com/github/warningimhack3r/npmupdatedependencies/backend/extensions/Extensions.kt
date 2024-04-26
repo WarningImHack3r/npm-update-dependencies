@@ -2,6 +2,28 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.extensions
 
 import com.intellij.json.psi.JsonValue
 import kotlinx.coroutines.*
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
+
+fun <T> safeConversion(block: () -> T): T? = try {
+    block()
+} catch (e: Exception) {
+    null
+}
+
+val JsonElement.asJsonObject
+    get() = safeConversion { jsonObject }
+
+val JsonElement.asJsonArray
+    get() = safeConversion { jsonArray }
+
+var JsonElement.asString
+    get() = safeConversion { jsonPrimitive.content }
+    set(_) {
+        // Do nothing
+    }
 
 fun JsonValue.stringValue(): String = text.replace("\"", "")
 

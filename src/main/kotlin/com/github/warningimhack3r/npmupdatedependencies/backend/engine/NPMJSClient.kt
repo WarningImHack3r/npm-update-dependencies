@@ -1,12 +1,16 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
-import com.google.gson.JsonObject
-import com.google.gson.JsonParser
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.json.Json
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonObject
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -49,7 +53,7 @@ class NPMJSClient(private val project: Project) {
                     log.debug("No dist.tarball found for package $packageName in any registry")
                 }
             }
-            val registry = "${computedRegistry.substringBefore("/$packageName")}/"
+            val registry = computedRegistry.substringBefore("/$packageName")
             log.info("Computed registry for package $packageName: $registry")
             registryForPackage[packageName] = registry
             registry
@@ -76,11 +80,7 @@ class NPMJSClient(private val project: Project) {
             return null
         }
         return try {
-            if (JsonParser.parseString(responseBody).isJsonObject) {
-                JsonParser.parseString(responseBody).asJsonObject
-            } else {
-                null
-            }
+            Json.parseToJsonElement(responseBody).jsonObject
         } catch (e: Exception) {
             log.warn("Error while parsing response body from $uri", e)
             null
@@ -110,7 +110,7 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting all versions for package $packageName")
         val registry = getRegistry(packageName)
         val json = getBodyAsJSON("${registry}/$packageName")
-        return json?.get("versions")?.asJsonObject?.keySet()?.toList().also {
+        return json?.get("versions")?.asJsonObject?.keys?.toList().also {
             if (it != null) {
                 log.info("All versions for package $packageName found in cache: $it")
             }
@@ -121,7 +121,12 @@ class NPMJSClient(private val project: Project) {
                 log.warn("All versions for package $packageName not found")
                 return null
             } else if (versions.startsWith("[")) {
-                JsonParser.parseString(versions).asJsonArray.map { it.asString }
+                try {
+                    Json.parseToJsonElement(versions)
+                } catch (e: Exception) {
+                    log.warn("Error while parsing all versions for package $packageName", e)
+                    null
+                }?.asJsonArray?.mapNotNull { it.asString } ?: emptyList()
             } else {
                 listOf(versions.replace("\"", ""))
             }
@@ -146,7 +151,7 @@ class NPMJSClient(private val project: Project) {
             if (it != null) {
                 log.info("Deprecation status for package $packageName found: $it")
             } else {
-                log.warn("Deprecation status for package $packageName not found")
+                log.debug("No deprecation status found for package $packageName")
             }
         }
     }
