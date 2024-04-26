@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.2.1] - 2024-04-26
+
 ### Changed
 
 - Improve crash reporter to include more relevant information
@@ -19,7 +21,7 @@
 ### Fixed
 
 - Fix a library crash due to a version parsing logic problem (#94)
-- Fix yet another compatibility issue with newer versions (2024.1+) (#94)
+- Fix yet another (last one) compatibility issue with newer versions (2024.1+) (#94)
 
 ## [2.2.0] - 2024-04-17
 
@@ -199,7 +201,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...HEAD
+[2.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.4...v2.1.5
 [2.1.4]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.3...v2.1.4
