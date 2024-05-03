@@ -45,6 +45,11 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.autoReorderDependencies = value
         }
+    var maxParallelism: Int
+        get() = settings.maxParallelism
+        set(value) {
+            settings.maxParallelism = value
+        }
     var showStatusBarWidget: Boolean
         get() = settings.showStatusBarWidget
         set(value) {
@@ -71,6 +76,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var defaultDeprecationAction: Deprecation.Action = Deprecation.Action.REPLACE,
         var showDeprecationBanner: Boolean = true,
         var autoReorderDependencies: Boolean = true,
+        var maxParallelism: Int = 100,
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,

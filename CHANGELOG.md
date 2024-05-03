@@ -12,6 +12,20 @@
 
 ## [Unreleased]
 
+### Added
+
+- Introduce a setting to customize the maximum amount of simultaneous scans
+
+### Changed
+
+- Slightly improve performance on scans startup
+- Logic improvements for scanners
+
+### Fixed
+
+- Fix a rare crash with the status bar when navigating between projects (#99)
+- Fix cached updates not being used when they should
+
 ## [2.2.1] - 2024-04-26
 
 ### Changed

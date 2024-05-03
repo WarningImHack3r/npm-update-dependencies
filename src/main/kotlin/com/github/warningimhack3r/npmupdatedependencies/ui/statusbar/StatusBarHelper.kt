@@ -13,7 +13,7 @@ object StatusBarHelper {
         for (project in projectManager.openProjects) {
             log.debug("Updating widget for project ${project.name}")
             val widgetBar =
-                WindowManager.getInstance().getStatusBar(project).getWidget(WidgetBar.ID) as? WidgetBar ?: continue
+                WindowManager.getInstance().getStatusBar(project)?.getWidget(WidgetBar.ID) as? WidgetBar ?: continue
             widgetBar.update()
             log.debug("Widget updated for project ${project.name}")
         }

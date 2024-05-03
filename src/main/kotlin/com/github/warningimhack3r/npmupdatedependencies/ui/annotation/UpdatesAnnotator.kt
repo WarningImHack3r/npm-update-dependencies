@@ -8,6 +8,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUp
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
@@ -21,6 +22,7 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
+import kotlinx.coroutines.delay
 import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
@@ -40,21 +42,24 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
 
         var state = NUDState.getInstance(project)
         if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
-            state.isScanningForRegistries = true
             log.debug("No registries found, scanning for registries...")
             RegistriesScanner.getInstance(project).scan()
             log.debug("Registries scanned")
-            state.isScanningForRegistries = false
         }
 
-        while (state.isScanningForRegistries || state.isScanningForUpdates) {
-            // Wait for the registries to be scanned and avoid multiple scans at the same time
-            log.debug("Waiting for registries to be scanned...")
+        if (state.isScanningForRegistries || state.isScanningForDeprecations) {
+            log.debug("Waiting for registries and/or deprecations to be scanned...")
+            while (state.isScanningForRegistries || state.isScanningForDeprecations) {
+                // Wait for the registries to be scanned and avoid multiple scans at the same time
+            }
         }
 
         log.debug("Scanning for updates...")
         state = NUDState.getInstance(project)
+        val maxParallelism = NUDSettingsState.instance.maxParallelism
+        var activeTasks = 0
         val updateChecker = PackageUpdateChecker.getInstance(project)
+
         return info
             .also {
                 // Remove from the cache all properties that are no longer in the file
@@ -65,11 +70,24 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.scannedUpdates = 0
                 state.isScanningForUpdates = true
             }.parallelMap { property ->
-                val value = property.comparator ?: return@parallelMap null
+                if (maxParallelism < 100) {
+                    while (activeTasks >= maxParallelism) {
+                        // Wait for the active tasks count to decrease
+                        delay(50)
+                    }
+                    activeTasks++
+                    log.debug("Task $activeTasks/$maxParallelism started: ${property.name}")
+                }
+                val value = property.comparator ?: return@parallelMap null.also {
+                    log.debug("Empty comparator for ${property.name}, skipping")
+                    activeTasks--
+                }
                 val scanResult = updateChecker.areUpdatesAvailable(property.name, value)
                 state.scannedUpdates++
 
                 val coerced = Semver.coerce(value)
+                log.debug("Task finished for ${property.name}")
+                activeTasks--
                 if (scanResult != null && coerced != null && !scanResult.versions.isEqualToAny(coerced)) {
                     Pair(property.jsonProperty, scanResult)
                 } else null

@@ -10,7 +10,6 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonObject
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
@@ -79,12 +78,7 @@ class NPMJSClient(private val project: Project) {
             log.warn("Error while getting response body from $uri", e)
             return null
         }
-        return try {
-            Json.parseToJsonElement(responseBody).jsonObject
-        } catch (e: Exception) {
-            log.warn("Error while parsing response body from $uri", e)
-            null
-        }
+        return Json.parseToJsonElement(responseBody).asJsonObject
     }
 
     fun getLatestVersion(packageName: String): String? {
@@ -112,7 +106,8 @@ class NPMJSClient(private val project: Project) {
         val json = getBodyAsJSON("${registry}/$packageName")
         return json?.get("versions")?.asJsonObject?.keys?.toList().also {
             if (it != null) {
-                log.info("All versions for package $packageName found in cache: $it")
+                log.info("All versions for package $packageName found in cache (${it.size} versions)")
+                log.debug("Versions in cache for $packageName: $it")
             }
         } ?: ShellRunner.execute(
             arrayOf("npm", "v", packageName, "versions", "--json", "--registry=$registry")
@@ -132,7 +127,8 @@ class NPMJSClient(private val project: Project) {
             }
         }.also { versions ->
             if (versions != null) {
-                log.info("All versions for package $packageName found: $versions")
+                log.info("All versions for package $packageName found (${versions.size} versions)")
+                log.debug("Versions for $packageName: $versions")
             }
         }
     }

@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClie
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.DeprecatedDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -19,6 +20,7 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.applyIf
+import kotlinx.coroutines.delay
 
 class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -37,21 +39,24 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
 
         var state = NUDState.getInstance(project)
         if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
-            state.isScanningForRegistries = true
             log.debug("No registries found, scanning for registries...")
             RegistriesScanner.getInstance(project).scan()
             log.debug("Registries scanned")
-            state.isScanningForRegistries = false
         }
 
-        while (state.isScanningForRegistries || state.isScanningForDeprecations) {
-            // Wait for the registries to be scanned and avoid multiple scans at the same time
-            log.debug("Waiting for registries to be scanned...")
+        if (state.isScanningForRegistries || state.isScanningForUpdates) {
+            log.debug("Waiting for registries and/or updates to be scanned...")
+            while (state.isScanningForRegistries || state.isScanningForUpdates) {
+                // Wait for the registries to be scanned and avoid multiple scans at the same time
+            }
         }
 
         log.debug("Scanning for deprecations...")
         state = NUDState.getInstance(project)
+        val maxParallelism = NUDSettingsState.instance.maxParallelism
+        var activeTasks = 0
         val npmjsClient = NPMJSClient.getInstance(project)
+
         return info
             .also {
                 // Remove from the cache all deprecations that are no longer in the file
@@ -62,8 +67,18 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 state.scannedDeprecations = 0
                 state.isScanningForDeprecations = true
             }.parallelMap { property ->
+                if (maxParallelism < 100) {
+                    while (activeTasks >= maxParallelism) {
+                        // Wait for the active tasks count to decrease
+                        delay(50)
+                    }
+                    activeTasks++
+                    log.debug("Task $activeTasks/$maxParallelism started: ${property.name}")
+                }
                 state.deprecations[property.name]?.let { deprecation ->
+                    log.debug("Deprecation found in cache: ${property.name}")
                     state.scannedDeprecations++
+                    activeTasks--
                     // If the deprecation is already in the cache, we don't need to check the NPM registry
                     Pair(property.jsonProperty, deprecation)
                 } ?: npmjsClient.getPackageDeprecation(property.name)?.let { reason ->
@@ -72,45 +87,44 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         // Remove punctuation at the end of the word
                         word.replace(Regex("[,;.]$"), "")
                     }.filter { word ->
-                        // Try to find a word that looks like a package name
-                        if (word.startsWith("@")) {
-                            // Scoped package
-                            return@filter word.split("/").size == 2
+                        with(word) {
+                            // Try to find a word that looks like a package name
+                            when {
+                                // Scoped package
+                                startsWith("@") -> split("/").size == 2
+                                // If it contains a slash without being a scoped package, it's likely an URL
+                                contains("/") -> false
+                                // Other potential matches
+                                contains("-") -> lowercase() == this
+                                // Else if we're unsure, we don't consider it as a package name
+                                else -> false
+                            }
                         }
-                        if (word.contains("/")) {
-                            // If it contains a slash without being a scoped package, it's likely an URL
-                            return@filter false
-                        }
-                        // Other potential matches
-                        if (word.contains("-")) {
-                            return@filter word.lowercase() == word
-                        }
-                        // Else if we're unsure, we don't consider it as a package name
-                        false
                     }.parallelMap innerMap@{ potentialPackage ->
                         // Confirm that the word is a package name by trying to get its latest version
                         npmjsClient.getLatestVersion(potentialPackage)?.let {
                             Pair(potentialPackage, it)
                         }
-                    }.filterNotNull().also {
-                        state.scannedDeprecations++
-                    }.firstOrNull()?.let { (name, version) ->
+                    }.filterNotNull().firstOrNull()?.let { (name, version) ->
                         // We found a package name and its latest version, so we can create a replacement
                         Pair(property.jsonProperty, Deprecation(reason, Deprecation.Replacement(name, version)))
                     } ?: Pair(
                         property.jsonProperty,
                         Deprecation(reason, null)
                     ) // No replacement found in the deprecation reason
-                }.also { pair ->
-                    pair?.let {
+                }.also { result ->
+                    result?.let { (property, deprecation) ->
                         // Add the deprecation to the cache if any
-                        state.deprecations[property.name] = it.second
-                    } ?: run {
+                        state.deprecations[property.name] = deprecation
+                    } ?: state.deprecations[property.name]?.let { _ ->
                         // Remove the deprecation from the cache if no deprecation is found
-                        if (state.deprecations.containsKey(property.name)) {
-                            state.deprecations.remove(property.name)
-                        }
+                        state.deprecations.remove(property.name)
                     }
+
+                    log.debug("Finished task for ${property.name}, deprecation found: ${result != null}")
+                    // Manage counters
+                    state.scannedDeprecations++
+                    activeTasks--
                 }
             }.filterNotNull().toMap().also {
                 log.debug("Deprecations scanned, ${it.size} found")

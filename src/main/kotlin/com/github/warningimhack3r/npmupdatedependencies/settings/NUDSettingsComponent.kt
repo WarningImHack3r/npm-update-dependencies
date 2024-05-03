@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
+import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -122,7 +123,7 @@ class NUDSettingsComponent {
         setCancelOperation {
             dialogWrapper.close(DialogWrapper.CANCEL_EXIT_CODE)
         }
-        dialogWrapper.setSize(400, 300) // Width is not really respected, text width takes over
+        dialogWrapper.setSize(400, 300) // Width is not respected, text width takes over
     }
 
     val panel = panel {
@@ -147,6 +148,19 @@ class NUDSettingsComponent {
                 checkBox("Automatically reorder dependencies")
                     .comment("Reorder dependencies after replacing deprecated ones.<br>Useful when a new dependency starts with a different letter than the old one.")
                     .bindSelected(settings::autoReorderDependencies)
+            }
+        }
+        group("Parallelism") {
+            row("Maximum parallel processes:") {
+                spinner(1..100)
+                    .comment(
+                        "Control the maximum number of parallel scans that can be run at the same time. Higher values can speed up the scan but might cause performance issues or out of memory issues. Make sure to bump ${
+                            ApplicationNamesInfo.getInstance().fullProductName.substringBefore(
+                                " "
+                            )
+                        }'s memory as needed.<br><strong>100 means no limit.</strong>"
+                    )
+                    .bindIntValue(settings::maxParallelism)
             }
         }
         group("Status Bar") {

@@ -41,13 +41,10 @@ class PackageUpdateChecker(private val project: Project) {
     }
 
     private fun areVersionsMatchingComparatorNeeds(versions: Versions, comparator: String): Boolean {
-        return if (versions.latest.satisfies(comparator)) {
-            versions.satisfies == null
-        } else {
-            versions.satisfies != null
-                    && versions.satisfies.satisfies(comparator)
-                    && isVersionMoreRecentThanComparator(versions.satisfies, comparator)
-        } && isVersionMoreRecentThanComparator(versions.latest, comparator)
+        return isVersionMoreRecentThanComparator(versions.latest, comparator) && versions.satisfies?.let { satisfying ->
+            satisfying.satisfies(comparator)
+                    && isVersionMoreRecentThanComparator(satisfying, comparator)
+        } ?: true
     }
 
     private fun getVersionExcludingFilter(packageName: String, version: Semver): String? {
@@ -81,6 +78,9 @@ class PackageUpdateChecker(private val project: Project) {
             if (areVersionsMatchingComparatorNeeds(cachedVersions.versions, comparator)) {
                 log.info("Cached versions for $packageName are still valid, returning them")
                 return cachedVersions
+            } else {
+                log.debug("Cached versions for $packageName are outdated, removing them")
+                availableUpdates.remove(packageName)
             }
         }
 
@@ -94,7 +94,7 @@ class PackageUpdateChecker(private val project: Project) {
         var satisfyingVersion: Semver? = null
         val updateAvailable = isVersionMoreRecentThanComparator(newestVersion, comparator)
         if (!updateAvailable) {
-            if (availableUpdates.containsKey(packageName)) {
+            availableUpdates[packageName]?.let {
                 availableUpdates.remove(packageName)
             }
             log.info("No update available for $packageName, removing cached versions")
