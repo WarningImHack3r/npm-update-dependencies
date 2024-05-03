@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.3.0] - 2024-05-03
+
 ### Added
 
 - Introduce a setting to customize the maximum amount of simultaneous scans
@@ -215,7 +217,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...HEAD
+[2.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.5...v2.2.0
 [2.1.5]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.4...v2.1.5
