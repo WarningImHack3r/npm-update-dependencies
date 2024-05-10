@@ -22,7 +22,7 @@
 
 ### Fixed
 
-- Fix status bar sometimes not being updated correctly (#102 - thanks @tborychowski!)
+- Fix status bar sometimes not being updated correctly (#102)
 - Fix high CPU usage when scanning for registries
 - Fix a crash when scanning for deprecations
 
