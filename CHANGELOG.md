@@ -12,6 +12,18 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve logic related to registries scanning, avoiding rare duplicated checks
+- Retry failed shell commands up to 2 times before giving up, improving success rate
+- Other code improvements and optimizations
+
+### Fixed
+
+- Fix status bar sometimes not being updated correctly (#102)
+- Fix high CPU usage when scanning for registries
+- Fix a crash when scanning for deprecations
+
 ## [2.3.0] - 2024-05-03
 
 ### Added

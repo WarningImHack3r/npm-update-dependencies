@@ -148,7 +148,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
             Status.GATHERING_REGISTRIES -> "Gathering registries..."
-            Status.SCANNING_PACKAGES -> "Scanning packages (${state.scannedUpdates + state.scannedDeprecations}/${state.totalPackages})..."
+            Status.SCANNING_PACKAGES -> "Scanning packages (${state.scannedUpdates + state.scannedDeprecations}/${state.totalPackages * 2})..."
             Status.SCANNING_FOR_UPDATES -> "Scanning for updates (${state.scannedUpdates}/${state.totalPackages})..."
             Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
             Status.READY -> {

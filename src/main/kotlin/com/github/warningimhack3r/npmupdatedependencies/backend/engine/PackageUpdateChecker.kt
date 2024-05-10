@@ -94,10 +94,7 @@ class PackageUpdateChecker(private val project: Project) {
         var satisfyingVersion: Semver? = null
         val updateAvailable = isVersionMoreRecentThanComparator(newestVersion, comparator)
         if (!updateAvailable) {
-            availableUpdates[packageName]?.let {
-                availableUpdates.remove(packageName)
-            }
-            log.info("No update available for $packageName, removing cached versions")
+            log.info("No update available for $packageName")
             return null
         }
 

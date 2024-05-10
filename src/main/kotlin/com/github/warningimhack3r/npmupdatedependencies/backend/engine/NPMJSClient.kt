@@ -27,9 +27,9 @@ class NPMJSClient(private val project: Project) {
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
-        val registryForPackage = NUDState.getInstance(project).packageRegistries
+        val state = NUDState.getInstance(project)
         val availableRegistries = RegistriesScanner.getInstance(project).registries
-        return registryForPackage[packageName].also {
+        return state.packageRegistries[packageName].also {
             if (it != null) {
                 log.debug("Registry for package $packageName found in cache: $it")
             }
@@ -54,7 +54,7 @@ class NPMJSClient(private val project: Project) {
             }
             val registry = computedRegistry.substringBefore("/$packageName")
             log.info("Computed registry for package $packageName: $registry")
-            registryForPackage[packageName] = registry
+            state.packageRegistries[packageName] = registry
             registry
         } ?: NPMJS_REGISTRY.also {
             log.info("Using default registry for package $packageName")

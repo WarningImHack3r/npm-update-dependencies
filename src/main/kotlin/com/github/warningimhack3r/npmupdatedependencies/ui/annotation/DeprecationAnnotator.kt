@@ -37,33 +37,28 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
-        var state = NUDState.getInstance(project)
-        if (!state.isScanningForRegistries && state.packageRegistries.isEmpty()) {
-            log.debug("No registries found, scanning for registries...")
-            RegistriesScanner.getInstance(project).scan()
+        val state = NUDState.getInstance(project)
+        val registriesScanner = RegistriesScanner.getInstance(project)
+        if (!registriesScanner.scanned && !state.isScanningForRegistries) {
+            log.debug("Registries not scanned yet, scanning now")
+            state.isScanningForRegistries = true
+            registriesScanner.scan()
+            state.isScanningForRegistries = false
             log.debug("Registries scanned")
         }
 
-        if (state.isScanningForRegistries || state.isScanningForUpdates) {
-            log.debug("Waiting for registries and/or updates to be scanned...")
-            while (state.isScanningForRegistries || state.isScanningForUpdates) {
-                // Wait for the registries to be scanned and avoid multiple scans at the same time
-            }
-        }
-
-        log.debug("Scanning for deprecations...")
-        state = NUDState.getInstance(project)
+        val npmjsClient = NPMJSClient.getInstance(project)
         val maxParallelism = NUDSettingsState.instance.maxParallelism
         var activeTasks = 0
-        val npmjsClient = NPMJSClient.getInstance(project)
 
+        log.debug("Scanning for deprecations...")
         return info
-            .also {
+            .also { properties ->
                 // Remove from the cache all deprecations that are no longer in the file
-                val fileDependenciesNames = it.map { property -> property.name }
+                val fileDependenciesNames = properties.map { property -> property.name }
                 state.deprecations.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
                 // Update the status bar widget
-                state.totalPackages = it.size
+                state.totalPackages = properties.size
                 state.scannedDeprecations = 0
                 state.isScanningForDeprecations = true
             }.parallelMap { property ->
@@ -113,7 +108,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         Deprecation(reason, null)
                     ) // No replacement found in the deprecation reason
                 }.also { result ->
-                    result?.let { (property, deprecation) ->
+                    result?.let { (_, deprecation) ->
                         // Add the deprecation to the cache if any
                         state.deprecations[property.name] = deprecation
                     } ?: state.deprecations[property.name]?.let { _ ->
@@ -127,7 +122,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                     activeTasks--
                 }
             }.filterNotNull().toMap().also {
-                log.debug("Deprecations scanned, ${it.size} found")
+                log.debug("Deprecations scanned, ${it.size} found out of ${info.size}")
                 state.isScanningForDeprecations = false
             }
     }

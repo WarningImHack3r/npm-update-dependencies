@@ -22,6 +22,7 @@ import java.nio.charset.StandardCharsets
 // https://github.com/SonarSource/sonarlint-intellij/blob/master/src/main/java/org/sonarlint/intellij/errorsubmitter/BlameSonarSource.java
 class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
     companion object {
+        private const val REPO_URL = "https://github.com/WarningImHack3r/npm-update-dependencies"
         private const val MAX_URL_LENGTH = 2083
         private const val BUG_LOGS_KEY = "bug-logs"
         private const val TRIMMED_STACKTRACE_MARKER = "\n\n<TRIMMED STACKTRACE>"
@@ -136,7 +137,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
      * @return the URL for the GitHub issue.
      */
     private fun buildUrl(fields: Map<String, String>) = buildString {
-        append("https://github.com/WarningImHack3r/npm-update-dependencies/issues/new?labels=bug&template=bug_report.yml")
+        append("$REPO_URL/issues/new?labels=bug&template=bug_report.yml")
         fields.forEach { (key, value) ->
             append("&$key=${URLEncoder.encode(value, StandardCharsets.UTF_8)}")
         }

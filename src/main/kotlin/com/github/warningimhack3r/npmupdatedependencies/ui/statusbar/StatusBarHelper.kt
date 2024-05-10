@@ -9,13 +9,16 @@ object StatusBarHelper {
 
     fun updateWidget() {
         log.info("Updating widget")
-        val projectManager = ProjectManager.getInstanceIfCreated() ?: return
+        val projectManager = ProjectManager.getInstanceIfCreated() ?: run {
+            log.warn("Project manager is not created, cancelling")
+            return
+        }
         for (project in projectManager.openProjects) {
-            log.debug("Updating widget for project ${project.name}")
+            log.debug("Updating widget for project \"${project.name}\"")
             val widgetBar =
                 WindowManager.getInstance().getStatusBar(project)?.getWidget(WidgetBar.ID) as? WidgetBar ?: continue
             widgetBar.update()
-            log.debug("Widget updated for project ${project.name}")
+            log.debug("Widget updated for project \"${project.name}\"")
         }
     }
 }

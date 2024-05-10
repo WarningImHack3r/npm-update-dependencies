@@ -14,8 +14,24 @@ class NUDState {
         fun getInstance(project: Project): NUDState = project.service()
     }
 
+    /**
+     * A "cache" of available updates for packages.
+     * Managed by [PackageUpdateChecker.areUpdatesAvailable].
+     */
     val availableUpdates = mutableMapOf<String, ScanResult>()
+
+    /**
+     * A "cache" of deprecations for packages.
+     * Managed by [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator.doAnnotate].
+     */
     val deprecations = mutableMapOf<String, Deprecation>()
+
+    /**
+     * A "cache" of registries for packages, mapping package names to registry URLs.
+     * Managed by [NPMJSClient.getRegistry] and only made to be used by it.
+     *
+     * MUST NOT be accessed from outside the [com.github.warningimhack3r.npmupdatedependencies.backend.engine] package.
+     */
     val packageRegistries = mutableMapOf<String, String>()
 
     var totalPackages = 0

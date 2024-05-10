@@ -7,11 +7,11 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.UpdateInBackground
-import com.intellij.openapi.components.service
 
 class UpdateAllLatestAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = e.project?.service<NUDState>()?.availableUpdates?.isNotEmpty() ?: false
+        e.presentation.isEnabled =
+            e.project?.let { NUDState.getInstance(it) }?.availableUpdates?.isNotEmpty() ?: false
     }
 
     override fun actionPerformed(e: AnActionEvent) {

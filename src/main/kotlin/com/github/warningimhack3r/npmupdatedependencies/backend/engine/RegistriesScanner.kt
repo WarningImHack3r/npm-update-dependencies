@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
-class RegistriesScanner(private val project: Project) {
+class RegistriesScanner {
     companion object {
         private val log = logger<RegistriesScanner>()
 
@@ -14,21 +14,27 @@ class RegistriesScanner(private val project: Project) {
         fun getInstance(project: Project): RegistriesScanner = project.service()
     }
 
+    /**
+     * Whether the registries have been scanned for this project.
+     */
+    var scanned = false
+
+    /**
+     * The list of registries found parsing the npm configuration.
+     */
     var registries: List<String> = emptyList()
 
     fun scan() {
-        val state = NUDState.getInstance(project)
         log.info("Starting to scan registries")
-        state.isScanningForRegistries = true
         // Run `npm config ls` to get the list of registries
         val config = ShellRunner.execute(arrayOf("npm", "config", "ls")) ?: return
-        registries = config.lines().asSequence().filter { line ->
-            line.isNotEmpty() && line.isNotBlank() && !line.startsWith(";")
-        }.map { it.trim() }.filter { line ->
-            line.contains("registry =") || line.contains("registry=")
-                    || line.startsWith("//")
+        registries = config.lines().asSequence().map { it.trim() }.filter { line ->
+            line.isNotEmpty() && line.isNotBlank() && !line.startsWith(";") &&
+                    (line.contains("registry =") || line.contains("registry=")
+                            || line.startsWith("//"))
         }.map { line ->
             if (line.startsWith("//")) {
+                // We assume that registries use TLS in 2024
                 "https:${line.substringBefore("/:")}"
             } else {
                 line.substringAfter("registry")
@@ -38,6 +44,6 @@ class RegistriesScanner(private val project: Project) {
             }
         }.map { it.removeSuffix("/") }.distinct().toList()
         log.info("Found registries: $registries")
-        state.isScanningForRegistries = false
+        if (!scanned) scanned = true
     }
 }

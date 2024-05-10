@@ -7,11 +7,10 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
 import com.intellij.openapi.actionSystem.UpdateInBackground
-import com.intellij.openapi.components.service
 
 class UpdateAllSatisfiesAction : AnAction(), UpdateInBackground {
     override fun update(e: AnActionEvent) {
-        val availableUpdates = e.project?.service<NUDState>()?.availableUpdates
+        val availableUpdates = e.project?.let { NUDState.getInstance(it) }?.availableUpdates
         e.presentation.isEnabled = if (availableUpdates != null) {
             availableUpdates.isNotEmpty()
                     && availableUpdates.values.mapNotNull { it.versions.satisfies }.any()

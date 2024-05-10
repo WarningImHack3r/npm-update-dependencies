@@ -19,11 +19,8 @@ val JsonElement.asJsonObject
 val JsonElement.asJsonArray
     get() = safeConversion { jsonArray }
 
-var JsonElement.asString
+val JsonElement.asString
     get() = safeConversion { jsonPrimitive.content }
-    set(_) {
-        // Do nothing
-    }
 
 fun JsonValue.stringValue(): String = text.replace("\"", "")
 
