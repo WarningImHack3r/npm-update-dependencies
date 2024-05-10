@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.3.1] - 2024-05-10
+
 ### Changed
 
 - Improve logic related to registries scanning, avoiding rare duplicated checks
@@ -20,7 +22,7 @@
 
 ### Fixed
 
-- Fix status bar sometimes not being updated correctly (#102)
+- Fix status bar sometimes not being updated correctly (#102 - thanks @tborychowski!)
 - Fix high CPU usage when scanning for registries
 - Fix a crash when scanning for deprecations
 
@@ -229,7 +231,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.1...HEAD
+[2.3.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...v2.3.0
 [2.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.0...v2.2.1
 [2.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.1.5...v2.2.0
