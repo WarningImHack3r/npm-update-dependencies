@@ -2,8 +2,8 @@ package com.github.warningimhack3r.npmupdatedependencies.ui.statusbar
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
-import com.intellij.dvcs.ui.LightActionGroup
 import com.intellij.ide.DataManager
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -122,7 +122,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
         return JBPopupFactory.getInstance().createActionGroupPopup(
             "Available Changes",
-            LightActionGroup().apply {
+            DefaultActionGroup().apply {
                 addSeparator("Updates")
                 addAll(NUDState.getInstance(project).availableUpdates.toSortedMap().map { update ->
                     DumbAwareAction.create(update.key) {
