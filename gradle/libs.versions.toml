@@ -1,6 +1,7 @@
 [versions]
 # libraries
 semver4j = "5.3.0"
+jnpm = "1.5"
 
 # plugins
 kotlin = "2.0.0"
@@ -11,6 +12,7 @@ kover = "0.8.0"
 
 [libraries]
 semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
+jnpm = { group = "org.orienteer.jnpm", name = "jnpm", version.ref = "jnpm" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
