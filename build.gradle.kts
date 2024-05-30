@@ -32,6 +32,21 @@ kotlin {
 dependencies {
 //    implementation(libs.annotations)
     implementation(libs.semver4j)
+    implementation(libs.jnpm)
+    constraints {
+        implementation("com.squareup.okhttp3:okhttp:4.9.3") {
+            because("4.9.0 has a security vulnerability")
+        }
+        implementation("org.apache.commons:commons-compress:1.26.1") {
+            because("1.21 has a security vulnerability")
+        }
+        implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1") {
+            because("2.10.1 has a security vulnerability")
+        }
+        implementation("com.squareup.okio:okio:3.4.0") {
+            because("2.8.0 has a security vulnerability")
+        }
+    }
 }
 
 // Configure Gradle IntelliJ Plugin - read more: https://plugins.jetbrains.com/docs/intellij/tools-gradle-intellij-plugin.html
@@ -96,6 +111,10 @@ tasks {
                 )
             }
         }
+    }
+
+    runIde {
+        maxHeapSize = "4g"
     }
 
     // Configure UI tests plugin
