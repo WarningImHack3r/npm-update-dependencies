@@ -1,17 +1,15 @@
 [versions]
 # libraries
-annotations = "24.1.0"
 semver4j = "5.3.0"
 
 # plugins
-kotlin = "1.9.24"
+kotlin = "2.0.0"
 changelog = "2.2.0"
 gradleIntelliJPlugin = "1.17.3"
 qodana = "2024.1.5"
 kover = "0.8.0"
 
 [libraries]
-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
 semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
 
 [plugins]
