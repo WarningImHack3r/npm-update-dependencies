@@ -29,19 +29,22 @@ class DeprecationBanner : EditorNotificationProvider {
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?> = Function { _ ->
         val psiFile = PsiManager.getInstance(project).findFile(file)
-        val deprecations = NUDState.getInstance(project).deprecations
-        if (psiFile == null || file.name != "package.json" || deprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
+        val state = NUDState.getInstance(project)
+        if (psiFile == null || file.name != "package.json" || state.deprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
             when {
                 psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
-                deprecations.isEmpty() -> log.debug("Leaving: no deprecations found")
+                state.deprecations.isEmpty() -> {
+                    if (state.scannedDeprecations > 0) log.debug("Leaving: no deprecations found")
+                    else log.warn("Leaving: deprecations not scanned yet")
+                }
+
                 !NUDSettingsState.instance.showDeprecationBanner -> log.debug("Leaving: deprecation banner is disabled")
             }
             return@Function null
         }
-        val deprecationsCount = deprecations.size
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
             val availableActions = enumValues<Deprecation.Action>().filter { action ->
-                (action == Deprecation.Action.REPLACE && deprecations.any { (_, deprecation) ->
+                (action == Deprecation.Action.REPLACE && state.deprecations.any { (_, deprecation) ->
                     deprecation.replacement != null
                 }) || action != Deprecation.Action.REPLACE
             }
@@ -56,6 +59,7 @@ class DeprecationBanner : EditorNotificationProvider {
             } else {
                 actionsTitles.first()
             }
+            val deprecationsCount = state.deprecations.size
             text(
                 if (deprecationsCount > 1) {
                     "You have $deprecationsCount deprecated packages. $actionsString them"
@@ -75,7 +79,7 @@ class DeprecationBanner : EditorNotificationProvider {
                     action.toString() + if (deprecationsCount > 1) {
                         " deprecations"
                     } else {
-                        " \"${deprecations.first().key}\""
+                        " \"${state.deprecations.first().key}\""
                     }
                 ) {
                     when (action) {

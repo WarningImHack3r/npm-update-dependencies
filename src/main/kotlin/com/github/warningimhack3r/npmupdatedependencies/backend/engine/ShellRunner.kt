@@ -21,13 +21,16 @@ object ShellRunner {
             }
             return try {
                 log.debug("Executing \"${command.joinToString(" ")}\"")
-                val process = ProcessBuilder(*command)
-                    .redirectOutput(ProcessBuilder.Redirect.PIPE)
-                    .start()
+                val process = ProcessBuilder(*command).start()
                 process.waitFor()
-                process.inputStream.bufferedReader().readText().also {
+                val output = process.inputStream?.bufferedReader()?.readText()?.also {
                     log.debug("Executed command \"${command.joinToString(" ")}\" with output:\n$it")
+                } ?: ""
+                val error = process.errorStream?.bufferedReader()?.readText()
+                if (output.isBlank() && !error.isNullOrBlank()) {
+                    log.warn("Error while executing \"${command.joinToString(" ")}\":\n${error.take(150)}")
                 }
+                output
             } catch (e: Exception) {
                 if (isWindows && !program.endsWith(".cmd")) {
                     failedWindowsPrograms.add(program)

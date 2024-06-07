@@ -3,7 +3,6 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
-import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -28,7 +27,6 @@ class NPMJSClient(private val project: Project) {
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
         val state = NUDState.getInstance(project)
-        val availableRegistries = RegistriesScanner.getInstance(project).registries
         return state.packageRegistries[packageName].also {
             if (it != null) {
                 log.debug("Registry for package $packageName found in cache: $it")
@@ -38,17 +36,15 @@ class NPMJSClient(private val project: Project) {
         )?.trim()?.let { dist ->
             val computedRegistry = dist.ifEmpty {
                 log.debug("No dist.tarball found for package $packageName, trying all registries")
-                availableRegistries.parallelMap { registry ->
+                RegistriesScanner.getInstance(project).registries.forEach { registry ->
                     ShellRunner.execute(
                         arrayOf("npm", "v", packageName, "dist.tarball", "--registry=$registry")
-                    )?.trim()?.let { regDist ->
-                        regDist.ifEmpty { null }
+                    )?.let { regDist ->
+                        log.debug("Found dist.tarball for package $packageName in registry $regDist")
+                        return@ifEmpty regDist
                     }
-                }.firstNotNullOfOrNull { it }.also {
-                    if (it != null) {
-                        log.debug("Found dist.tarball for package $packageName in registry $it")
-                    }
-                } ?: return@let null.also {
+                }
+                return@let null.also {
                     log.debug("No dist.tarball found for package $packageName in any registry")
                 }
             }
