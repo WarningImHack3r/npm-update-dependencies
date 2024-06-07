@@ -64,6 +64,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.totalPackages = properties.size
                 state.scannedUpdates = 0
                 state.isScanningForUpdates = true
+                log.debug("Starting batching ${info.size} dependencies for updates")
             }.parallelMap { property ->
                 if (maxParallelism < 100) {
                     while (activeTasks >= maxParallelism) {

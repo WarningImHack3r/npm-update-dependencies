@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix plugin hanging forever when trying to find a dependency's registry (#110)
+
 ## [2.3.2] - 2024-05-17
 
 ### Fixed

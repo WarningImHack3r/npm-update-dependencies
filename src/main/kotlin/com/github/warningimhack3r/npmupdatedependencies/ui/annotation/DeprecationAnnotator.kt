@@ -61,6 +61,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 state.totalPackages = properties.size
                 state.scannedDeprecations = 0
                 state.isScanningForDeprecations = true
+                log.debug("Starting batching ${info.size} dependencies for deprecation")
             }.parallelMap { property ->
                 if (maxParallelism < 100) {
                     while (activeTasks >= maxParallelism) {
