@@ -106,9 +106,14 @@ class PackageUpdateChecker(private val project: Project) {
             || !newestVersion.satisfies(comparator)
         ) {
             log.debug("Latest version $newestVersion is excluded, a beta, or does not satisfy the comparator")
-            val allVersions = npmjsClient.getAllVersions(packageName)?.mapNotNull { version ->
-                Semver.coerce(version)
-            }?.sortedDescending() ?: emptyList()
+            val allVersions = try {
+                npmjsClient.getAllVersions(packageName)?.mapNotNull { version ->
+                    Semver.coerce(version)
+                }?.sortedDescending() ?: emptyList()
+            } catch (e: Exception) {
+                log.warn("Failed to get all versions for $packageName", e)
+                emptyList()
+            }
 
             // Downgrade the latest version if it's filtered out
             var latest: Semver? = null

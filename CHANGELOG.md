@@ -15,6 +15,7 @@
 ### Fixed
 
 - Fix plugin hanging forever when trying to find a dependency's registry (#110)
+- Mitigate crashes when checking version for some dependencies (#109)
 
 ## [2.3.2] - 2024-05-17
 
