@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [2.3.3] - 2024-06-15
+
 ### Fixed
 
 - Fix plugin hanging forever when trying to find a dependency's registry (#110)
@@ -242,7 +244,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...HEAD
+[2.3.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...v2.3.0
