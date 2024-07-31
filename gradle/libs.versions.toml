@@ -3,12 +3,12 @@
 semver4j = "5.3.0"
 
 # plugins
+changelog = "2.2.0"
+intellijPlatform = "2.0.0"
 kotlin = "1.9.24"
 serialization = "1.6.3"
-changelog = "2.2.0"
-gradleIntelliJPlugin = "1.17.4"
-qodana = "2024.1.5"
 kover = "0.8.1"
+qodana = "2024.1.5"
 
 [libraries]
 semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
@@ -16,7 +16,7 @@ serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
-gradleIntelliJPlugin = { id = "org.jetbrains.intellij", version.ref = "gradleIntelliJPlugin" }
+intellijPlatform = { id = "org.jetbrains.intellij.platform", version.ref = "intellijPlatform" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
 serialization = { id = "plugin.serialization", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }

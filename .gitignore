@@ -1,6 +1,7 @@
 .gradle/
 .idea/*
 !.idea/icon.svg
+.intelliJPlatform/
 .qodana
 assets
 build/
