@@ -27,17 +27,18 @@ class NPMJSClient(private val project: Project) {
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
         val state = NUDState.getInstance(project)
+        val shellRunner = ShellRunner.getInstance(project)
         return state.packageRegistries[packageName].also {
             if (it != null) {
                 log.debug("Registry for package $packageName found in cache: $it")
             }
-        } ?: ShellRunner.execute(
+        } ?: shellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
             val computedRegistry = dist.ifEmpty {
                 log.debug("No dist.tarball found for package $packageName, trying all registries")
                 RegistriesScanner.getInstance(project).registries.forEach { registry ->
-                    ShellRunner.execute(
+                    shellRunner.execute(
                         arrayOf("npm", "v", packageName, "dist.tarball", "--registry=$registry")
                     )?.let { regDist ->
                         log.debug("Found dist.tarball for package $packageName in registry $regDist")
@@ -85,7 +86,7 @@ class NPMJSClient(private val project: Project) {
             if (it != null) {
                 log.info("Latest version for package $packageName found in cache: $it")
             }
-        } ?: ShellRunner.execute(
+        } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "version", "--registry=$registry")
         )?.trim()?.let { it.ifEmpty { null } }.also {
             if (it != null) {
@@ -105,7 +106,7 @@ class NPMJSClient(private val project: Project) {
                 log.info("All versions for package $packageName found in cache (${it.size} versions)")
                 log.debug("Versions in cache for $packageName: $it")
             }
-        } ?: ShellRunner.execute(
+        } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "versions", "--json", "--registry=$registry")
         )?.trim()?.let { versions ->
             if (versions.isEmpty()) {
@@ -137,7 +138,7 @@ class NPMJSClient(private val project: Project) {
             if (it != null) {
                 log.info("Deprecation status for package $packageName found in cache: $it")
             }
-        } ?: ShellRunner.execute(
+        } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "deprecated", "--registry=$registry")
         )?.trim()?.let { it.ifEmpty { null } }.also {
             if (it != null) {

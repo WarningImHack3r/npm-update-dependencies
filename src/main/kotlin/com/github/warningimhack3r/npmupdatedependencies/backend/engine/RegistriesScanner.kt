@@ -6,7 +6,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
-class RegistriesScanner {
+class RegistriesScanner(private val project: Project) {
     companion object {
         private val log = logger<RegistriesScanner>()
 
@@ -27,7 +27,7 @@ class RegistriesScanner {
     fun scan() {
         log.info("Starting to scan registries")
         // Run `npm config ls` to get the list of registries
-        val config = ShellRunner.execute(arrayOf("npm", "config", "ls")) ?: return
+        val config = ShellRunner.getInstance(project).execute(arrayOf("npm", "config", "ls")) ?: return
         registries = config.lines().asSequence().map { it.trim() }.filter { line ->
             line.isNotEmpty() && line.isNotBlank() && !line.startsWith(";") &&
                     (line.contains("registry =") || line.contains("registry=")
