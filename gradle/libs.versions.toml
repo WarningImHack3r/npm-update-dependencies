@@ -3,11 +3,11 @@
 semver4j = "5.3.0"
 
 # plugins
-changelog = "2.2.0"
+changelog = "2.2.1"
 intellijPlatform = "2.0.0"
-kotlin = "1.9.24"
-serialization = "1.6.3"
-kover = "0.8.1"
+kotlin = "2.0.0"
+serialization = "1.7.1"
+kover = "0.8.3"
 qodana = "2024.1.5"
 
 [libraries]
