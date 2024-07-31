@@ -24,6 +24,7 @@ kotlin {
 // Configure project's dependencies
 repositories {
     mavenCentral()
+    gradlePluginPortal()
 
     // IntelliJ Platform Gradle Plugin Repositories Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-repositories-extension.html
     intellijPlatform {
@@ -35,6 +36,7 @@ repositories {
 dependencies {
     implementation(libs.semver4j)
     implementation(libs.serialization)
+    testImplementation(libs.junit)
 
     // IntelliJ Platform Gradle Plugin Dependencies Extension - read more: https://plugins.jetbrains.com/docs/intellij/tools-intellij-platform-gradle-plugin-dependencies-extension.html
     intellijPlatform {
