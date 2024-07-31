@@ -43,7 +43,7 @@ class DeprecationBanner : EditorNotificationProvider {
             return@Function null
         }
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
-            val availableActions = enumValues<Deprecation.Action>().filter { action ->
+            val availableActions = Deprecation.Action.entries.filter { action ->
                 (action == Deprecation.Action.REPLACE && state.deprecations.any { (_, deprecation) ->
                     deprecation.replacement != null
                 }) || action != Deprecation.Action.REPLACE

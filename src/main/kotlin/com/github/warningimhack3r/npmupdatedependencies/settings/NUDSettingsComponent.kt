@@ -130,11 +130,11 @@ class NUDSettingsComponent {
         val settings = NUDSettingsState.instance
         group("Annotation Actions") {
             row("Default update type:") {
-                comboBox(enumValues<Versions.Kind>().toList())
+                comboBox(Versions.Kind.entries.toList())
                     .bindItem(settings::defaultUpdateType.toMutableProperty())
             }
             row("Default deprecation action:") {
-                comboBox(enumValues<Deprecation.Action>().toList())
+                comboBox(Deprecation.Action.entries.toList())
                     .bindItem(settings::defaultDeprecationAction.toMutableProperty())
             }
         }
@@ -172,7 +172,7 @@ class NUDSettingsComponent {
             }
             indent {
                 row("Status Bar mode:") {
-                    comboBox(enumValues<StatusBarMode>().toList())
+                    comboBox(StatusBarMode.entries.toList())
                         .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
                         .bindItem(settings::statusBarMode.toMutableProperty())
                 }.enabledIf(statusBarEnabled.selected)

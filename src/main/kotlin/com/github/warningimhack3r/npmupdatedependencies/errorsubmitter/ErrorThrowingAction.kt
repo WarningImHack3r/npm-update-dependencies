@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.errorsubmitter
 
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.UpdateInBackground
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAwareAction
 
@@ -14,9 +14,13 @@ import com.intellij.openapi.project.DumbAwareAction
  * #com.github.warningimhack3r.npmupdatedependencies.errorreport.ErrorThrowingAction
  * ```
  */
-class ErrorThrowingAction : DumbAwareAction(), UpdateInBackground {
+class ErrorThrowingAction : DumbAwareAction() {
     companion object {
         private val LOG = logger<ErrorThrowingAction>()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
     }
 
     override fun update(e: AnActionEvent) {
