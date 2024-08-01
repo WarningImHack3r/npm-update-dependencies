@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.0.0] - 2024-08-01
+
 ### Removed
 
 - Drop support for 2022.1 and 2022.2 IDEs (#116)
@@ -248,7 +250,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...HEAD
+[3.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...v3.0.0
 [2.3.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...v2.3.1
