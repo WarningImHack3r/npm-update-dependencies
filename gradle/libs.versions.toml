@@ -12,9 +12,9 @@ kover = "0.8.3"
 qodana = "2024.1.5"
 
 [libraries]
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
 serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
-junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }

@@ -4,6 +4,5 @@
 !.idea/icon.svg
 .intelliJPlatform/
 .qodana
-assets
 build/
 .DS_Store
