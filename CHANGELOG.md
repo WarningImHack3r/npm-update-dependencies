@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.0.0] - 2024-08-01
+
 ### Removed
 
 - Drop support for 2022.1 and 2022.2 IDEs (#116)
