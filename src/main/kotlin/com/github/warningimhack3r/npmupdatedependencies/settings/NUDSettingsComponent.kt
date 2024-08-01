@@ -18,7 +18,6 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
@@ -102,7 +101,7 @@ class NUDSettingsComponent {
                         .disableUpDownActions()
                         .createPanel()
                 )
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.FILL)
             }
         }
         setTitle("Excluded Versions")
