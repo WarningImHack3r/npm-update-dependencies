@@ -16,8 +16,6 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Consumer
-import java.awt.event.MouseEvent
 
 class StatusBarFactory : StatusBarEditorBasedWidgetFactory() {
     companion object {
@@ -75,9 +73,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         Status.READY -> "Click to see available updates"
     }
 
-    override fun getClickConsumer(): Consumer<MouseEvent>? = null
-
-    // Replaced with getPopup() in 2023.1
+    @Deprecated("Replaced with getPopup() in 2023.1", ReplaceWith("getPopup()"))
     override fun getPopupStep(): ListPopup? {
         if (project.isDisposed || currentStatus != Status.READY) return null
 

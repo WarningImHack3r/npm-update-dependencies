@@ -17,7 +17,7 @@ class BlacklistVersionFix(
     private val versionName: String? = null
 ) : BaseIntentionAction() {
     override fun getText() =
-        "${enumValues<Versions.Kind>().size + 1 + index}. Blacklist ${versionName ?: versionPattern} for $dependencyName"
+        "${Versions.Kind.entries.size + 1 + index}. Blacklist ${versionName ?: versionPattern} for $dependencyName"
 
     override fun getFamilyName() = "Blacklist version $versionPattern for $dependencyName"
 

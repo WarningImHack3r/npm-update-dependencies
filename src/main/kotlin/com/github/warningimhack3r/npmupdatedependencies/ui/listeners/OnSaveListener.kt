@@ -33,7 +33,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         // Fix updates if any
         if (state.availableUpdates.isNotEmpty()) {
             actionsToPerform.add {
-                ActionsCommon.updateAll(file, enumValues<Versions.Kind>().first {
+                ActionsCommon.updateAll(file, Versions.Kind.entries.first {
                     it == NUDSettingsState.instance.defaultUpdateType
                 })
             }
@@ -41,7 +41,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
         // Fix deprecations if any
         if (state.deprecations.isNotEmpty()) {
-            when (enumValues<Deprecation.Action>().first {
+            when (Deprecation.Action.entries.first {
                 it == NUDSettingsState.instance.defaultDeprecationAction
             }) {
                 Deprecation.Action.REPLACE -> actionsToPerform.add {

@@ -21,7 +21,7 @@ data class Deprecation(
         }
 
         companion object {
-            fun orderedActions(placeFirst: Action? = null) = enumValues<Action>().toList().let {
+            fun orderedActions(placeFirst: Action? = null) = Action.entries.toList().let {
                 if (placeFirst == null) it
                 else listOf(placeFirst) + it.filter { action -> action != placeFirst }
             }
