@@ -85,7 +85,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                 if (size == 1) first() else {
                     // Filter all files containing the dependency name
                     filter { file ->
-                        FileDocumentManager.getInstance().getDocument(file)?.text?.contains(dependencyName) ?: false
+                        FileDocumentManager.getInstance().getDocument(file)?.text?.contains(dependencyName) == true
                     }.run {
                         if (size == 1) first() else {
                             // Show a dialog to choose the file

@@ -9,7 +9,7 @@ import kotlinx.serialization.json.jsonPrimitive
 
 fun <T> safeConversion(block: () -> T): T? = try {
     block()
-} catch (e: Exception) {
+} catch (_: Exception) {
     null
 }
 

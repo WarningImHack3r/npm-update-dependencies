@@ -89,7 +89,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
             ))
             consumer.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             consumer.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
             false
         }

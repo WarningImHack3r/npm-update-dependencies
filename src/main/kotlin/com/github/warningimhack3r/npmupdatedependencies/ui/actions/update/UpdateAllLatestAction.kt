@@ -15,7 +15,7 @@ class UpdateAllLatestAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled =
-            e.project?.let { NUDState.getInstance(it) }?.availableUpdates?.isNotEmpty() ?: false
+            e.project?.let { NUDState.getInstance(it) }?.availableUpdates?.isNotEmpty() == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

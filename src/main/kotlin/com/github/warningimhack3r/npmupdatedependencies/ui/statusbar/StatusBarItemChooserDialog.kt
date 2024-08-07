@@ -31,7 +31,7 @@ class StatusBarItemChooserDialog(items: Collection<String>) : JDialog() {
         isModal = true
         isResizable = false
         isUndecorated = true
-        defaultCloseOperation = WindowConstants.DISPOSE_ON_CLOSE
+        defaultCloseOperation = DISPOSE_ON_CLOSE
 
         // Configure the header
         val header = JLabel("Select an item (${items.size})")
