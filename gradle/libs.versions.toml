@@ -6,10 +6,10 @@ semver4j = "5.3.0"
 # plugins
 changelog = "2.2.1"
 intellijPlatform = "2.0.1"
-kotlin = "2.0.10"
+kotlin = "2.0.20"
 kover = "0.8.3"
 qodana = "2024.1.9"
-serialization = "1.7.1"
+serialization = "1.7.2"
 
 [libraries]
 junit = { group = "junit", name = "junit", version.ref = "junit" }
