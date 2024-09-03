@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.0.1] - 2024-09-03
+
 ### Fixed
 
 - Fix `false` deprecated field flagging dependencies as deprecated (#122)
@@ -255,7 +257,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.1...HEAD
+[3.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...v3.0.0
 [2.3.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.1...v2.3.2
