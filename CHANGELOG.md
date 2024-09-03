@@ -12,6 +12,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix `false` deprecated field flagging dependencies as deprecated (#122)
+- Fix registry affectation logic freezing the plugin
+
 ## [3.0.0] - 2024-08-01
 
 ### Removed

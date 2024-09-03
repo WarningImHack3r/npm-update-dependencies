@@ -1,8 +1,10 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoolean
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.isBlankOrEmpty
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
@@ -28,10 +30,8 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting registry for package $packageName")
         val state = NUDState.getInstance(project)
         val shellRunner = ShellRunner.getInstance(project)
-        return state.packageRegistries[packageName].also {
-            if (it != null) {
-                log.debug("Registry for package $packageName found in cache: $it")
-            }
+        return state.packageRegistries[packageName]?.also {
+            log.debug("Registry for package $packageName found in cache: $it")
         } ?: shellRunner.execute(
             arrayOf("npm", "v", packageName, "dist.tarball")
         )?.trim()?.let { dist ->
@@ -48,11 +48,13 @@ class NPMJSClient(private val project: Project) {
                 return@let null.also {
                     log.debug("No dist.tarball found for package $packageName in any registry")
                 }
+            }.substringBefore("/$packageName").ifEmpty {
+                log.debug("No registry found for package $packageName")
+                return@let null
             }
-            val registry = computedRegistry.substringBefore("/$packageName")
-            log.info("Computed registry for package $packageName: $registry")
-            state.packageRegistries[packageName] = registry
-            registry
+            log.info("Computed registry for package $packageName: $computedRegistry")
+            state.packageRegistries[packageName] = computedRegistry
+            computedRegistry
         } ?: NPMJS_REGISTRY.also {
             log.info("Using default registry for package $packageName")
         }
@@ -82,15 +84,13 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting latest version for package $packageName")
         val registry = getRegistry(packageName)
         val json = getBodyAsJSON("${registry}/$packageName/latest")
-        return json?.get("version")?.asString.also {
-            if (it != null) {
-                log.info("Latest version for package $packageName found in cache: $it")
-            }
+        return json?.get("version")?.asString?.also {
+            log.info("Latest version for package $packageName found online: $it")
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "version", "--registry=$registry")
         )?.trim()?.let { it.ifEmpty { null } }.also {
             if (it != null) {
-                log.info("Latest version for package $packageName found: $it")
+                log.info("Latest version for package $packageName found locally: $it")
             } else {
                 log.warn("Latest version for package $packageName not found")
             }
@@ -101,11 +101,9 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting all versions for package $packageName")
         val registry = getRegistry(packageName)
         val json = getBodyAsJSON("${registry}/$packageName")
-        return json?.get("versions")?.asJsonObject?.keys?.toList().also {
-            if (it != null) {
-                log.info("All versions for package $packageName found in cache (${it.size} versions)")
-                log.debug("Versions in cache for $packageName: $it")
-            }
+        return json?.get("versions")?.asJsonObject?.keys?.toList()?.also {
+            log.info("All versions for package $packageName found in online (${it.size} versions)")
+            log.debug("Versions for $packageName: $it")
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "versions", "--json", "--registry=$registry")
         )?.trim()?.let { versions ->
@@ -122,11 +120,9 @@ class NPMJSClient(private val project: Project) {
             } else {
                 listOf(versions.replace("\"", ""))
             }
-        }.also { versions ->
-            if (versions != null) {
-                log.info("All versions for package $packageName found (${versions.size} versions)")
-                log.debug("Versions for $packageName: $versions")
-            }
+        }?.also { versions ->
+            log.info("All versions for package $packageName found locally (${versions.size} versions)")
+            log.debug("Local versions for $packageName: $versions")
         }
     }
 
@@ -134,15 +130,33 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting deprecation status for package $packageName")
         val registry = getRegistry(packageName)
         val json = getBodyAsJSON("${registry}/$packageName/latest")
-        return json?.get("deprecated")?.asString.also {
-            if (it != null) {
-                log.info("Deprecation status for package $packageName found in cache: $it")
+
+        fun deprecationStatus(deprecation: String, local: Boolean = false): String? {
+            log.debug("Deprecation status for package $packageName before transformation: $deprecation")
+            return with(deprecation) {
+                when {
+                    local && isBlankOrEmpty() -> null
+                    equals("true", ignoreCase = true) || (!local && isBlankOrEmpty()) -> "Deprecated"
+                    equals("false", ignoreCase = true) -> null
+                    else -> this
+                }
+            }.also { reason ->
+                log.debug("Deprecation status for package $packageName after transformation: $reason")
             }
+        }
+
+        return json?.get("deprecated")?.let { deprecation ->
+            log.debug("Deprecation status for package $packageName found online: $deprecation")
+            if (deprecation.asBoolean == true) {
+                "Deprecated"
+            } else deprecation.asString?.let { deprecationStatus(it) }
+        }?.also { reason ->
+            log.info("Online deprecation after transformation: $reason")
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "deprecated", "--registry=$registry")
-        )?.trim()?.let { it.ifEmpty { null } }.also {
-            if (it != null) {
-                log.info("Deprecation status for package $packageName found: $it")
+        )?.trim()?.let { deprecationStatus(it, local = true) }.also { reason ->
+            if (reason != null) {
+                log.info("Deprecation status for package $packageName found locally: $reason")
             } else {
                 log.debug("No deprecation status found for package $packageName")
             }

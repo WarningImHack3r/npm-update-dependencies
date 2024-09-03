@@ -18,7 +18,7 @@ class ShellRunner(private val project: Project) {
 
     private val failedWindowsPrograms = mutableSetOf<String>()
 
-    private fun isWindows() = System.getProperty("os.name").lowercase().contains("win")
+    private fun isWindows() = System.getProperty("os.name").contains("win", ignoreCase = true)
 
     fun execute(command: Array<String>): String? {
         val program = command.firstOrNull() ?: return null.also {
