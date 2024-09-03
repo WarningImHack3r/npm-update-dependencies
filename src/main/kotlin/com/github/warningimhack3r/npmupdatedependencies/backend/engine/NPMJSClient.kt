@@ -134,9 +134,23 @@ class NPMJSClient(private val project: Project) {
         log.info("Getting deprecation status for package $packageName")
         val registry = getRegistry(packageName)
         val json = getBodyAsJSON("${registry}/$packageName/latest")
-        return json?.get("deprecated")?.asString.also {
-            if (it != null) {
-                log.info("Deprecation status for package $packageName found in cache: $it")
+        return json?.get("deprecated")?.let { deprecated ->
+            when {
+                deprecated.isJsonPrimitive && deprecated.asJsonPrimitive.isString -> {
+                    val deprecatedValue = deprecated.asString
+                    if (deprecatedValue.equals("true", ignoreCase = true)) {
+                        log.info("Package $packageName is deprecated")
+                        deprecatedValue
+                    } else {
+                        log.info("Deprecation status for package $packageName found in cache: $deprecatedValue")
+                        deprecatedValue
+                    }
+                }
+                deprecated.isJsonPrimitive && deprecated.asJsonPrimitive.isBoolean && deprecated.asBoolean -> {
+                    log.info("Package $packageName is deprecated")
+                    "true"
+                }
+                else -> null
             }
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "deprecated", "--registry=$registry")
