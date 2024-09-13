@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix compatibility with 2024.3 IDEs
+
 ## [3.0.1] - 2024-09-03
 
 ### Fixed
