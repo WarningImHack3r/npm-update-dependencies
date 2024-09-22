@@ -1,8 +1,10 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.engine
+package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.openapi.components.Service
@@ -12,19 +14,12 @@ import com.intellij.openapi.project.Project
 import org.semver4j.Semver
 
 @Service(Service.Level.PROJECT)
-class PackageUpdateChecker(private val project: Project) {
+class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageUpdateChecker>()
 
         @JvmStatic
         fun getInstance(project: Project): PackageUpdateChecker = project.service()
-    }
-
-    private fun isVersionUpgradable(version: String): Boolean {
-        return !(version.startsWith("http")
-                || version.startsWith("git")
-                || version.contains("/")
-                || !version.any { it.isDigit() })
     }
 
     private fun isVersionMoreRecentThanComparator(version: Semver, comparator: String): Boolean {
@@ -45,7 +40,7 @@ class PackageUpdateChecker(private val project: Project) {
         return isVersionMoreRecentThanComparator(versions.latest, comparator) && versions.satisfies?.let { satisfying ->
             satisfying.satisfies(comparator)
                     && isVersionMoreRecentThanComparator(satisfying, comparator)
-        } ?: true
+        } != false
     }
 
     private fun getVersionExcludingFilter(packageName: String, version: Semver): String? {
@@ -65,18 +60,18 @@ class PackageUpdateChecker(private val project: Project) {
 
     fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
-        val availableUpdates = NUDState.getInstance(project).availableUpdates
+        val state = NUDState.getInstance(project)
         if (!isVersionUpgradable(comparator)) {
             log.warn("Comparator $comparator is not upgradable")
-            if (availableUpdates.containsKey(packageName)) {
+            if (state.availableUpdates.containsKey(packageName)) {
                 log.debug("Removing cached versions for $packageName")
-                availableUpdates.remove(packageName)
+                state.availableUpdates.remove(packageName)
             }
             return null
         }
 
         // Check if an update has already been found
-        availableUpdates[packageName]?.let { cachedVersions ->
+        state.availableUpdates[packageName]?.let { cachedVersions ->
             when (cachedVersions) {
                 is UpdateState.Outdated -> {
                     log.debug("Update found in cache for $packageName: $cachedVersions")
@@ -85,7 +80,7 @@ class PackageUpdateChecker(private val project: Project) {
                         return cachedVersions.update
                     }
                     log.debug("Cached versions for $packageName are outdated, removing them")
-                    availableUpdates.remove(packageName)
+                    state.availableUpdates.remove(packageName)
                 }
 
                 else -> log.warn("Invalid cached versions for $packageName: $cachedVersions")

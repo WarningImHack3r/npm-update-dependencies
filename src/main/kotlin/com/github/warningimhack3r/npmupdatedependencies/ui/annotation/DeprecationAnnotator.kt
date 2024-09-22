@@ -4,8 +4,8 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageDeprecationChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
@@ -72,7 +72,13 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                     activeTasks++
                     log.debug("Task $activeTasks/$maxParallelism started: ${property.name}")
                 }
-                val deprecation = deprecationChecker.getDeprecationStatus(property.name)
+                val value = property.comparator ?: return@parallelMap null.also {
+                    log.debug("Empty comparator for ${property.name}, skipping")
+                    state.scannedUpdates++
+                    activeTasks--
+                }
+
+                val deprecation = deprecationChecker.getDeprecationStatus(property.name, value)
                 state.deprecations[property.name] = when (deprecation) {
                     null -> DeprecationState.NotDeprecated
                     else -> DeprecationState.Deprecated(deprecation)

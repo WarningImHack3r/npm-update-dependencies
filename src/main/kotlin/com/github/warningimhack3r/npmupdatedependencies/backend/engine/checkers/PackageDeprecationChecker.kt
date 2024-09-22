@@ -1,7 +1,9 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.engine
+package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -9,7 +11,7 @@ import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 
 @Service(Service.Level.PROJECT)
-class PackageDeprecationChecker(private val project: Project) {
+class PackageDeprecationChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageDeprecationChecker>()
 
@@ -17,11 +19,20 @@ class PackageDeprecationChecker(private val project: Project) {
         fun getInstance(project: Project): PackageDeprecationChecker = project.service()
     }
 
-    fun getDeprecationStatus(packageName: String): Deprecation? {
-        val npmjsClient = NPMJSClient.getInstance(project)
+    fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
+        log.info("Checking for deprecations for $packageName with comparator $comparator")
+        val state = NUDState.getInstance(project)
+        if (!isVersionUpgradable(comparator)) {
+            log.warn("Comparator $comparator is not upgradable")
+            if (state.deprecations.containsKey(packageName)) {
+                log.debug("Removing cached deprecation for $packageName")
+                state.deprecations.remove(packageName)
+            }
+            return null
+        }
 
         // Check if a deprecation has already been found
-        NUDState.getInstance(project).deprecations[packageName]?.let { deprecationState ->
+        state.deprecations[packageName]?.let { deprecationState ->
             when (deprecationState) {
                 is DeprecationState.Deprecated -> {
                     log.debug("Deprecation found in cache for $packageName: ${deprecationState.deprecation}")
@@ -33,6 +44,7 @@ class PackageDeprecationChecker(private val project: Project) {
         }
 
         // Check if the package is deprecated
+        val npmjsClient = NPMJSClient.getInstance(project)
         val reason = npmjsClient.getPackageDeprecation(packageName) ?: return null
 
         // Get the deprecation reason and check if it contains a package name

@@ -16,13 +16,13 @@ class NUDState {
 
     /**
      * A "cache" of available updates for packages.
-     * Managed by [PackageUpdateChecker.checkAvailableUpdates] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator.doAnnotate].
+     * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker.checkAvailableUpdates] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator.doAnnotate].
      */
     val availableUpdates = mutableMapOf<String, UpdateState>()
 
     /**
      * A "cache" of deprecations for packages.
-     * Managed by [PackageDeprecationChecker.getDeprecationStatus] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator.doAnnotate].
+     * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker.getDeprecationStatus] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator.doAnnotate].
      */
     val deprecations = mutableMapOf<String, DeprecationState>()
 
