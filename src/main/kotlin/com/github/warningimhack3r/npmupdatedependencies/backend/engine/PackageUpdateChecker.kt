@@ -1,6 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
@@ -62,25 +63,32 @@ class PackageUpdateChecker(private val project: Project) {
         }
     }
 
-    fun areUpdatesAvailable(packageName: String, comparator: String): ScanResult? {
+    fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
         val availableUpdates = NUDState.getInstance(project).availableUpdates
         if (!isVersionUpgradable(comparator)) {
+            log.warn("Comparator $comparator is not upgradable")
             if (availableUpdates.containsKey(packageName)) {
+                log.debug("Removing cached versions for $packageName")
                 availableUpdates.remove(packageName)
             }
-            log.warn("Comparator $comparator is not upgradable, removing cached versions for $packageName")
             return null
         }
 
         // Check if an update has already been found
         availableUpdates[packageName]?.let { cachedVersions ->
-            if (areVersionsMatchingComparatorNeeds(cachedVersions.versions, comparator)) {
-                log.info("Cached versions for $packageName are still valid, returning them")
-                return cachedVersions
-            } else {
-                log.debug("Cached versions for $packageName are outdated, removing them")
-                availableUpdates.remove(packageName)
+            when (cachedVersions) {
+                is UpdateState.Outdated -> {
+                    log.debug("Update found in cache for $packageName: $cachedVersions")
+                    if (areVersionsMatchingComparatorNeeds(cachedVersions.update.versions, comparator)) {
+                        log.info("Cached versions for $packageName are still valid, returning them")
+                        return cachedVersions.update
+                    }
+                    log.debug("Cached versions for $packageName are outdated, removing them")
+                    availableUpdates.remove(packageName)
+                }
+
+                else -> log.warn("Invalid cached versions for $packageName: $cachedVersions")
             }
         }
 
@@ -148,12 +156,9 @@ class PackageUpdateChecker(private val project: Project) {
             }
         }
 
-        return ScanResult(
+        return Update(
             Versions(newestVersion, satisfyingVersion),
             filtersAffectingVersions
-        ).also {
-            log.info("Found updates for $packageName: $it")
-            availableUpdates[packageName] = it
-        }
+        )
     }
 }

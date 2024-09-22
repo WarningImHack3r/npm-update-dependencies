@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Cache the "no deprecation" and "no update" status, avoiding checking everytime (#129)
+
 ## [3.0.2] - 2024-09-13
 
 ### Fixed

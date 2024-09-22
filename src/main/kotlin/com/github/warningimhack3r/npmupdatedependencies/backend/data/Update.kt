@@ -1,6 +1,11 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
-data class ScanResult(
+sealed class UpdateState {
+    object UpToDate : UpdateState()
+    data class Outdated(val update: Update) : UpdateState()
+}
+
+data class Update(
     val versions: Versions,
     val affectedByFilters: Collection<String> = emptyList()
 )

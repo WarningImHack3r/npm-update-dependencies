@@ -1,7 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
@@ -27,7 +28,7 @@ import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
-        Map<JsonProperty, ScanResult>
+        Map<JsonProperty, Update>
         >() {
     companion object {
         private val log = logger<UpdatesAnnotator>()
@@ -36,7 +37,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
         Pair(file.project, AnnotatorsCommon.getInfo(file))
 
-    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, ScanResult> {
+    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Update> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
@@ -76,16 +77,24 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 }
                 val value = property.comparator ?: return@parallelMap null.also {
                     log.debug("Empty comparator for ${property.name}, skipping")
+                    state.scannedUpdates++
                     activeTasks--
                 }
-                val scanResult = updateChecker.areUpdatesAvailable(property.name, value)
-                state.scannedUpdates++
 
+                val update = updateChecker.checkAvailableUpdates(property.name, value)
                 val coerced = Semver.coerce(value)
-                log.debug("Task finished for ${property.name}")
+                val updateAvailable =
+                    update != null && coerced != null && !update.versions.isEqualToAny(coerced)
+                state.availableUpdates[property.name] = when (update) {
+                    null -> UpdateState.UpToDate
+                    else -> UpdateState.Outdated(update)
+                }
+                log.debug("Task finished for ${property.name}, update found: $updateAvailable")
+                state.scannedUpdates++
                 activeTasks--
-                if (scanResult != null && coerced != null && !scanResult.versions.isEqualToAny(coerced)) {
-                    Pair(property.jsonProperty, scanResult)
+
+                if (updateAvailable) {
+                    Pair(property.jsonProperty, update)
                 } else null
             }.filterNotNull().toMap().also {
                 log.debug("Updates scanned, ${it.size} found out of ${info.size}")
@@ -93,7 +102,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             }
     }
 
-    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, ScanResult>, holder: AnnotationHolder) {
+    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Update>, holder: AnnotationHolder) {
         if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, scanResult) ->
             val versions = scanResult.versions

@@ -1,5 +1,10 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
+sealed class DeprecationState {
+    object NotDeprecated : DeprecationState()
+    data class Deprecated(val deprecation: Deprecation) : DeprecationState()
+}
+
 data class Deprecation(
     val reason: String,
     val replacement: Replacement?
