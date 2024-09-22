@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.data
 
 sealed class UpdateState {
-    object UpToDate : UpdateState()
+    data object UpToDate : UpdateState()
     data class Outdated(val update: Update) : UpdateState()
 }
 
