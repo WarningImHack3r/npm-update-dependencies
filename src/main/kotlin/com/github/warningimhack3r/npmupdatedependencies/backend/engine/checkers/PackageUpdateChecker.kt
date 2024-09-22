@@ -61,7 +61,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
         val state = NUDState.getInstance(project)
-        if (!isVersionUpgradable(comparator)) {
+        if (!isComparatorUpgradable(comparator)) {
             log.warn("Comparator $comparator is not upgradable")
             if (state.availableUpdates.containsKey(packageName)) {
                 log.debug("Removing cached versions for $packageName")

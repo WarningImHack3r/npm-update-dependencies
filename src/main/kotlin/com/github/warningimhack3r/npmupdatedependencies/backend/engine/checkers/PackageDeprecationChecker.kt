@@ -22,7 +22,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
     fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
         log.info("Checking for deprecations for $packageName with comparator $comparator")
         val state = NUDState.getInstance(project)
-        if (!isVersionUpgradable(comparator)) {
+        if (!isComparatorUpgradable(comparator)) {
             log.warn("Comparator $comparator is not upgradable")
             if (state.deprecations.containsKey(packageName)) {
                 log.debug("Removing cached deprecation for $packageName")
