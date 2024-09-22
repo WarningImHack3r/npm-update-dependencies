@@ -1,5 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
@@ -24,11 +26,21 @@ object ActionsCommon {
         getAllDependencies(file)
             .mapNotNull { property ->
                 NUDState.getInstance(file.project).availableUpdates[property.name]?.let { scanResult ->
-                    val newVersion = scanResult.versions.from(kind) ?: scanResult.versions.orderedAvailableKinds(kind)
-                        .firstOrNull { it != kind }?.let { scanResult.versions.from(it) } ?: return@mapNotNull null
-                    val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                    val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
-                    Pair(property, newElement)
+                    when (scanResult) {
+                        is UpdateState.Outdated -> {
+                            val versions = scanResult.update.versions
+                            val newVersion =
+                                versions.from(kind) ?: versions.orderedAvailableKinds(kind)
+                                    .firstOrNull { it != kind }?.let { versions.from(it) }
+                                ?: return@let null
+                            val prefix =
+                                NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                            val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
+                            Pair(property, newElement)
+                        }
+
+                        else -> null
+                    }
                 }
             }.run {
                 if (isNotEmpty()) {
@@ -42,16 +54,23 @@ object ActionsCommon {
     }
 
     fun replaceAllDeprecations(file: PsiFile) {
-        val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
-                deprecations[property.name]?.let { deprecation ->
-                    val replacement = deprecation.replacement ?: return@mapNotNull null
-                    val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                    val newNameElement = NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
-                    val newVersionElement =
-                        NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
-                    Triple(property, newNameElement, newVersionElement)
+                NUDState.getInstance(file.project).deprecations[property.name]?.let { deprecation ->
+                    when (deprecation) {
+                        is DeprecationState.Deprecated -> {
+                            val replacement = deprecation.deprecation.replacement ?: return@let null
+                            val prefix =
+                                NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                            val newNameElement =
+                                NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
+                            val newVersionElement =
+                                NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
+                            Triple(property, newNameElement, newVersionElement)
+                        }
+
+                        else -> null
+                    }
                 }
             }.run {
                 if (isNotEmpty()) {
@@ -63,7 +82,6 @@ object ActionsCommon {
                     }
                     if (NUDSettingsState.instance.autoReorderDependencies) reorderAllDependencies(file)
                 }
-                deprecations.clear()
                 deprecationsCompletion(file.project)
             }
     }

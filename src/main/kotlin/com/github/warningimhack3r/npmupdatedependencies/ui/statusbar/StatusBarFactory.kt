@@ -1,5 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.statusbar
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.ide.DataManager
@@ -148,8 +150,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             Status.SCANNING_FOR_UPDATES -> "Scanning for updates (${state.scannedUpdates}/${state.totalPackages})..."
             Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
             Status.READY -> {
-                val outdated = state.availableUpdates.size
-                val deprecated = state.deprecations.size
+                val outdated = state.availableUpdates.filter { it.value is UpdateState.Outdated }.size
+                val deprecated = state.deprecations.filter { it.value is DeprecationState.Deprecated }.size
                 when (NUDSettingsState.instance.statusBarMode) {
                     StatusBarMode.FULL -> when {
                         outdated == 0 && deprecated == 0 -> null
