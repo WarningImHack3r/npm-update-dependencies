@@ -10,7 +10,9 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.datetime.Clock
 import org.semver4j.Semver
+import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
 class PackageUpdateChecker(private val project: Project) : PackageChecker() {
@@ -75,6 +77,14 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
             log.debug("Update found in cache for $packageName: $updateState")
             if (updateState.comparator != comparator) {
                 log.debug("Comparator for $packageName has changed, removing cached versions")
+                state.availableUpdates.remove(packageName)
+                return@let
+            }
+            if (updateState.scannedAt.plus(
+                    NUDSettingsState.instance.cacheDurationMinutes.minutes
+                ) < Clock.System.now()
+            ) {
+                log.debug("Cached versions for $packageName have expired, removing them")
                 state.availableUpdates.remove(packageName)
                 return@let
             }

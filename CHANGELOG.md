@@ -16,6 +16,7 @@
 
 - Cache the "no deprecation" and "no update" status, avoiding checking everytime (#129)
 - Cache the comparator compared upon, avoiding re-scanning the same dependency multiple times (#129)
+- Invalidate the cache after a configurable amount of time (#129)
 - Check the validity of a comparator before trying to scan for deprecations, as already done for updates (#130)
 - Improve the accuracy of the comparator validity verifier (#130)
 

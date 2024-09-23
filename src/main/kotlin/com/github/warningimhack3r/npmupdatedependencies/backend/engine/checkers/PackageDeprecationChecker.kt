@@ -4,10 +4,13 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.datetime.Clock
+import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
 class PackageDeprecationChecker(private val project: Project) : PackageChecker() {
@@ -36,6 +39,14 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             log.debug("Deprecation found in cache for $packageName: $deprecationState")
             if (deprecationState.comparator != comparator) {
                 log.debug("Comparator for $packageName has changed, removing cached deprecation")
+                state.deprecations.remove(packageName)
+                return@let
+            }
+            if (deprecationState.scannedAt.plus(
+                    NUDSettingsState.instance.cacheDurationMinutes.minutes
+                ) < Clock.System.now()
+            ) {
+                log.debug("Cached deprecation for $packageName has expired, removing it")
                 state.deprecations.remove(packageName)
                 return@let
             }

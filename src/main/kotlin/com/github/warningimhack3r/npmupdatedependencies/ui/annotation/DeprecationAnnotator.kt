@@ -22,7 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
-import java.util.Date
+import kotlinx.datetime.Clock
 
 class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -83,7 +83,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 state.deprecations[property.name] = state.deprecations.getOrPut(property.name) {
                     DataState(
                         data = deprecation,
-                        scannedAt = Date(),
+                        scannedAt = Clock.System.now(),
                         comparator = value
                     )
                 }

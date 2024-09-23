@@ -24,8 +24,8 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
 import org.semver4j.Semver
-import java.util.Date
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -86,7 +86,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.availableUpdates[property.name] = state.availableUpdates.getOrPut(property.name) {
                     DataState(
                         data = update,
-                        scannedAt = Date(),
+                        scannedAt = Clock.System.now(),
                         comparator = value
                     )
                 }

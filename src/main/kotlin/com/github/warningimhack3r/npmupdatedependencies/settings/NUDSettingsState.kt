@@ -50,6 +50,11 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.maxParallelism = value
         }
+    var cacheDurationMinutes: Int
+        get() = settings.cacheDurationMinutes
+        set(value) {
+            settings.cacheDurationMinutes = value
+        }
     var showStatusBarWidget: Boolean
         get() = settings.showStatusBarWidget
         set(value) {
@@ -77,6 +82,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var showDeprecationBanner: Boolean = true,
         var autoReorderDependencies: Boolean = true,
         var maxParallelism: Int = 100,
+        var cacheDurationMinutes: Int = 30,
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
