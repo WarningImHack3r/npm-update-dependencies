@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
@@ -22,6 +22,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
+import java.util.Date
 
 class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -79,10 +80,11 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 }
 
                 val deprecation = deprecationChecker.getDeprecationStatus(property.name, value)
-                state.deprecations[property.name] = when (deprecation) {
-                    null -> DeprecationState.NotDeprecated
-                    else -> DeprecationState.Deprecated(deprecation)
-                }
+                state.deprecations[property.name] = DataState(
+                    data = deprecation,
+                    scannedAt = Date(),
+                    comparator = value
+                )
                 log.debug("Task finished for ${property.name}, deprecation found: ${deprecation != null}")
                 state.scannedDeprecations++
                 activeTasks--

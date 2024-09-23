@@ -1,7 +1,5 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
@@ -25,22 +23,15 @@ object ActionsCommon {
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
         getAllDependencies(file)
             .mapNotNull { property ->
-                NUDState.getInstance(file.project).availableUpdates[property.name]?.let { scanResult ->
-                    when (scanResult) {
-                        is UpdateState.Outdated -> {
-                            val versions = scanResult.update.versions
-                            val newVersion =
-                                versions.from(kind) ?: versions.orderedAvailableKinds(kind)
-                                    .firstOrNull { it != kind }?.let { versions.from(it) }
-                                ?: return@let null
-                            val prefix =
-                                NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                            val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
-                            Pair(property, newElement)
-                        }
-
-                        else -> null
-                    }
+                NUDState.getInstance(file.project).availableUpdates[property.name]?.data?.let { update ->
+                    val newVersion = update.versions.from(kind)
+                        ?: update.versions.orderedAvailableKinds(kind).firstOrNull { it != kind }?.let {
+                            update.versions.from(it)
+                        } ?: return@let null
+                    val prefix =
+                        NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                    val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
+                    Pair(property, newElement)
                 }
             }.run {
                 if (isNotEmpty()) {
@@ -56,21 +47,15 @@ object ActionsCommon {
     fun replaceAllDeprecations(file: PsiFile) {
         getAllDependencies(file)
             .mapNotNull { property ->
-                NUDState.getInstance(file.project).deprecations[property.name]?.let { deprecation ->
-                    when (deprecation) {
-                        is DeprecationState.Deprecated -> {
-                            val replacement = deprecation.deprecation.replacement ?: return@let null
-                            val prefix =
-                                NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                            val newNameElement =
-                                NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
-                            val newVersionElement =
-                                NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
-                            Triple(property, newNameElement, newVersionElement)
-                        }
-
-                        else -> null
-                    }
+                NUDState.getInstance(file.project).deprecations[property.name]?.data?.let { deprecation ->
+                    val replacement = deprecation.replacement ?: return@let null
+                    val prefix =
+                        NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                    val newNameElement =
+                        NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
+                    val newVersionElement =
+                        NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
+                    Triple(property, newNameElement, newVersionElement)
                 }
             }.run {
                 if (isNotEmpty()) {

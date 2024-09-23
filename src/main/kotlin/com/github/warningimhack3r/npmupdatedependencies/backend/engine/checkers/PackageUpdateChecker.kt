@@ -1,7 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
@@ -71,21 +70,16 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
         }
 
         // Check if an update has already been found
-        state.availableUpdates[packageName]?.let { cachedVersions ->
-            when (cachedVersions) {
-                is UpdateState.Outdated -> {
-                    log.debug("Update found in cache for $packageName: $cachedVersions")
-                    if (areVersionsMatchingComparatorNeeds(cachedVersions.update.versions, comparator)) {
-                        log.info("Cached versions for $packageName are still valid, returning them")
-                        return cachedVersions.update
-                    }
-                    log.debug("Cached versions for $packageName are outdated, removing them")
-                    state.availableUpdates.remove(packageName)
-                }
-
-                else -> log.warn("Invalid cached versions for $packageName: $cachedVersions")
+        state.availableUpdates[packageName]?.data?.let { update ->
+            log.debug("Update found in cache for $packageName: $update")
+            if (areVersionsMatchingComparatorNeeds(update.versions, comparator)) {
+                log.info("Cached versions for $packageName are still valid, returning them")
+                return update
             }
-        }
+            log.debug("Cached versions for $packageName are outdated, removing them")
+            state.availableUpdates.remove(packageName)
+
+        } ?: log.warn("No cached versions found in cache for $packageName")
 
         // Check if an update is available
         val npmjsClient = NPMJSClient.getInstance(project)

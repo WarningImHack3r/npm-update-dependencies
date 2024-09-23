@@ -1,7 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.banner
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
@@ -46,10 +45,7 @@ class DeprecationBanner : EditorNotificationProvider {
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
             val availableActions = Deprecation.Action.entries.filter { action ->
                 (action == Deprecation.Action.REPLACE && state.deprecations.values.mapNotNull { state ->
-                    when (state) {
-                        is DeprecationState.Deprecated -> state.deprecation.replacement
-                        else -> null
-                    }
+                    state.data?.replacement
                 }.any()) || action != Deprecation.Action.REPLACE
             }
             // Description text & icon
@@ -63,7 +59,7 @@ class DeprecationBanner : EditorNotificationProvider {
             } else {
                 actionsTitles.first()
             }
-            val deprecationsCount = state.deprecations.filter { it.value is DeprecationState.Deprecated }.size
+            val deprecationsCount = state.deprecations.filter { it.value.data != null }.size
             text(
                 if (deprecationsCount > 1) {
                     "You have $deprecationsCount deprecated packages. $actionsString them"

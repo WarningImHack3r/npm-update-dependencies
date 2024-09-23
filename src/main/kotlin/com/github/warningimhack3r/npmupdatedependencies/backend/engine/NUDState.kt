@@ -1,7 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -18,13 +19,13 @@ class NUDState {
      * A "cache" of available updates for packages.
      * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker.checkAvailableUpdates] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator.doAnnotate].
      */
-    val availableUpdates = mutableMapOf<String, UpdateState>()
+    val availableUpdates = mutableMapOf<String, DataState<Update>>()
 
     /**
      * A "cache" of deprecations for packages.
      * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker.getDeprecationStatus] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator.doAnnotate].
      */
-    val deprecations = mutableMapOf<String, DeprecationState>()
+    val deprecations = mutableMapOf<String, DataState<Deprecation>>()
 
     /**
      * A "cache" of registries for packages, mapping package names to registry URLs.

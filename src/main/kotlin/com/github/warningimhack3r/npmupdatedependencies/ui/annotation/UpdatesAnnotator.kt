@@ -1,8 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
 import org.semver4j.Semver
+import java.util.Date
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -85,10 +86,11 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 val coerced = Semver.coerce(value)
                 val updateAvailable =
                     update != null && coerced != null && !update.versions.isEqualToAny(coerced)
-                state.availableUpdates[property.name] = when (update) {
-                    null -> UpdateState.UpToDate
-                    else -> UpdateState.Outdated(update)
-                }
+                state.availableUpdates[property.name] = DataState(
+                    data = update,
+                    scannedAt = Date(),
+                    comparator = value
+                )
                 log.debug("Task finished for ${property.name}, update found: $updateAvailable")
                 state.scannedUpdates++
                 activeTasks--

@@ -1,6 +1,5 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.update
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.UpdateState
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
@@ -16,16 +15,10 @@ class UpdateAllSatisfiesAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val availableUpdates = e.project?.let { NUDState.getInstance(it) }?.availableUpdates
-        e.presentation.isEnabled = if (availableUpdates == null) false else {
+        e.presentation.isEnabled = availableUpdates?.let {
             availableUpdates.isNotEmpty()
-                    && availableUpdates.values
-                .mapNotNull { state ->
-                    when (state) {
-                        is UpdateState.Outdated -> state.update.versions.satisfies
-                        else -> null
-                    }
-                }.any()
-        }
+                    && availableUpdates.values.mapNotNull { it.data?.versions?.satisfies }.any()
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

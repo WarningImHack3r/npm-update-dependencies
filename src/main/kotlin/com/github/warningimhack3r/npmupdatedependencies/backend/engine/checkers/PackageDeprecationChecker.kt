@@ -1,7 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DeprecationState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
@@ -32,16 +31,10 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }
 
         // Check if a deprecation has already been found
-        state.deprecations[packageName]?.let { deprecationState ->
-            when (deprecationState) {
-                is DeprecationState.Deprecated -> {
-                    log.debug("Deprecation found in cache for $packageName: ${deprecationState.deprecation}")
-                    return deprecationState.deprecation
-                }
-
-                else -> log.debug("No deprecation found in cache: $packageName")
-            }
-        }
+        state.deprecations[packageName]?.data?.let { deprecation ->
+            log.debug("Deprecation found in cache for $packageName: $deprecation")
+            return deprecation
+        } ?: log.debug("No cached deprecation found in cache for $packageName")
 
         // Check if the package is deprecated
         val npmjsClient = NPMJSClient.getInstance(project)
