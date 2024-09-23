@@ -83,14 +83,16 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 }
 
                 val update = updateChecker.checkAvailableUpdates(property.name, value)
+                state.availableUpdates[property.name] = state.availableUpdates.getOrPut(property.name) {
+                    DataState(
+                        data = update,
+                        scannedAt = Date(),
+                        comparator = value
+                    )
+                }
                 val coerced = Semver.coerce(value)
                 val updateAvailable =
                     update != null && coerced != null && !update.versions.isEqualToAny(coerced)
-                state.availableUpdates[property.name] = DataState(
-                    data = update,
-                    scannedAt = Date(),
-                    comparator = value
-                )
                 log.debug("Task finished for ${property.name}, update found: $updateAvailable")
                 state.scannedUpdates++
                 activeTasks--

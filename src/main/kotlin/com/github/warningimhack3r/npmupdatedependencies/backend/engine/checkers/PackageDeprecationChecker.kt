@@ -31,9 +31,15 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }
 
         // Check if a deprecation has already been found
-        state.deprecations[packageName]?.data?.let { deprecation ->
-            log.debug("Deprecation found in cache for $packageName: $deprecation")
-            return deprecation
+        state.deprecations[packageName]?.let { deprecationState ->
+            if (deprecationState.data == null) return@let
+            log.debug("Deprecation found in cache for $packageName: $deprecationState")
+            if (deprecationState.comparator != comparator) {
+                log.debug("Comparator for $packageName has changed, removing cached deprecation")
+                state.deprecations.remove(packageName)
+                return@let
+            }
+            return deprecationState.data
         } ?: log.debug("No cached deprecation found in cache for $packageName")
 
         // Check if the package is deprecated
