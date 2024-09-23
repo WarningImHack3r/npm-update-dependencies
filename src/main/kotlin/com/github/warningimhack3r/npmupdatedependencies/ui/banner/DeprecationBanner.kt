@@ -44,9 +44,9 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
             val availableActions = Deprecation.Action.entries.filter { action ->
-                (action == Deprecation.Action.REPLACE && state.deprecations.values.mapNotNull { state ->
-                    state.data?.replacement
-                }.any()) || action != Deprecation.Action.REPLACE
+                (action == Deprecation.Action.REPLACE && state.deprecations.values.any { state ->
+                    state.data?.replacement != null
+                }) || action != Deprecation.Action.REPLACE
             }
             // Description text & icon
             val actionsTitles = availableActions.mapIndexed { index, action ->

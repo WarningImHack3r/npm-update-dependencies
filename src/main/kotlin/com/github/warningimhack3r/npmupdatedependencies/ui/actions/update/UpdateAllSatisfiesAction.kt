@@ -17,7 +17,7 @@ class UpdateAllSatisfiesAction : AnAction() {
         val availableUpdates = e.project?.let { NUDState.getInstance(it) }?.availableUpdates
         e.presentation.isEnabled = availableUpdates?.let {
             availableUpdates.isNotEmpty()
-                    && availableUpdates.values.mapNotNull { it.data?.versions?.satisfies }.any()
+                    && availableUpdates.values.any { it.data?.versions?.satisfies != null }
         } == true
     }
 

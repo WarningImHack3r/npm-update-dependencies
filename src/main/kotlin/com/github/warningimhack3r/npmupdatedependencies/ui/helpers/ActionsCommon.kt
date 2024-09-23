@@ -21,9 +21,10 @@ object ActionsCommon {
     }
 
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
+        val availableUpdates = NUDState.getInstance(file.project).availableUpdates
         getAllDependencies(file)
             .mapNotNull { property ->
-                NUDState.getInstance(file.project).availableUpdates[property.name]?.data?.let { update ->
+                availableUpdates[property.name]?.data?.let { update ->
                     val newVersion = update.versions.from(kind)
                         ?: update.versions.orderedAvailableKinds(kind).firstOrNull { it != kind }?.let {
                             update.versions.from(it)
@@ -45,9 +46,10 @@ object ActionsCommon {
     }
 
     fun replaceAllDeprecations(file: PsiFile) {
+        val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
-                NUDState.getInstance(file.project).deprecations[property.name]?.data?.let { deprecation ->
+                deprecations[property.name]?.data?.let { deprecation ->
                     val replacement = deprecation.replacement ?: return@let null
                     val prefix =
                         NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
