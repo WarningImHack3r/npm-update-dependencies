@@ -83,12 +83,12 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 }
 
                 val update = updateChecker.checkAvailableUpdates(property.name, value)
-                state.availableUpdates[property.name] = state.availableUpdates.getOrPut(property.name) {
-                    DataState(
+                state.availableUpdates[property.name] = state.availableUpdates[property.name].let { currentState ->
+                    if (currentState == null || currentState.data != update) DataState(
                         data = update,
                         scannedAt = Clock.System.now(),
                         comparator = value
-                    )
+                    ) else currentState
                 }
                 val coerced = Semver.coerce(value)
                 val updateAvailable =

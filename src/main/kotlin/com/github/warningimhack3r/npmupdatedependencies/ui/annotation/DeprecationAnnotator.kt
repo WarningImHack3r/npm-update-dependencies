@@ -80,12 +80,12 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 }
 
                 val deprecation = deprecationChecker.getDeprecationStatus(property.name, value)
-                state.deprecations[property.name] = state.deprecations.getOrPut(property.name) {
-                    DataState(
+                state.deprecations[property.name] = state.deprecations[property.name].let { currentState ->
+                    if (currentState == null || currentState.data != deprecation) DataState(
                         data = deprecation,
                         scannedAt = Clock.System.now(),
                         comparator = value
-                    )
+                    ) else currentState
                 }
                 log.debug("Task finished for ${property.name}, deprecation found: ${deprecation != null}")
                 state.scannedDeprecations++

@@ -73,7 +73,6 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
         // Check if an update has already been found
         state.availableUpdates[packageName]?.let { updateState ->
-            if (updateState.data == null) return@let
             log.debug("Update found in cache for $packageName: $updateState")
             if (updateState.comparator != comparator) {
                 log.debug("Comparator for $packageName has changed, removing cached versions")
@@ -88,7 +87,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 state.availableUpdates.remove(packageName)
                 return@let
             }
-            if (areVersionsMatchingComparatorNeeds(updateState.data.versions, comparator)) {
+            if (updateState.data == null || areVersionsMatchingComparatorNeeds(updateState.data.versions, comparator)) {
                 log.info("Cached versions for $packageName are still valid, returning them")
                 return updateState.data
             }

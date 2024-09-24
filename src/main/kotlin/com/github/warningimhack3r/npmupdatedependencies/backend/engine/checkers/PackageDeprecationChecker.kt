@@ -35,7 +35,6 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
 
         // Check if a deprecation has already been found
         state.deprecations[packageName]?.let { deprecationState ->
-            if (deprecationState.data == null) return@let
             log.debug("Deprecation found in cache for $packageName: $deprecationState")
             if (deprecationState.comparator != comparator) {
                 log.debug("Comparator for $packageName has changed, removing cached deprecation")
