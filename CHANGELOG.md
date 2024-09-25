@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.1.0] - 2024-09-25
+
 ### Changed
 
 - Cache the "no deprecation" and "no update" status, avoiding checking everytime (#129)
@@ -271,7 +273,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...HEAD
+[3.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.2...v3.1.0
 [3.0.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...v3.0.1
 [3.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...v3.0.0
