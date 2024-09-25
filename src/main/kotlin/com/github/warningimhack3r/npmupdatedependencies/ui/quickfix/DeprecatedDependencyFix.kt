@@ -9,11 +9,11 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
-import com.jetbrains.rd.util.printlnError
 
 class DeprecatedDependencyFix(
     private val property: JsonProperty,
@@ -21,6 +21,7 @@ class DeprecatedDependencyFix(
     replacement: Deprecation.Replacement?,
     private val showOrder: Boolean
 ) : BaseIntentionAction() {
+    private val log = logger<DeprecatedDependencyFix>()
     private val replacementName = replacement?.name ?: ""
     private val replacementVersion = replacement?.version ?: ""
 
@@ -42,7 +43,7 @@ class DeprecatedDependencyFix(
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
-            printlnError("Trying to ${actionType.toString().lowercase()} dependency but the file is null")
+            log.warn("Trying to ${actionType.toString().lowercase()} dependency but the file is null")
             return
         }
         when (actionType) {
@@ -64,7 +65,9 @@ class DeprecatedDependencyFix(
                     property,
                     LeafPsiElement::class.java
                 ).also {
-                    if (it == null) printlnError("No comma found before or after the dependency (${property.name}) to delete")
+                    if (it == null) {
+                        log.warn("No comma found before or after the dependency (${property.name}) to delete")
+                    }
                 }?.delete()
                 // Delete the property
                 property.delete()

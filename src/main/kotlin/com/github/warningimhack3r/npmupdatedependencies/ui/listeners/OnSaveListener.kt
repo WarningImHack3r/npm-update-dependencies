@@ -23,15 +23,17 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         val state = NUDState.getInstance(project)
         // Initial checks
         val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+        val hasUpdates = state.availableUpdates.filter { it.value.data != null }.isNotEmpty()
+        val hasDeprecations = state.deprecations.filter { it.value.data != null }.isNotEmpty()
         if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
-            || (state.availableUpdates.isEmpty() && state.deprecations.isEmpty())
+            || (!hasUpdates && !hasDeprecations)
         ) return
 
         // Create a set of actions to perform
         val actionsToPerform = mutableSetOf<() -> Unit>()
 
         // Fix updates if any
-        if (state.availableUpdates.isNotEmpty()) {
+        if (hasUpdates) {
             actionsToPerform.add {
                 ActionsCommon.updateAll(file, Versions.Kind.entries.first {
                     it == NUDSettingsState.instance.defaultUpdateType
@@ -40,7 +42,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         }
 
         // Fix deprecations if any
-        if (state.deprecations.isNotEmpty()) {
+        if (hasDeprecations) {
             when (Deprecation.Action.entries.first {
                 it == NUDSettingsState.instance.defaultDeprecationAction
             }) {

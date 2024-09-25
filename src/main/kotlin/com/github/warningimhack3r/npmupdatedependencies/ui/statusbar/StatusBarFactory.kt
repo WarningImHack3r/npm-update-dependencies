@@ -120,17 +120,21 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             "Available Changes",
             DefaultActionGroup().apply {
                 addSeparator("Updates")
-                addAll(NUDState.getInstance(project).availableUpdates.toSortedMap().map { update ->
-                    DumbAwareAction.create(update.key) {
-                        openPackageJson(update.key)
-                    }
-                })
+                addAll(
+                    NUDState.getInstance(project).availableUpdates.filter { it.value.data != null }.toSortedMap()
+                        .map { update ->
+                            DumbAwareAction.create(update.key) {
+                                openPackageJson(update.key)
+                            }
+                        })
                 addSeparator("Deprecations")
-                addAll(NUDState.getInstance(project).deprecations.toSortedMap().map { deprecation ->
-                    DumbAwareAction.create(deprecation.key) {
-                        openPackageJson(deprecation.key)
-                    }
-                })
+                addAll(
+                    NUDState.getInstance(project).deprecations.filter { it.value.data != null }.toSortedMap()
+                        .map { deprecation ->
+                            DumbAwareAction.create(deprecation.key) {
+                                openPackageJson(deprecation.key)
+                            }
+                        })
             },
             DataManager.getInstance().getDataContext(myStatusBar.component),
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,

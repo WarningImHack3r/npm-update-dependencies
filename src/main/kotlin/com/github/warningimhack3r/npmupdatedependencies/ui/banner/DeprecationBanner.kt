@@ -45,7 +45,7 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
             val availableActions = Deprecation.Action.entries.filter { action ->
-                (action == Deprecation.Action.REPLACE && state.deprecations.values.any { state ->
+                (action == Deprecation.Action.REPLACE && foundDeprecations.values.any { state ->
                     state.data?.replacement != null
                 }) || action != Deprecation.Action.REPLACE
             }
@@ -79,9 +79,7 @@ class DeprecationBanner : EditorNotificationProvider {
                 createActionLabel(
                     action.toString() + if (deprecationsCount > 1) {
                         " deprecations"
-                    } else {
-                        " \"${state.deprecations.first().key}\""
-                    }
+                    } else " \"${foundDeprecations.first().key}\""
                 ) {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)

@@ -7,17 +7,18 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.jetbrains.rd.util.printlnError
 
 class UpdateDependencyFix(
     private val versions: Versions,
     private val kind: Versions.Kind,
     private val property: JsonProperty
 ) : BaseIntentionAction() {
-    val version = versions.from(kind)
+    private val log = logger<UpdateDependencyFix>()
+    private val version = versions.from(kind)
 
     override fun getText() = QuickFixesCommon.getPositionPrefix(
         kind,
@@ -31,7 +32,7 @@ class UpdateDependencyFix(
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
-            printlnError("Trying to update dependency but file is null")
+            log.warn("Trying to update dependency but file is null")
             return
         }
         val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""

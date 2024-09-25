@@ -5,14 +5,16 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.EditorNotifications
-import com.jetbrains.rd.util.printlnError
 
 object ActionsCommon {
+    private val log = logger<ActionsCommon>()
+
     private fun getAllDependencies(file: PsiFile): List<JsonProperty> {
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .filter {
@@ -117,9 +119,10 @@ object ActionsCommon {
 
     fun deleteAllDeprecations(file: PsiFile) {
         val deprecations = NUDState.getInstance(file.project).deprecations
+        val deprecationsToRemove = deprecations.filter { it.value.data != null }
         getAllDependencies(file)
             .mapNotNull { property ->
-                if (deprecations.containsKey(property.name)) property else null
+                if (deprecationsToRemove.containsKey(property.name)) property else null
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Delete all deprecations", false) {
@@ -130,14 +133,18 @@ object ActionsCommon {
                                 property,
                                 LeafPsiElement::class.java
                             ).also {
-                                if (it == null) printlnError("No comma found before or after the dependency (${property.name}) to delete")
+                                if (it == null) {
+                                    log.warn("No comma found before or after the dependency (${property.name}) to delete")
+                                }
                             }?.delete()
                             // Delete the property
                             property.delete()
                         }
                     }
                 }
-                deprecations.clear()
+                deprecationsToRemove.forEach { (key, _) ->
+                    deprecations.remove(key)
+                }
                 deprecationsCompletion(file.project)
             }
     }
