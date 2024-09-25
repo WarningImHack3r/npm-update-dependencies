@@ -120,17 +120,21 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             "Available Changes",
             DefaultActionGroup().apply {
                 addSeparator("Updates")
-                addAll(NUDState.getInstance(project).availableUpdates.toSortedMap().map { update ->
-                    DumbAwareAction.create(update.key) {
-                        openPackageJson(update.key)
-                    }
-                })
+                addAll(
+                    NUDState.getInstance(project).availableUpdates.filter { it.value.data != null }.toSortedMap()
+                        .map { update ->
+                            DumbAwareAction.create(update.key) {
+                                openPackageJson(update.key)
+                            }
+                        })
                 addSeparator("Deprecations")
-                addAll(NUDState.getInstance(project).deprecations.toSortedMap().map { deprecation ->
-                    DumbAwareAction.create(deprecation.key) {
-                        openPackageJson(deprecation.key)
-                    }
-                })
+                addAll(
+                    NUDState.getInstance(project).deprecations.filter { it.value.data != null }.toSortedMap()
+                        .map { deprecation ->
+                            DumbAwareAction.create(deprecation.key) {
+                                openPackageJson(deprecation.key)
+                            }
+                        })
             },
             DataManager.getInstance().getDataContext(myStatusBar.component),
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -148,8 +152,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             Status.SCANNING_FOR_UPDATES -> "Scanning for updates (${state.scannedUpdates}/${state.totalPackages})..."
             Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
             Status.READY -> {
-                val outdated = state.availableUpdates.size
-                val deprecated = state.deprecations.size
+                val outdated = state.availableUpdates.filter { it.value.data != null }.size
+                val deprecated = state.deprecations.filter { it.value.data != null }.size
                 when (NUDSettingsState.instance.statusBarMode) {
                     StatusBarMode.FULL -> when {
                         outdated == 0 && deprecated == 0 -> null

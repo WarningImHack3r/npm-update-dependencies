@@ -1,29 +1,26 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.engine
+package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
+import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
 import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.datetime.Clock
 import org.semver4j.Semver
+import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
-class PackageUpdateChecker(private val project: Project) {
+class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageUpdateChecker>()
 
         @JvmStatic
         fun getInstance(project: Project): PackageUpdateChecker = project.service()
-    }
-
-    private fun isVersionUpgradable(version: String): Boolean {
-        return !(version.startsWith("http")
-                || version.startsWith("git")
-                || version.contains("/")
-                || !version.any { it.isDigit() })
     }
 
     private fun isVersionMoreRecentThanComparator(version: Semver, comparator: String): Boolean {
@@ -44,7 +41,7 @@ class PackageUpdateChecker(private val project: Project) {
         return isVersionMoreRecentThanComparator(versions.latest, comparator) && versions.satisfies?.let { satisfying ->
             satisfying.satisfies(comparator)
                     && isVersionMoreRecentThanComparator(satisfying, comparator)
-        } ?: true
+        } != false
     }
 
     private fun getVersionExcludingFilter(packageName: String, version: Semver): String? {
@@ -62,27 +59,41 @@ class PackageUpdateChecker(private val project: Project) {
         }
     }
 
-    fun areUpdatesAvailable(packageName: String, comparator: String): ScanResult? {
+    fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
-        val availableUpdates = NUDState.getInstance(project).availableUpdates
-        if (!isVersionUpgradable(comparator)) {
-            if (availableUpdates.containsKey(packageName)) {
-                availableUpdates.remove(packageName)
+        val state = NUDState.getInstance(project)
+        if (!isComparatorUpgradable(comparator)) {
+            log.warn("Comparator $comparator is not upgradable")
+            if (state.availableUpdates.containsKey(packageName)) {
+                log.debug("Removing cached versions for $packageName")
+                state.availableUpdates.remove(packageName)
             }
-            log.warn("Comparator $comparator is not upgradable, removing cached versions for $packageName")
             return null
         }
 
         // Check if an update has already been found
-        availableUpdates[packageName]?.let { cachedVersions ->
-            if (areVersionsMatchingComparatorNeeds(cachedVersions.versions, comparator)) {
-                log.info("Cached versions for $packageName are still valid, returning them")
-                return cachedVersions
-            } else {
-                log.debug("Cached versions for $packageName are outdated, removing them")
-                availableUpdates.remove(packageName)
+        state.availableUpdates[packageName]?.let { updateState ->
+            log.debug("Update found in cache for $packageName: $updateState")
+            if (updateState.comparator != comparator) {
+                log.debug("Comparator for $packageName has changed, removing cached versions")
+                state.availableUpdates.remove(packageName)
+                return@let
             }
-        }
+            if (updateState.scannedAt.plus(
+                    NUDSettingsState.instance.cacheDurationMinutes.minutes
+                ) < Clock.System.now()
+            ) {
+                log.debug("Cached versions for $packageName have expired, removing them")
+                state.availableUpdates.remove(packageName)
+                return@let
+            }
+            if (updateState.data == null || areVersionsMatchingComparatorNeeds(updateState.data.versions, comparator)) {
+                log.info("Cached versions for $packageName are still valid, returning them")
+                return updateState.data
+            }
+            log.debug("Cached versions for $packageName are not valid, removing them")
+            state.availableUpdates.remove(packageName)
+        } ?: log.warn("No cached versions found in cache for $packageName")
 
         // Check if an update is available
         val npmjsClient = NPMJSClient.getInstance(project)
@@ -148,12 +159,9 @@ class PackageUpdateChecker(private val project: Project) {
             }
         }
 
-        return ScanResult(
+        return Update(
             Versions(newestVersion, satisfyingVersion),
             filtersAffectingVersions
-        ).also {
-            log.info("Found updates for $packageName: $it")
-            availableUpdates[packageName] = it
-        }
+        )
     }
 }

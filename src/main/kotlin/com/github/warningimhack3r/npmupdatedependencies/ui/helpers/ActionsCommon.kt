@@ -5,14 +5,16 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.ui.EditorNotifications
-import com.jetbrains.rd.util.printlnError
 
 object ActionsCommon {
+    private val log = logger<ActionsCommon>()
+
     private fun getAllDependencies(file: PsiFile): List<JsonProperty> {
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .filter {
@@ -21,12 +23,16 @@ object ActionsCommon {
     }
 
     fun updateAll(file: PsiFile, kind: Versions.Kind) {
+        val availableUpdates = NUDState.getInstance(file.project).availableUpdates
         getAllDependencies(file)
             .mapNotNull { property ->
-                NUDState.getInstance(file.project).availableUpdates[property.name]?.let { scanResult ->
-                    val newVersion = scanResult.versions.from(kind) ?: scanResult.versions.orderedAvailableKinds(kind)
-                        .firstOrNull { it != kind }?.let { scanResult.versions.from(it) } ?: return@mapNotNull null
-                    val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                availableUpdates[property.name]?.data?.let { update ->
+                    val newVersion = update.versions.from(kind)
+                        ?: update.versions.orderedAvailableKinds(kind).firstOrNull { it != kind }?.let {
+                            update.versions.from(it)
+                        } ?: return@let null
+                    val prefix =
+                        NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
                     Pair(property, newElement)
                 }
@@ -45,10 +51,12 @@ object ActionsCommon {
         val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
-                deprecations[property.name]?.let { deprecation ->
-                    val replacement = deprecation.replacement ?: return@mapNotNull null
-                    val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                    val newNameElement = NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
+                deprecations[property.name]?.data?.let { deprecation ->
+                    val replacement = deprecation.replacement ?: return@let null
+                    val prefix =
+                        NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+                    val newNameElement =
+                        NUDHelper.createElement(property.project, "\"${replacement.name}\"", "JSON")
                     val newVersionElement =
                         NUDHelper.createElement(property.project, "\"$prefix${replacement.version}\"", "JSON")
                     Triple(property, newNameElement, newVersionElement)
@@ -63,7 +71,6 @@ object ActionsCommon {
                     }
                     if (NUDSettingsState.instance.autoReorderDependencies) reorderAllDependencies(file)
                 }
-                deprecations.clear()
                 deprecationsCompletion(file.project)
             }
     }
@@ -112,9 +119,10 @@ object ActionsCommon {
 
     fun deleteAllDeprecations(file: PsiFile) {
         val deprecations = NUDState.getInstance(file.project).deprecations
+        val deprecationsToRemove = deprecations.filter { it.value.data != null }
         getAllDependencies(file)
             .mapNotNull { property ->
-                if (deprecations.containsKey(property.name)) property else null
+                if (deprecationsToRemove.containsKey(property.name)) property else null
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Delete all deprecations", false) {
@@ -125,14 +133,18 @@ object ActionsCommon {
                                 property,
                                 LeafPsiElement::class.java
                             ).also {
-                                if (it == null) printlnError("No comma found before or after the dependency (${property.name}) to delete")
+                                if (it == null) {
+                                    log.warn("No comma found before or after the dependency (${property.name}) to delete")
+                                }
                             }?.delete()
                             // Delete the property
                             property.delete()
                         }
                     }
                 }
-                deprecations.clear()
+                deprecationsToRemove.forEach { (key, _) ->
+                    deprecations.remove(key)
+                }
                 deprecationsCompletion(file.project)
             }
     }

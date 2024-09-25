@@ -11,10 +11,10 @@ class InvalidateCachesAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        val state = e.project?.let { NUDState.getInstance(it) }
-        e.presentation.isEnabled = if (state != null) {
+        e.presentation.isEnabled = e.project?.let { project ->
+            val state = NUDState.getInstance(project)
             state.availableUpdates.isNotEmpty() || state.deprecations.isNotEmpty()
-        } else false
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

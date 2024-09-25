@@ -13,8 +13,9 @@ class RemoveAllDeprecationsAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled =
-            e.project?.let { NUDState.getInstance(it) }?.deprecations?.isNotEmpty() ?: false
+        e.presentation.isEnabled = e.project?.let { project ->
+            NUDState.getInstance(project).deprecations.isNotEmpty()
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

@@ -61,6 +61,7 @@ class NPMJSClient(private val project: Project) {
     }
 
     private fun getResponseBody(uri: URI): String {
+        log.debug("GET $uri")
         val request = HttpRequest
             .newBuilder(uri)
             .build()

@@ -15,10 +15,10 @@ class UpdateAllSatisfiesAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         val availableUpdates = e.project?.let { NUDState.getInstance(it) }?.availableUpdates
-        e.presentation.isEnabled = if (availableUpdates != null) {
+        e.presentation.isEnabled = availableUpdates?.let {
             availableUpdates.isNotEmpty()
-                    && availableUpdates.values.mapNotNull { it.versions.satisfies }.any()
-        } else false
+                    && availableUpdates.values.any { it.data?.versions?.satisfies != null }
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

@@ -162,6 +162,13 @@ class NUDSettingsComponent {
                     .bindIntValue(settings::maxParallelism)
             }
         }
+        group("Cache") {
+            row("Cache duration (minutes):") {
+                spinner(1..60 * 24)
+                    .comment("Control how long valid scan results are cached for. Lower values can cause more scans to be run, but higher values can cause outdated results to be shown.")
+                    .bindIntValue(settings::cacheDurationMinutes)
+            }
+        }
         group("Status Bar") {
             lateinit var statusBarEnabled: Cell<JBCheckBox>
             row {
