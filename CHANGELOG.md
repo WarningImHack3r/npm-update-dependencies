@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Remove a useless call to the local `npm` command when checking for deprecations, slightly speeding up the scan (#136)
+
 ## [3.1.0] - 2024-09-25
 
 ### Changed

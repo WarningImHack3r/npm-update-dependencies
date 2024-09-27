@@ -127,35 +127,43 @@ class NPMJSClient(private val project: Project) {
         }
     }
 
+    private fun deprecationStatus(packageName: String, deprecation: String, local: Boolean = false): String? {
+        log.debug("Deprecation status for package $packageName before transformation: $deprecation")
+        return with(deprecation) {
+            when {
+                local && isBlankOrEmpty() -> null
+                equals("true", ignoreCase = true) || (!local && isBlankOrEmpty()) -> "Deprecated"
+                equals("false", ignoreCase = true) -> null
+                else -> this
+            }
+        }.also { reason ->
+            log.debug("Deprecation status for package $packageName after transformation: $reason")
+        }
+    }
+
     fun getPackageDeprecation(packageName: String): String? {
         log.info("Getting deprecation status for package $packageName")
         val registry = getRegistry(packageName)
-        val json = getBodyAsJSON("${registry}/$packageName/latest")
 
-        fun deprecationStatus(deprecation: String, local: Boolean = false): String? {
-            log.debug("Deprecation status for package $packageName before transformation: $deprecation")
-            return with(deprecation) {
-                when {
-                    local && isBlankOrEmpty() -> null
-                    equals("true", ignoreCase = true) || (!local && isBlankOrEmpty()) -> "Deprecated"
-                    equals("false", ignoreCase = true) -> null
-                    else -> this
-                }
-            }.also { reason ->
-                log.debug("Deprecation status for package $packageName after transformation: $reason")
+        return getBodyAsJSON("${registry}/$packageName/latest")?.let { json ->
+            val deprecation = json["deprecated"] ?: run {
+                log.debug("No deprecation present in online response for package $packageName")
+                return null
             }
-        }
-
-        return json?.get("deprecated")?.let { deprecation ->
             log.debug("Deprecation status for package $packageName found online: $deprecation")
-            if (deprecation.asBoolean == true) {
-                "Deprecated"
-            } else deprecation.asString?.let { deprecationStatus(it) }
-        }?.also { reason ->
-            log.info("Online deprecation after transformation: $reason")
+            when (deprecation.asBoolean) {
+                true -> "Deprecated"
+                false -> return null
+                null -> deprecation.asString?.let {
+                    deprecationStatus(packageName, it)
+                }.let { reason ->
+                    if (reason == null) return null
+                    reason
+                }
+            }
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "deprecated", "--registry=$registry")
-        )?.trim()?.let { deprecationStatus(it, local = true) }.also { reason ->
+        )?.trim()?.let { deprecationStatus(packageName, it, local = true) }.also { reason ->
             if (reason != null) {
                 log.info("Deprecation status for package $packageName found locally: $reason")
             } else {
