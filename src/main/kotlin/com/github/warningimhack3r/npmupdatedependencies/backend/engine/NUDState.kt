@@ -1,8 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHelper
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service

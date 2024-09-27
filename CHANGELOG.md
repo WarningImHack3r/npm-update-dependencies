@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add HTTP caching for some requests to the npm registry, improving performance (#135)
+
 ### Fixed
 
 - Remove a useless call to the local `npm` command when checking for deprecations, slightly speeding up the scan (#136)

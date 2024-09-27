@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.update
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction

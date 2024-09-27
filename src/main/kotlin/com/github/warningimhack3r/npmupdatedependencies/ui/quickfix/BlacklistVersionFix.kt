@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.quickfix
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer

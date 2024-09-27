@@ -1,14 +1,14 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
@@ -86,7 +86,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.availableUpdates[property.name] = state.availableUpdates[property.name].let { currentState ->
                     if (currentState == null || currentState.data != update) DataState(
                         data = update,
-                        scannedAt = Clock.System.now(),
+                        addedAt = Clock.System.now(),
                         comparator = value
                     ) else currentState
                 }

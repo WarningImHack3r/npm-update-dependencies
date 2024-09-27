@@ -1,7 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.banner
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.icons.AllIcons

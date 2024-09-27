@@ -1,12 +1,12 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.DataState
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.DeprecatedDependencyFix
@@ -83,7 +83,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 state.deprecations[property.name] = state.deprecations[property.name].let { currentState ->
                     if (currentState == null || currentState.data != deprecation) DataState(
                         data = deprecation,
-                        scannedAt = Clock.System.now(),
+                        addedAt = Clock.System.now(),
                         comparator = value
                     ) else currentState
                 }

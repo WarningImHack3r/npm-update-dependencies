@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.data
+package com.github.warningimhack3r.npmupdatedependencies.backend.models
 
 data class Update(
     val versions: Versions,

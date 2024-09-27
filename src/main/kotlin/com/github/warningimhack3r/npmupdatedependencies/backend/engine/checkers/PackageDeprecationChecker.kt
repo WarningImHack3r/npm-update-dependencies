@@ -1,9 +1,9 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -41,9 +41,8 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 state.deprecations.remove(packageName)
                 return@let
             }
-            if (deprecationState.scannedAt.plus(
-                    NUDSettingsState.instance.cacheDurationMinutes.minutes
-                ) < Clock.System.now()
+            if (Clock.System.now() >
+                deprecationState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes
             ) {
                 log.debug("Cached deprecation for $packageName has expired, removing it")
                 state.deprecations.remove(packageName)

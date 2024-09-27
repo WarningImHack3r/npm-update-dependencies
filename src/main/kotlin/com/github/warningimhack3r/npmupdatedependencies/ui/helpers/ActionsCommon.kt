@@ -1,8 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.json.psi.JsonProperty
 import com.intellij.openapi.diagnostic.logger

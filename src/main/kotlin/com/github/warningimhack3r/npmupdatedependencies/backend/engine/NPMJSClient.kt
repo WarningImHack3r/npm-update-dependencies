@@ -5,16 +5,20 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJso
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.isBlankOrEmpty
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.CacheEntry
+import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
+import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
 class NPMJSClient(private val project: Project) {
@@ -25,6 +29,8 @@ class NPMJSClient(private val project: Project) {
         @JvmStatic
         fun getInstance(project: Project): NPMJSClient = project.service()
     }
+
+    private val cache = mutableMapOf<String, CacheEntry<String>>()
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
@@ -61,13 +67,33 @@ class NPMJSClient(private val project: Project) {
     }
 
     private fun getResponseBody(uri: URI): String {
+        // Only cache /latest requests to save up on memory
+        val shouldUseCache = uri.path.endsWith("/latest")
+        if (shouldUseCache) {
+            cache[uri.toString()]?.let { cachedBody ->
+                if (Clock.System.now()
+                    > cachedBody.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes
+                ) {
+                    cache.remove(uri.toString())
+                    return@let
+                }
+                log.debug("GET $uri (cached)")
+                return cachedBody.data
+            }
+            log.debug("Entry for $uri not found in cache")
+        }
+
         log.debug("GET $uri")
         val request = HttpRequest
             .newBuilder(uri)
             .build()
         return HttpClient.newHttpClient()
             .send(request, HttpResponse.BodyHandlers.ofString())
-            .body()
+            .body().also { body ->
+                if (!shouldUseCache) return@also
+                log.debug("Caching response for $uri")
+                cache[uri.toString()] = CacheEntry(body, Clock.System.now())
+            }
     }
 
     private fun getBodyAsJSON(uri: String): JsonObject? {

@@ -1,9 +1,9 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Update
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.openapi.components.Service
@@ -79,9 +79,8 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 state.availableUpdates.remove(packageName)
                 return@let
             }
-            if (updateState.scannedAt.plus(
-                    NUDSettingsState.instance.cacheDurationMinutes.minutes
-                ) < Clock.System.now()
+            if (Clock.System.now() >
+                updateState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes
             ) {
                 log.debug("Cached versions for $packageName have expired, removing them")
                 state.availableUpdates.remove(packageName)

@@ -1,8 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
