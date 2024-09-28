@@ -1,24 +1,23 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoolean
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.isBlankOrEmpty
-import com.github.warningimhack3r.npmupdatedependencies.backend.models.CacheEntry
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import kotlinx.datetime.Clock
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.net.URI
 import java.net.http.HttpClient
 import java.net.http.HttpRequest
 import java.net.http.HttpResponse
-import kotlin.time.Duration.Companion.minutes
+import java.util.concurrent.TimeUnit
 
 @Service(Service.Level.PROJECT)
 class NPMJSClient(private val project: Project) {
@@ -30,7 +29,12 @@ class NPMJSClient(private val project: Project) {
         fun getInstance(project: Project): NPMJSClient = project.service()
     }
 
-    private val cache = mutableMapOf<String, CacheEntry<String>>()
+    private val cache = Caffeine.newBuilder()
+        .expireAfterWrite(NUDSettingsState.instance.cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
+        .removalListener<String, String> { k, _, removalCause ->
+            log.debug("Package $k removed from cache: $removalCause")
+        }
+        .build<String, String>()
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
@@ -67,20 +71,9 @@ class NPMJSClient(private val project: Project) {
     }
 
     private fun getResponseBody(uri: URI): String {
-        // Only cache /latest requests to save up on memory
-        val shouldUseCache = uri.path.endsWith("/latest")
-        if (shouldUseCache) {
-            cache[uri.toString()]?.let { cachedBody ->
-                if (Clock.System.now()
-                    > cachedBody.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes
-                ) {
-                    cache.remove(uri.toString())
-                    return@let
-                }
-                log.debug("GET $uri (cached)")
-                return cachedBody.data
-            }
-            log.debug("Entry for $uri not found in cache")
+        cache.getIfPresent(uri.toString())?.let { cachedData ->
+            log.debug("GET $uri (from cache)")
+            return cachedData
         }
 
         log.debug("GET $uri")
@@ -90,9 +83,8 @@ class NPMJSClient(private val project: Project) {
         return HttpClient.newHttpClient()
             .send(request, HttpResponse.BodyHandlers.ofString())
             .body().also { body ->
-                if (!shouldUseCache) return@also
                 log.debug("Caching response for $uri")
-                cache[uri.toString()] = CacheEntry(body, Clock.System.now())
+                cache.put(uri.toString(), body)
             }
     }
 
