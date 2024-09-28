@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.2.0] - 2024-09-28
+
 ### Added
 
 - **Add support for updating the `packageManager` tag**
@@ -284,7 +286,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...HEAD
+[3.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.2...v3.1.0
 [3.0.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.1...v3.0.2
 [3.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...v3.0.1
