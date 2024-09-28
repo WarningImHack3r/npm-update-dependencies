@@ -15,6 +15,8 @@
 ### Added
 
 - Add HTTP caching for some requests to the npm registry, improving performance (#135)
+- Attempt to batch registries scan without network requests before falling back to the original behavior, speeding up the first scan (#136)
+  - Many thanks to [@SCjona](https://github.com/SCjona) for the whole 3.1.0 and the two issues of this release!
 
 ### Fixed
 

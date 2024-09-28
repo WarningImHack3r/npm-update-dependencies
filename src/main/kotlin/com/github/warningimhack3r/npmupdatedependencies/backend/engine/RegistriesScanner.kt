@@ -1,9 +1,12 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.json.Json
 
 @Service(Service.Level.PROJECT)
 class RegistriesScanner(private val project: Project) {
@@ -26,8 +29,53 @@ class RegistriesScanner(private val project: Project) {
 
     fun scan() {
         log.info("Starting to scan registries")
+        val shellRunner = ShellRunner.getInstance(project)
+        val state = NUDState.getInstance(project)
+        // Populate packageRegistries with the contents of `npm ls --json`
+        shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { json ->
+            val jsonElement = Json.parseToJsonElement(json).asJsonObject ?: return@let.also {
+                log.warn("Failed to parse JSON from npm ls --json")
+            }
+            val dependencies = jsonElement["dependencies"]?.asJsonObject ?: return@let.also {
+                log.warn("No dependencies found in JSON from npm ls --json")
+            }
+            var registriesSet = setOf<String>()
+            for (packageName in dependencies.keys) {
+                val values = dependencies[packageName]?.asJsonObject ?: continue.also {
+                    log.warn("No values found for package $packageName in JSON from npm ls --json")
+                }
+                if (values.keys.contains("extraneous")) {
+                    log.debug("Package $packageName is extraneous, skipping")
+                    continue
+                }
+                val registry = dependencies[packageName]?.asJsonObject?.get("resolved")?.asString ?: continue.also {
+                    log.warn("No resolved found for package $packageName in JSON from npm ls --json")
+                }
+                if (!registry.startsWith("http")) {
+                    log.warn("Invalid registry $registry for package $packageName, skipping")
+                    continue
+                }
+                val formattedRegistry = registry.substringBefore("/$packageName")
+                log.debug("Found registry $formattedRegistry for package $packageName")
+                registriesSet += formattedRegistry
+                state.packageRegistries[packageName] = formattedRegistry
+            }
+            registries = registriesSet.toList()
+        }
+        if (registries.isNotEmpty()) {
+            // There are extra thin chances of missing registries with
+            // this logic, like when a package with a custom registry is
+            // installed with pnpm BUT at least one other is installed
+            // with npm.
+            // We'll consider here such edge cases negligible (and the user's
+            // responsibility), prioritizing speed and simplicity instead of
+            // slowing things down for everyone because of a few weird cases.
+            log.info("Found registries from `npm ls`: $registries")
+            if (!scanned) scanned = true
+            return
+        }
         // Run `npm config ls` to get the list of registries
-        val config = ShellRunner.getInstance(project).execute(arrayOf("npm", "config", "ls")) ?: return
+        val config = shellRunner.execute(arrayOf("npm", "config", "ls")) ?: return
         registries = config.lines().asSequence().map { it.trim() }.filter { line ->
             line.isNotEmpty() && line.isNotBlank() && !line.startsWith(";") &&
                     (line.contains("registry =") || line.contains("registry=")
