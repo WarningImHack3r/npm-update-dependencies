@@ -65,4 +65,14 @@ class NUDState {
             field = value
             StatusBarHelper.updateWidget()
         }
+    var isScanningForPackageManager = false
+        set(value) {
+            field = value
+            StatusBarHelper.updateWidget()
+        }
+    var foundPackageManager: String? = null
+        set(value) {
+            field = value
+            StatusBarHelper.updateWidget()
+        }
 }
