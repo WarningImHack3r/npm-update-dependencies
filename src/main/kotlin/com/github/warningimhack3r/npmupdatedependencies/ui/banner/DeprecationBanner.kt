@@ -15,7 +15,6 @@ import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
 import com.intellij.ui.JBColor
 import com.intellij.util.applyIf
-import com.jetbrains.rd.util.first
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -79,7 +78,7 @@ class DeprecationBanner : EditorNotificationProvider {
                 createActionLabel(
                     action.toString() + if (deprecationsCount > 1) {
                         " deprecations"
-                    } else " \"${foundDeprecations.first().key}\""
+                    } else " \"${foundDeprecations.keys.firstOrNull()}\""
                 ) {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)

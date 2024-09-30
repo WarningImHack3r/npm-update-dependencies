@@ -39,7 +39,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
     ): Boolean {
         return try {
             // Base data
-            val event = if (events.isNotEmpty()) events.first() else null
+            val event = events.firstOrNull()
 
             val stackTrace = event?.throwableText ?: ""
             val simpleErrorMessage = if (event != null && !event.message.isNullOrEmpty()) {
@@ -184,7 +184,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
         return IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: run {
             val projectManager = ProjectManager.getInstance()
             val openProjects = projectManager.openProjects
-            if (openProjects.isNotEmpty()) openProjects.first() else projectManager.defaultProject
+            openProjects.firstOrNull() ?: projectManager.defaultProject
         }
     }
 }
