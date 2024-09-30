@@ -75,7 +75,7 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
             return null
         }
 
-        val (managerName, managerVersion) = property.comparator.split("@")
+        val (managerName, managerVersion) = property.comparator.substringBefore("+").split("@")
         val update = PackageUpdateChecker.getInstance(project)
             .checkAvailableUpdates(managerName, "^${managerVersion}")
         state.availableUpdates[managerName] = state.availableUpdates[managerName].let { currentState ->
