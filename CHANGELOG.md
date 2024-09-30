@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.2.1] - 2024-09-30
+
 ### Fixed
 
 - Fix a crash when no `packageManager` tag is present in the `package.json` file
@@ -290,7 +292,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.1...HEAD
+[3.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...v3.2.0
 [3.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.2...v3.1.0
 [3.0.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.1...v3.0.2
