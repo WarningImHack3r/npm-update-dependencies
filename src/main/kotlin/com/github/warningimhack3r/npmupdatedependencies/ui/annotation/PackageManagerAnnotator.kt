@@ -35,9 +35,9 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): Pair<Project, Property>? {
         if (file.name != "package.json") return null
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
-            .first { child ->
+            .firstOrNull { child ->
                 child.name == "packageManager"
-            }.let { property ->
+            }?.let { property ->
                 Pair(
                     file.project,
                     Property(property, property.name, property.value?.stringValue())

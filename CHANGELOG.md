@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix a crash when no `packageManager` tag is present in the `package.json` file
+
 ## [3.2.0] - 2024-09-28
 
 ### Added
