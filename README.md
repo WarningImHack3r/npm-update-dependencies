@@ -15,11 +15,12 @@ version depending on your choice.
 ## Features
 
 - Update a dependency to the latest or satisfying version
-- Support for custom registries and private packages
 - Keep comparators (e.g. `^`, `~`, `>`, `<`, `>=`, `<=`) when replacing versions
-- Detect and replace/remove deprecated dependencies
-- Batch update all dependencies (latest or satisfying), all deprecated dependencies
 - Get notified of deprecated dependencies with a banner
+- Detect and replace/remove deprecated dependencies
+- Batch update all dependencies (latest or satisfying) and/or all deprecated dependencies
+- Support for custom registries and private packages
+- Support of the `packageManager` field
 - See your outdated dependencies at a glance in the status bar
 - Exclude dependencies or versions from the scan
 - Configure everything in the settings
