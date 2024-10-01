@@ -63,6 +63,10 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
                 return null
             }
+            if (NUDSettingsState.instance.unmaintainedDays == 0) {
+                log.debug("No deprecation found for $packageName, unmaintained check is disabled")
+                return null
+            }
             log.debug("No deprecation found for $packageName, checking if it's unmaintained")
             val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null
             val lastUpdateInstant = Instant.parse(lastUpdate)
