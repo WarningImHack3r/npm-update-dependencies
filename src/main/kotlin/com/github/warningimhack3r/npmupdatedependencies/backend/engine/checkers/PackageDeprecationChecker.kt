@@ -68,7 +68,9 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 return null
             }
             log.debug("No deprecation found for $packageName, checking if it's unmaintained")
-            val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null
+            val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null.also {
+                log.warn("Couldn't get last modification date for $packageName")
+            }
             val lastUpdateInstant = Instant.parse(lastUpdate)
             if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
                 log.debug("Package $packageName is unmaintained")
@@ -80,6 +82,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                     null
                 )
             }
+            log.debug("Package $packageName is maintained")
             return null
         }
 
