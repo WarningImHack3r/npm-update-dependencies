@@ -5,7 +5,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoo
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
-import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.isBlankOrEmpty
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -149,8 +148,8 @@ class NPMJSClient(private val project: Project) {
         log.debug("Deprecation status for package $packageName before transformation: $deprecation")
         return with(deprecation) {
             when {
-                local && isBlankOrEmpty() -> null
-                equals("true", ignoreCase = true) || (!local && isBlankOrEmpty()) -> "Deprecated"
+                local && isBlank() -> null
+                equals("true", ignoreCase = true) || (!local && isBlank()) -> "Deprecated"
                 equals("false", ignoreCase = true) -> null
                 else -> this
             }

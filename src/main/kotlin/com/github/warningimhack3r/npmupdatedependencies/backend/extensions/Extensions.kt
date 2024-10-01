@@ -33,5 +33,3 @@ fun JsonValue.stringValue(): String = text.replace("\"", "")
 fun <T, R> Iterable<T>.parallelMap(mapper: suspend (T) -> R) = runBlocking(SupervisorJob() + Dispatchers.Default) {
     coroutineScope { map { async { mapper(it) } }.awaitAll() }
 }
-
-fun String.isBlankOrEmpty() = isBlank() || isEmpty()
