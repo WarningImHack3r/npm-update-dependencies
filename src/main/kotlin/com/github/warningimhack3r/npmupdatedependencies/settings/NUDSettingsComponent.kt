@@ -133,20 +133,38 @@ class NUDSettingsComponent {
                     .bindItem(settings::defaultUpdateType.toMutableProperty())
             }
             row("Default deprecation action:") {
-                comboBox(Deprecation.Action.entries.toList())
+                comboBox(Deprecation.Action.entries.toList().filter { it != Deprecation.Action.IGNORE })
                     .bindItem(settings::defaultDeprecationAction.toMutableProperty())
             }
         }
         group("Deprecations") {
+            lateinit var bannerEnabled: Cell<JBCheckBox>
             row {
-                checkBox("Show deprecation banner")
+                bannerEnabled = checkBox("Show deprecation banner")
                     .comment("Show a warning banner when at least one dependency is deprecated.")
                     .bindSelected(settings::showDeprecationBanner)
+            }
+            indent {
+                row {
+                    checkBox("Include \"unmaintained\" packages")
+                        .comment("Also show the banner when a package hasn't been updated in a specified amount of time.")
+                        .bindSelected(settings::bannerIncludesUnmaintained)
+                }.enabledIf(bannerEnabled.selected)
             }
             row {
                 checkBox("Automatically reorder dependencies")
                     .comment("Reorder dependencies after replacing deprecated ones.<br>Useful when a new dependency starts with a different letter than the old one.")
                     .bindSelected(settings::autoReorderDependencies)
+            }
+            row("Days until a package is considered unmaintained:") {
+                spinner(0..365 * 10)
+                    .comment(
+                        """
+                        Control how many days a package can go without an update before it's considered \"likely unmaintained\". Set to 0 to disable.<br>
+                        <em>Keep in mind that a package might still be maintained even if it hasn't been updated in a while. You can adjust this value to your preference, or even exclude specific packages from this check if you consider them to be false positives.</em>
+                        """.trimIndent()
+                    )
+                    .bindIntValue(settings::unmaintainedDays)
             }
         }
         group("Parallelism") {
@@ -220,6 +238,11 @@ class NUDSettingsComponent {
                         }
                     }.showAndGet()
                 }
+            }
+            row("Packages excluded from the \"unmaintained\" check:") {
+                textField()
+                    .comment("Comma-separated list of package names that should be excluded from the \"unmaintained\" check.")
+                    .bindText(settings::excludedUnmaintainedPackages)
             }
         }
 

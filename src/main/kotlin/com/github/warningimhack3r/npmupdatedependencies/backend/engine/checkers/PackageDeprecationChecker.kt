@@ -3,6 +3,7 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.toReadableString
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
@@ -10,6 +11,10 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.periodUntil
+import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
 @Service(Service.Level.PROJECT)
@@ -34,6 +39,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }
 
         // Check if a deprecation has already been found
+        val now = Clock.System.now()
         state.deprecations[packageName]?.let { deprecationState ->
             log.debug("Deprecation found in cache for $packageName: $deprecationState")
             if (deprecationState.comparator != comparator) {
@@ -41,9 +47,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 state.deprecations.remove(packageName)
                 return@let
             }
-            if (Clock.System.now() >
-                deprecationState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes
-            ) {
+            if (now > deprecationState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes) {
                 log.debug("Cached deprecation for $packageName has expired, removing it")
                 state.deprecations.remove(packageName)
                 return@let
@@ -53,7 +57,27 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
 
         // Check if the package is deprecated
         val npmjsClient = NPMJSClient.getInstance(project)
-        val reason = npmjsClient.getPackageDeprecation(packageName) ?: return null
+        val reason = npmjsClient.getPackageDeprecation(packageName) ?: run {
+            if (NUDSettingsState.instance.excludedUnmaintainedPackages.split(",").map { it.trim() }
+                    .contains(packageName)) {
+                log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
+                return null
+            }
+            log.debug("No deprecation found for $packageName, checking if it's unmaintained")
+            val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null
+            val lastUpdateInstant = Instant.parse(lastUpdate)
+            if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
+                log.debug("Package $packageName is unmaintained")
+                val timeDiff = lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
+                return Deprecation(
+                    Deprecation.Kind.UNMAINTAINED,
+                    "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " +
+                            "Consider looking for an alternative.",
+                    null
+                )
+            }
+            return null
+        }
 
         // Get the deprecation reason and check if it contains a package name
         val replacementPackage = reason.split(" ").map { word ->
@@ -76,13 +100,14 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }.parallelMap { potentialPackage ->
             // Confirm that the word is a package name by trying to get its latest version
             npmjsClient.getLatestVersion(potentialPackage)?.let {
-                Pair(potentialPackage, it)
+                Deprecation.Replacement(potentialPackage, it)
             }
         }.filterNotNull().firstOrNull()
 
-        return replacementPackage?.let { (name, version) ->
-            // We found a package name and its latest version, so we can create a replacement
-            Deprecation(reason, Deprecation.Replacement(name, version))
-        } ?: Deprecation(reason, null)
+        return Deprecation(
+            Deprecation.Kind.DEPRECATED,
+            reason,
+            replacementPackage
+        )
     }
 }

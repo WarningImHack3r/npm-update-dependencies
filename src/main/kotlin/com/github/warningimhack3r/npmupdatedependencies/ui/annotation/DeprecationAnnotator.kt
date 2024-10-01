@@ -103,29 +103,57 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
     override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Deprecation>, holder: AnnotationHolder) {
         if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, deprecation) ->
-            holder.newAnnotation(HighlightSeverity.ERROR, deprecation.reason)
-                .range(property.textRange)
-                .highlightType(ProblemHighlightType.LIKE_DEPRECATED)
-                .applyIf(deprecation.replacement != null) {
-                    withFix(
-                        DeprecatedDependencyFix(
-                            property,
-                            Deprecation.Action.REPLACE,
-                            deprecation.replacement,
-                            true
+            when (deprecation.kind) {
+                Deprecation.Kind.DEPRECATED -> {
+                    holder.newAnnotation(HighlightSeverity.ERROR, deprecation.reason)
+                        .range(property.textRange)
+                        .highlightType(ProblemHighlightType.LIKE_DEPRECATED)
+                        .applyIf(deprecation.replacement != null) {
+                            withFix(
+                                DeprecatedDependencyFix(
+                                    property,
+                                    Deprecation.Action.REPLACE,
+                                    deprecation.replacement,
+                                    true
+                                )
+                            )
+                        }
+                        .withFix(
+                            DeprecatedDependencyFix(
+                                property,
+                                Deprecation.Action.REMOVE,
+                                null,
+                                deprecation.replacement != null
+                            )
                         )
-                    )
+                        .needsUpdateOnTyping()
+                        .create()
                 }
-                .withFix(
-                    DeprecatedDependencyFix(
-                        property,
-                        Deprecation.Action.REMOVE,
-                        null,
-                        deprecation.replacement != null
-                    )
-                )
-                .needsUpdateOnTyping()
-                .create()
+
+                Deprecation.Kind.UNMAINTAINED -> {
+                    holder.newAnnotation(HighlightSeverity.WEAK_WARNING, deprecation.reason)
+                        .range(property.textRange)
+                        .highlightType(ProblemHighlightType.WEAK_WARNING)
+                        .withFix(
+                            DeprecatedDependencyFix(
+                                property,
+                                Deprecation.Action.REMOVE,
+                                null,
+                                false
+                            )
+                        )
+                        .withFix(
+                            DeprecatedDependencyFix(
+                                property,
+                                Deprecation.Action.IGNORE,
+                                null,
+                                false
+                            )
+                        )
+                        .needsUpdateOnTyping()
+                        .create()
+                }
+            }
         }
         if (annotationResult.isNotEmpty()) {
             log.debug("Annotations created, updating banner")

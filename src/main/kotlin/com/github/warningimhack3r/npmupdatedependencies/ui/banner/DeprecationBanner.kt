@@ -29,7 +29,11 @@ class DeprecationBanner : EditorNotificationProvider {
     ): Function<in FileEditor, out JComponent?> = Function { _ ->
         val psiFile = PsiManager.getInstance(project).findFile(file)
         val state = NUDState.getInstance(project)
-        val foundDeprecations = state.deprecations.filter { it.value.data != null }
+        val foundDeprecations = state.deprecations.filter { deprecation ->
+            deprecation.value.data != null && if (NUDSettingsState.instance.bannerIncludesUnmaintained) {
+                true
+            } else deprecation.value.data?.kind != Deprecation.Kind.UNMAINTAINED
+        }
         if (psiFile == null || file.name != "package.json" || foundDeprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
             when {
                 psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
@@ -44,9 +48,12 @@ class DeprecationBanner : EditorNotificationProvider {
         }
         return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
             val availableActions = Deprecation.Action.entries.filter { action ->
-                (action == Deprecation.Action.REPLACE && foundDeprecations.values.any { state ->
+                // Exclude REPLACE if there are no replaceable deprecations
+                val isActionReplace = action == Deprecation.Action.REPLACE
+                val hasReplaceableDeprecations = foundDeprecations.values.any { state ->
                     state.data?.replacement != null
-                }) || action != Deprecation.Action.REPLACE
+                }
+                (isActionReplace && hasReplaceableDeprecations) || (!isActionReplace && action != Deprecation.Action.IGNORE)
             }
             // Description text & icon
             val actionsTitles = availableActions.mapIndexed { index, action ->
@@ -82,7 +89,13 @@ class DeprecationBanner : EditorNotificationProvider {
                 ) {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
-                        Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile)
+                        Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
+                            foundDeprecations.keys.contains(it.name)
+                        }
+
+                        Deprecation.Action.IGNORE -> {
+                            // Ignore all deprecations, won't happen as they can all be removed
+                        }
                     }
                 }
             }

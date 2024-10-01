@@ -117,12 +117,12 @@ object ActionsCommon {
         }
     }
 
-    fun deleteAllDeprecations(file: PsiFile) {
+    fun deleteAllDeprecations(file: PsiFile, predicate: (JsonProperty) -> Boolean = { true }) {
         val deprecations = NUDState.getInstance(file.project).deprecations
         val deprecationsToRemove = deprecations.filter { it.value.data != null }
         getAllDependencies(file)
-            .mapNotNull { property ->
-                if (deprecationsToRemove.containsKey(property.name)) property else null
+            .filter { property ->
+                deprecationsToRemove.containsKey(property.name) && predicate(property)
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Delete all deprecations", false) {

@@ -40,10 +40,20 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.showDeprecationBanner = value
         }
+    var bannerIncludesUnmaintained: Boolean
+        get() = settings.bannerIncludesUnmaintained
+        set(value) {
+            settings.bannerIncludesUnmaintained = value
+        }
     var autoReorderDependencies: Boolean
         get() = settings.autoReorderDependencies
         set(value) {
             settings.autoReorderDependencies = value
+        }
+    var unmaintainedDays: Int
+        get() = settings.unmaintainedDays
+        set(value) {
+            settings.unmaintainedDays = value
         }
     var maxParallelism: Int
         get() = settings.maxParallelism
@@ -75,17 +85,25 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.excludedVersions = value
         }
+    var excludedUnmaintainedPackages: String
+        get() = settings.excludedUnmaintainedPackages.joinToString(",")
+        set(value) {
+            settings.excludedUnmaintainedPackages = value.split(",").map { it.trim() }
+        }
 
     data class Settings(
         var defaultUpdateType: Versions.Kind = Versions.Kind.SATISFIES,
         var defaultDeprecationAction: Deprecation.Action = Deprecation.Action.REPLACE,
         var showDeprecationBanner: Boolean = true,
+        var bannerIncludesUnmaintained: Boolean = true,
         var autoReorderDependencies: Boolean = true,
+        var unmaintainedDays: Int = 365,
         var maxParallelism: Int = 100,
         var cacheDurationMinutes: Int = 30,
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
-        var excludedVersions: MutableMap<String, List<String>> = emptyMap<String, List<String>>().toMutableMap()
+        var excludedVersions: MutableMap<String, List<String>> = emptyMap<String, List<String>>().toMutableMap(),
+        var excludedUnmaintainedPackages: List<String> = listOf()
     )
 }

@@ -53,6 +53,10 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
                 Deprecation.Action.REMOVE -> actionsToPerform.add {
                     ActionsCommon.deleteAllDeprecations(file)
                 }
+
+                Deprecation.Action.IGNORE -> {
+                    // Do nothing, not selectable
+                }
             }
         }
 
