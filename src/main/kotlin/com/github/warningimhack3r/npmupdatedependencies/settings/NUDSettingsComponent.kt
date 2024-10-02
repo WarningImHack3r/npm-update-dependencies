@@ -1,20 +1,15 @@
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
@@ -160,8 +155,8 @@ class NUDSettingsComponent {
                 spinner(0..365 * 10)
                     .comment(
                         """
-                        Control how many days a package can go without an update before it's considered \"likely unmaintained\". Set to 0 to disable.<br>
-                        <em>Keep in mind that a package might still be maintained even if it hasn't been updated in a while. You can adjust this value to your preference, or even exclude specific packages from this check if you consider them to be false positives.</em>
+                        Control how many days a package can go without an update before it's considered "likely unmaintained". Set to 0 to disable.<br>
+                        <em>A package might still be maintained even if it hasn't been updated in a while. You can adjust this value to your liking, or even exclude packages from this check if you know they're still maintained.</em>
                         """.trimIndent()
                     )
                     .bindIntValue(settings::unmaintainedDays)
@@ -222,20 +217,6 @@ class NUDSettingsComponent {
                                 values.isNotEmpty()
                             }
                         }.toMutableMap()
-                        ProjectManager.getInstance().openProjects.forEach { project ->
-                            // Clear the cache for packages with excluded versions
-                            settings.excludedVersions.keys.forEach { packageName ->
-                                NUDState.getInstance(project).availableUpdates.remove(packageName)
-                            }
-                            // if project's currently open file is package.json, re-analyze it
-                            FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-                                PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
-                                    if (file.name == "package.json") {
-                                        DaemonCodeAnalyzer.getInstance(project).restart(file)
-                                    }
-                                }
-                            }
-                        }
                     }.showAndGet()
                 }
             }

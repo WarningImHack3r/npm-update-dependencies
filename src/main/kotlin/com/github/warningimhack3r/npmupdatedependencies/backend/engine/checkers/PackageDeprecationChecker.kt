@@ -58,8 +58,10 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         // Check if the package is deprecated
         val npmjsClient = NPMJSClient.getInstance(project)
         val reason = npmjsClient.getPackageDeprecation(packageName) ?: run {
-            if (NUDSettingsState.instance.excludedUnmaintainedPackages.split(",").map { it.trim() }
-                    .contains(packageName)) {
+            if (NUDSettingsState.instance.excludedUnmaintainedPackages
+                    .split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                    .contains(packageName)
+            ) {
                 log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
                 return null
             }

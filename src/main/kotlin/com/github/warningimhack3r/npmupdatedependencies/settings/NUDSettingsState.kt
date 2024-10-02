@@ -88,7 +88,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
     var excludedUnmaintainedPackages: String
         get() = settings.excludedUnmaintainedPackages.joinToString(",")
         set(value) {
-            settings.excludedUnmaintainedPackages = value.split(",").map { it.trim() }
+            settings.excludedUnmaintainedPackages = value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
         }
 
     data class Settings(

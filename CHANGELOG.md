@@ -17,6 +17,10 @@
 - Add warnings for unmaintained dependencies (#140)
   - Dependencies are considered likely unmaintained if they have not been updated for a long time, **configurable in the settings**
 
+### Fixed
+
+- Fix inaccurate cache invalidation when tweaking excluded packages setting
+
 ## [3.2.1] - 2024-09-30
 
 ### Fixed
