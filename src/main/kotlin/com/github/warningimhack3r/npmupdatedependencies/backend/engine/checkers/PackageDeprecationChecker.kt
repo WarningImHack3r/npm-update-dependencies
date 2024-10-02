@@ -71,16 +71,20 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null.also {
                 log.warn("Couldn't get last modification date for $packageName")
             }
-            val lastUpdateInstant = Instant.parse(lastUpdate)
-            if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
-                log.debug("Package $packageName is unmaintained")
-                val timeDiff = lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
-                return Deprecation(
-                    Deprecation.Kind.UNMAINTAINED,
-                    "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " +
-                            "Consider looking for an alternative.",
-                    null
-                )
+            try {
+                val lastUpdateInstant = Instant.parse(lastUpdate)
+                if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
+                    log.debug("Package $packageName is unmaintained")
+                    val timeDiff = lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
+                    return Deprecation(
+                        Deprecation.Kind.UNMAINTAINED,
+                        "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
+                        null
+                    )
+                }
+            } catch (e: Exception) {
+                log.warn("Couldn't parse last modification date for $packageName: $lastUpdate", e)
+                return null
             }
             log.debug("Package $packageName is maintained")
             return null
