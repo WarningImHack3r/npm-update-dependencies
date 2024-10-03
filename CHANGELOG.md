@@ -18,10 +18,6 @@
   - Dependencies are considered likely unmaintained if they have not been updated for a long time, **configurable in the settings**
 - Suggest replacing a deprecated dependency with its latest version when applicable
 
-### Changed
-
-- Improve mitigation of an external library crash, better supporting `styled-components` updates (#109)
-
 ### Fixed
 
 - Fix inaccurate cache invalidation when tweaking excluded packages setting
