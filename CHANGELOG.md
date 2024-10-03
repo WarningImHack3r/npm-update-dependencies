@@ -27,6 +27,7 @@
 - Fix inaccurate cache invalidation when tweaking excluded packages setting
 - Fix some deprecations not being detected
 - Fix deprecation replacement action sometimes leading to weird results when auto-sorting is enabled
+- (Likely) fix a concurrency crash (#144)
 
 ## [3.2.1] - 2024-09-30
 

@@ -7,6 +7,7 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarHe
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.project.Project
+import com.jetbrains.rd.util.concurrentMapOf
 
 @Service(Service.Level.PROJECT)
 class NUDState {
@@ -19,13 +20,13 @@ class NUDState {
      * A "cache" of available updates for packages.
      * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker.checkAvailableUpdates] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator.doAnnotate].
      */
-    val availableUpdates = mutableMapOf<String, DataState<Update>>()
+    val availableUpdates = concurrentMapOf<String, DataState<Update>>()
 
     /**
      * A "cache" of deprecations for packages.
      * Managed by [com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker.getDeprecationStatus] and [com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator.doAnnotate].
      */
-    val deprecations = mutableMapOf<String, DataState<Deprecation>>()
+    val deprecations = concurrentMapOf<String, DataState<Deprecation>>()
 
     /**
      * A "cache" of registries for packages, mapping package names to registry URLs.
@@ -33,7 +34,7 @@ class NUDState {
      *
      * MUST NOT be accessed from outside the [com.github.warningimhack3r.npmupdatedependencies.backend.engine] package.
      */
-    val packageRegistries = mutableMapOf<String, String>()
+    val packageRegistries = concurrentMapOf<String, String>()
 
     var totalPackages = 0
         set(value) {
