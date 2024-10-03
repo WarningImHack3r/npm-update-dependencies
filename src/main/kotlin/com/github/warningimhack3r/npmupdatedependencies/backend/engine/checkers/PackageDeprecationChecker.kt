@@ -14,6 +14,7 @@ import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
+import org.semver4j.Semver
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
 
@@ -56,8 +57,11 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         } ?: log.debug("No cached deprecation found in cache for $packageName")
 
         // Check if the package is deprecated
+        val comparatorVersion = Semver.coerce(comparator)?.version ?: "latest".also {
+            log.warn("Couldn't coerce comparator $comparator to a version, using 'latest' instead")
+        }
         val npmjsClient = NPMJSClient.getInstance(project)
-        val reason = npmjsClient.getPackageDeprecation(packageName) ?: run {
+        val reason = npmjsClient.getPackageDeprecation(packageName, comparatorVersion) ?: run {
             if (NUDSettingsState.instance.excludedUnmaintainedPackages
                     .split(",").map { it.trim() }.filter { it.isNotEmpty() }
                     .contains(packageName)
@@ -90,6 +94,21 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             }
             log.debug("Package $packageName is maintained")
             return null
+        }
+
+        if (npmjsClient.getPackageDeprecation(packageName) == null) {
+            // Only the current version is deprecated, not the latest: suggest to upgrade instead
+            log.debug("Only the current version of $packageName is deprecated, suggesting to upgrade")
+            npmjsClient.getLatestVersion(packageName)?.let { Semver.coerce(it) }?.let { latestVersion ->
+                val currentVersionText = Semver.coerce(comparatorVersion)?.let {
+                    "$packageName ${it.major}"
+                } ?: "The current version of $packageName"
+                return Deprecation(
+                    Deprecation.Kind.DEPRECATED,
+                    "$currentVersionText is deprecated, consider upgrading to v${latestVersion.major}",
+                    Deprecation.Replacement(packageName, latestVersion.version)
+                )
+            } ?: log.warn("Couldn't get latest version for $packageName or can't coerce it")
         }
 
         // Get the deprecation reason and check if it contains a package name

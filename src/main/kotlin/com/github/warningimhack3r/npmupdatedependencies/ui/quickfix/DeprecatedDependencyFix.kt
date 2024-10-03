@@ -28,7 +28,10 @@ class DeprecatedDependencyFix(
 
     override fun getText(): String {
         val baseText = when (actionType) {
-            Deprecation.Action.REPLACE -> "Replace by \"${replacementName}\" (${replacementVersion})"
+            Deprecation.Action.REPLACE -> if (replacementName == property.name) {
+                "Upgrade to $replacementVersion"
+            } else "Replace by \"${replacementName}\" (${replacementVersion})"
+
             Deprecation.Action.REMOVE -> "Remove dependency"
             Deprecation.Action.IGNORE -> "Ignore deprecation"
         }

@@ -158,11 +158,11 @@ class NPMJSClient(private val project: Project) {
         }
     }
 
-    fun getPackageDeprecation(packageName: String): String? {
-        log.info("Getting deprecation status for package $packageName")
+    fun getPackageDeprecation(packageName: String, currentVersion: String = "latest"): String? {
+        log.info("Getting deprecation status for package $packageName with version $currentVersion")
         val registry = getRegistry(packageName)
 
-        return getBodyAsJSON("${registry}/$packageName/latest")?.let { json ->
+        return getBodyAsJSON("${registry}/$packageName/$currentVersion")?.let { json ->
             val deprecation = json["deprecated"] ?: run {
                 log.debug("No deprecation present in online response for package $packageName")
                 return null

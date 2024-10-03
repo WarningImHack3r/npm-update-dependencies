@@ -16,6 +16,7 @@
 
 - Add warnings for unmaintained dependencies (#140)
   - Dependencies are considered likely unmaintained if they have not been updated for a long time, **configurable in the settings**
+- Suggest replacing a deprecated dependency with its latest version when applicable
 
 ### Changed
 
@@ -24,6 +25,7 @@
 ### Fixed
 
 - Fix inaccurate cache invalidation when tweaking excluded packages setting
+- Fix some deprecations not being detected
 - Fix deprecation replacement action sometimes leading to weird results when auto-sorting is enabled
 
 ## [3.2.1] - 2024-09-30
