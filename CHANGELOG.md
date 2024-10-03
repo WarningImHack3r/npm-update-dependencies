@@ -20,6 +20,7 @@
 ### Fixed
 
 - Fix inaccurate cache invalidation when tweaking excluded packages setting
+- Fix deprecation replacement action sometimes leading to weird results when auto-sorting is enabled
 
 ## [3.2.1] - 2024-09-30
 

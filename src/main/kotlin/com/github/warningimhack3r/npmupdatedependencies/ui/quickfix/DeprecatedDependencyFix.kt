@@ -53,7 +53,7 @@ class DeprecatedDependencyFix(
                 val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                 val newName = NUDHelper.createElement(project, "\"$replacementName\"", "JSON")
                 val newVersion = NUDHelper.createElement(project, "\"$prefix$replacementVersion\"", "JSON")
-                NUDHelper.safeFileWrite(file, "Replace \"${property.name}\" by \"$replacementName\"") {
+                NUDHelper.safeFileWrite(file, "Replace \"${property.name}\" by \"$replacementName\"", false) {
                     property.nameElement.replace(newName)
                     property.value?.replace(newVersion)
                 }
