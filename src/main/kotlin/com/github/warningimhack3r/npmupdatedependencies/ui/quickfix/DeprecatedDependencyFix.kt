@@ -22,7 +22,10 @@ class DeprecatedDependencyFix(
     replacement: Deprecation.Replacement?,
     private val showOrder: Boolean
 ) : BaseIntentionAction() {
-    private val log = logger<DeprecatedDependencyFix>()
+    companion object {
+        private val log = logger<DeprecatedDependencyFix>()
+    }
+
     private val replacementName = replacement?.name ?: ""
     private val replacementVersion = replacement?.version ?: ""
 

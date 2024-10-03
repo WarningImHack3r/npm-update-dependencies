@@ -17,7 +17,10 @@ class UpdateDependencyFix(
     private val kind: Versions.Kind,
     private val property: JsonProperty
 ) : BaseIntentionAction() {
-    private val log = logger<UpdateDependencyFix>()
+    companion object {
+        private val log = logger<UpdateDependencyFix>()
+    }
+
     private val version = versions.from(kind)
 
     override fun getText() = QuickFixesCommon.getPositionPrefix(
