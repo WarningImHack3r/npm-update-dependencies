@@ -39,7 +39,7 @@ class RegistriesScanner(private val project: Project) {
             val dependencies = jsonElement["dependencies"]?.asJsonObject ?: return@let.also {
                 log.warn("No dependencies found in JSON from npm ls --json")
             }
-            var registriesSet = setOf<String>()
+            val registriesSet = mutableSetOf<String>()
             for (packageName in dependencies.keys) {
                 val values = dependencies[packageName]?.asJsonObject ?: continue.also {
                     log.warn("No values found for package $packageName in JSON from npm ls --json")
@@ -57,7 +57,7 @@ class RegistriesScanner(private val project: Project) {
                 }
                 val formattedRegistry = registry.substringBefore("/$packageName")
                 log.debug("Found registry $formattedRegistry for package $packageName")
-                registriesSet += formattedRegistry
+                registriesSet.add(formattedRegistry)
                 state.packageRegistries[packageName] = formattedRegistry
             }
             registries = registriesSet.toList()

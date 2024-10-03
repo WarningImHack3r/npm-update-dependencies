@@ -17,6 +17,10 @@
 - Add warnings for unmaintained dependencies (#140)
   - Dependencies are considered likely unmaintained if they have not been updated for a long time, **configurable in the settings**
 
+### Changed
+
+- Improve mitigation of an external library crash, better supporting `styled-components` updates (#109)
+
 ### Fixed
 
 - Fix inaccurate cache invalidation when tweaking excluded packages setting
