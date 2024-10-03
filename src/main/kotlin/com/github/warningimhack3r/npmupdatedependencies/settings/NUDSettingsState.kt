@@ -1,12 +1,15 @@
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.PersistentStateComponent
 import com.intellij.openapi.components.State
 import com.intellij.openapi.components.Storage
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.util.xmlb.XmlSerializerUtil.copyBean
 
 @State(name = "NUDSettings", storages = [Storage("npm-update-dependencies.xml")])
@@ -54,6 +57,10 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         get() = settings.unmaintainedDays
         set(value) {
             settings.unmaintainedDays = value
+            ProjectManager.getInstance().openProjects.forEach { project ->
+                NUDState.getInstance(project).deprecations.clear()
+                NUDHelper.reanalyzePackageJsonIfOpen(project)
+            }
         }
     var maxParallelism: Int
         get() = settings.maxParallelism
@@ -84,11 +91,19 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         get() = settings.excludedVersions
         set(value) {
             settings.excludedVersions = value
+            ProjectManager.getInstance().openProjects.forEach { project ->
+                NUDState.getInstance(project).availableUpdates.clear()
+                NUDHelper.reanalyzePackageJsonIfOpen(project)
+            }
         }
     var excludedUnmaintainedPackages: String
         get() = settings.excludedUnmaintainedPackages.joinToString(",")
         set(value) {
             settings.excludedUnmaintainedPackages = value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
+            ProjectManager.getInstance().openProjects.forEach { project ->
+                NUDState.getInstance(project).deprecations.clear()
+                NUDHelper.reanalyzePackageJsonIfOpen(project)
+            }
         }
 
     data class Settings(
