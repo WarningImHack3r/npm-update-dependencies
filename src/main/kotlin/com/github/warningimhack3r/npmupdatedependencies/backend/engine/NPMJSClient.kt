@@ -188,4 +188,21 @@ class NPMJSClient(private val project: Project) {
             }
         }
     }
+
+    fun getPackageLastModified(packageName: String): String? {
+        log.info("Getting last modified date for package $packageName")
+        val registry = getRegistry(packageName)
+        val json = getBodyAsJSON("${registry}/$packageName")
+        return json?.get("time")?.asJsonObject?.get("modified")?.asString?.also {
+            log.info("Last modified date for package $packageName found online: $it")
+        } ?: ShellRunner.getInstance(project).execute(
+            arrayOf("npm", "v", packageName, "time.modified", "--registry=$registry")
+        )?.trim()?.let { it.ifEmpty { null } }.also {
+            if (it != null) {
+                log.info("Last modified date for package $packageName found locally: $it")
+            } else {
+                log.warn("Last modified date for package $packageName not found")
+            }
+        }
+    }
 }

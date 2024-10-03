@@ -18,6 +18,7 @@ version depending on your choice.
 - Keep comparators (e.g. `^`, `~`, `>`, `<`, `>=`, `<=`) when replacing versions
 - Get notified of deprecated dependencies with a banner
 - Detect and replace/remove deprecated dependencies
+- Configure and spot dependencies that are likely unmaintained
 - Batch update all dependencies (latest or satisfying) and/or all deprecated dependencies
 - Support for custom registries and private packages
 - Support of the `packageManager` field

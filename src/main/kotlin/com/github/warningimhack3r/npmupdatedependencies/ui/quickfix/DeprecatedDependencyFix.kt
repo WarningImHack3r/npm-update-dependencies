@@ -7,6 +7,7 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.json.psi.JsonProperty
 import com.intellij.openapi.diagnostic.logger
@@ -29,6 +30,7 @@ class DeprecatedDependencyFix(
         val baseText = when (actionType) {
             Deprecation.Action.REPLACE -> "Replace by \"${replacementName}\" (${replacementVersion})"
             Deprecation.Action.REMOVE -> "Remove dependency"
+            Deprecation.Action.IGNORE -> "Ignore deprecation"
         }
         return (if (showOrder) QuickFixesCommon.getPositionPrefix(
             actionType,
@@ -71,6 +73,11 @@ class DeprecatedDependencyFix(
                 }?.delete()
                 // Delete the property
                 property.delete()
+            }
+
+            Deprecation.Action.IGNORE -> {
+                NUDSettingsState.instance.excludedUnmaintainedPackages += ",${property.name}"
+                DaemonCodeAnalyzer.getInstance(project).restart(file)
             }
         }
         NUDState.getInstance(project).deprecations.remove(property.name)
