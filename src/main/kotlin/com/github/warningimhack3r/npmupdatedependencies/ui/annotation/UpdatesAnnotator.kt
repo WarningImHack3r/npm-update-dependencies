@@ -92,7 +92,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 }
                 val coerced = Semver.coerce(value)
                 val updateAvailable =
-                    update != null && coerced != null && !update.versions.isEqualToAny(coerced)
+                    update != null && ((coerced != null && !update.versions.isEqualToAny(coerced)) || coerced == null)
                 log.debug("Task finished for ${property.name}, update found: $updateAvailable")
                 state.scannedUpdates++
                 activeTasks--
@@ -110,7 +110,10 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, scanResult) ->
             val versions = scanResult.versions
-            val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
+            val wasNonNumeric = property.value?.stringValue()?.none { it.isDigit() } == true
+            val text = (if (wasNonNumeric) {
+                "Avoid using a non-numeric version, replace it with its numeric equivalent."
+            } else "An update is available!") + if (scanResult.affectedByFilters.isNotEmpty()) {
                 " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
             } else ""
             val currentVersion = property.value?.stringValue()?.let { Semver.coerce(it) }
@@ -122,7 +125,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     withFix(UpdateDependencyFix(versions, Kind.SATISFIES, property))
                 }
                 // Exclude next Major/Minor/Exact/all versions
-                .applyIf(currentVersion != null) {
+                .applyIf(currentVersion != null && !wasNonNumeric) {
                     if (currentVersion == null) return@applyIf this
 
                     val baseIndex = if (versions.satisfies == null) -1 else 0

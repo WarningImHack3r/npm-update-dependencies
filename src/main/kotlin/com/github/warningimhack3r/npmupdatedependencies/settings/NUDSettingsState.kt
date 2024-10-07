@@ -87,6 +87,11 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.autoFixOnSave = value
         }
+    var suggestReplacingTags: Boolean
+        get() = settings.suggestReplacingTags
+        set(value) {
+            settings.suggestReplacingTags = value
+        }
     var excludedVersions: MutableMap<String, List<String>>
         get() = settings.excludedVersions
         set(value) {
@@ -118,6 +123,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
+        var suggestReplacingTags: Boolean = true,
         var excludedVersions: MutableMap<String, List<String>> = emptyMap<String, List<String>>().toMutableMap(),
         var excludedUnmaintainedPackages: List<String> = listOf()
     )

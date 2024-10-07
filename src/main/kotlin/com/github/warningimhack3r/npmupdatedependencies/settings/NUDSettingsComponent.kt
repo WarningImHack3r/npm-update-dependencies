@@ -162,7 +162,7 @@ class NUDSettingsComponent {
                     .bindIntValue(settings::unmaintainedDays)
             }
         }
-        group("Parallelism") {
+        group("Optimization") {
             row("Maximum parallel processes:") {
                 spinner(1..100)
                     .comment(
@@ -174,8 +174,6 @@ class NUDSettingsComponent {
                     )
                     .bindIntValue(settings::maxParallelism)
             }
-        }
-        group("Cache") {
             row("Cache duration (minutes):") {
                 spinner(1..60 * 24)
                     .comment("Control how long valid scan results are cached for. Lower values can cause more scans to be run, but higher values can cause outdated results to be shown.")
@@ -197,11 +195,16 @@ class NUDSettingsComponent {
                 }.enabledIf(statusBarEnabled.selected)
             }
         }
-        group("Auto-Fix") {
+        group("Miscellaneous") {
             row {
                 checkBox("Auto-fix on save")
                     .comment("Auto-fix applies the default update type and deprecation action to all dependencies when saving <code>package.json</code>.")
                     .bindSelected(settings::autoFixOnSave)
+            }
+            row {
+                checkBox("Suggest replacing tags with versions")
+                    .comment("Suggest replacing tags like <code>latest</code> or <code>next</code> with actual versions when a tag is used in a dependency comparator.")
+                    .bindSelected(settings::suggestReplacingTags)
             }
         }
         group("Exclusions") {

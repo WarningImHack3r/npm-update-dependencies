@@ -100,18 +100,23 @@ class NPMJSClient(private val project: Project) {
 
     fun getLatestVersion(packageName: String): String? {
         log.info("Getting latest version for package $packageName")
-        val registry = getRegistry(packageName)
-        val json = getBodyAsJSON("${registry}/$packageName/latest")
-        return json?.get("version")?.asString?.also {
-            log.info("Latest version for package $packageName found online: $it")
-        } ?: ShellRunner.getInstance(project).execute(
-            arrayOf("npm", "v", packageName, "version", "--registry=$registry")
+        return getVersionFromTag(packageName, "latest") ?: ShellRunner.getInstance(project).execute(
+            arrayOf("npm", "v", packageName, "version", "--registry=${getRegistry(packageName)}")
         )?.trim()?.let { it.ifEmpty { null } }.also {
             if (it != null) {
                 log.info("Latest version for package $packageName found locally: $it")
             } else {
                 log.warn("Latest version for package $packageName not found")
             }
+        }
+    }
+
+    fun getVersionFromTag(packageName: String, tag: String): String? {
+        log.info("Getting version for package $packageName with tag $tag")
+        return getBodyAsJSON("${getRegistry(packageName)}/$packageName/$tag")?.get("version")?.asString?.also {
+            log.info("Version for package $packageName with tag $tag found online: $it")
+        } ?: null.also {
+            log.warn("Version for package $packageName with tag $tag not found online")
         }
     }
 

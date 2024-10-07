@@ -12,6 +12,11 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
+  - Can be disabled in the settings
+
 ## [3.3.0] - 2024-10-07
 
 ### Added

@@ -68,6 +68,37 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 log.debug("Removing cached versions for $packageName")
                 state.availableUpdates.remove(packageName)
             }
+            if (!NUDSettingsState.instance.suggestReplacingTags) {
+                log.debug("Suggesting replacing tags is disabled")
+                return null
+            }
+            // Tag comparator, this should be avoided
+            with(comparator.lowercase()) {
+                when {
+                    Regex("^[a-z]+$").matches(this) -> {
+                        log.debug("Comparator $comparator is a tag, fetching version from tag")
+                        val versionFromTag = NPMJSClient.getInstance(project).getVersionFromTag(
+                            packageName, this
+                        )
+                        val potentialVersion = Semver.coerce(versionFromTag) ?: return null.also {
+                            log.warn("Failed to coerce version $versionFromTag for $packageName")
+                        }
+                        log.debug("Version from tag $versionFromTag for $packageName")
+                        return Update(Versions(potentialVersion))
+                    }
+
+                    equals("*") -> {
+                        log.debug("Comparator $comparator is a wildcard, fetching latest version")
+                        val latestVersion = NPMJSClient.getInstance(project).getLatestVersion(packageName)?.let {
+                            Semver.coerce(it)
+                        } ?: return null.also {
+                            log.warn("No latest version found for $packageName with wildcard comparator")
+                        }
+                        log.debug("Latest version $latestVersion for $packageName")
+                        return Update(Versions(latestVersion))
+                    }
+                }
+            }
             return null
         }
 

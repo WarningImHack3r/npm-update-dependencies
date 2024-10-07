@@ -22,11 +22,14 @@ class UpdateDependencyFix(
     }
 
     private val version = versions.from(kind)
+    private val wasNonNumeric = property.value?.stringValue()?.none { it.isDigit() } == true
 
-    override fun getText() = QuickFixesCommon.getPositionPrefix(
-        kind,
-        versions.orderedAvailableKinds(NUDSettingsState.instance.defaultUpdateType!!)
-    ) + "Update to ${kind.toString().lowercase()} version ($version)"
+    override fun getText() = if (wasNonNumeric) "Set version to $version" else {
+        QuickFixesCommon.getPositionPrefix(
+            kind,
+            versions.orderedAvailableKinds(NUDSettingsState.instance.defaultUpdateType!!)
+        ) + "Update to ${kind.toString().lowercase()} version ($version)"
+    }
 
     override fun getFamilyName() = "Update dependency"
 
@@ -38,9 +41,11 @@ class UpdateDependencyFix(
             log.warn("Trying to update dependency but file is null")
             return
         }
-        val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+        val prefix = if (wasNonNumeric) "^" else {
+            NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
+        }
         val newElement = NUDHelper.createElement(project, "\"$prefix$version\"", "JSON")
-        NUDHelper.safeFileWrite(file, "Update \"${property.name}\" to $version") {
+        NUDHelper.safeFileWrite(file, "${if (wasNonNumeric) "Set" else "Update"} \"${property.name}\" to $version") {
             property.value?.replace(newElement)
         }
     }
