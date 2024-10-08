@@ -98,6 +98,8 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                         log.debug("Latest version $latestVersion for $packageName")
                         return Update(Versions(latestVersion))
                     }
+
+                    else -> log.debug("Comparator $comparator is not a tag or wildcard, leaving")
                 }
             }
             return null

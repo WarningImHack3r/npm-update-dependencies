@@ -6,6 +6,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
 
 @Service(Service.Level.PROJECT)
@@ -32,9 +33,15 @@ class RegistriesScanner(private val project: Project) {
         val shellRunner = ShellRunner.getInstance(project)
         val state = NUDState.getInstance(project)
         // Populate packageRegistries with the contents of `npm ls --json`
-        shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { json ->
-            val jsonElement = Json.parseToJsonElement(json).asJsonObject ?: return@let.also {
-                log.warn("Failed to parse JSON from npm ls --json")
+        shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { output ->
+            val json = try {
+                Json.parseToJsonElement(output)
+            } catch (e: SerializationException) {
+                log.warn("Failed to parse JSON from npm ls --json", e)
+                return@let
+            }
+            val jsonElement = json.asJsonObject ?: return@let.also {
+                log.warn("Failed to extract object from npm ls --json")
             }
             val dependencies = jsonElement["dependencies"]?.asJsonObject ?: return@let.also {
                 log.warn("No dependencies found in JSON from npm ls --json")
@@ -61,6 +68,7 @@ class RegistriesScanner(private val project: Project) {
                 state.packageRegistries[packageName] = formattedRegistry
             }
             registries = registriesSet.toList()
+            log.debug("Found ${registries.size} registries and ${state.packageRegistries.size} package registries bindings from `npm ls --json`")
         }
         if (registries.isNotEmpty()) {
             // There are extra thin chances of missing registries with

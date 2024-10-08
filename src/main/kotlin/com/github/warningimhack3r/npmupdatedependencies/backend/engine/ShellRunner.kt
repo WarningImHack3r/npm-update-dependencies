@@ -42,11 +42,11 @@ class ShellRunner(private val project: Project) {
                 val process = ProcessBuilder(*platformCommand)
                     .directory(project.basePath?.let { File(it) })
                     .start()
-                process.waitFor()
                 val output = process.inputStream?.bufferedReader()?.readText()?.also {
                     log.debug("Successfully executed \"${platformCommand.joinToString(" ")}\" with output:\n$it")
                 }
                 val error = process.errorStream?.bufferedReader()?.readText()
+                process.waitFor()
                 if (output.isNullOrBlank() && !error.isNullOrBlank()) {
                     log.warn("Error while executing \"${platformCommand.joinToString(" ")}\":\n${error.take(150)}")
                 }

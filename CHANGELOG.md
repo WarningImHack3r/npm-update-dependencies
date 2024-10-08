@@ -17,6 +17,10 @@
 - Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
   - Can be disabled in the settings
 
+### Fixed
+
+- Fix plugin hanging forever when scanning for registries (#146)
+
 ## [3.3.0] - 2024-10-07
 
 ### Added
