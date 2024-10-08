@@ -17,6 +17,10 @@
 - Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
   - Can be disabled in the settings
 
+### Changed
+
+- Widen the kind of dependencies that can be checked for deprecations
+
 ### Fixed
 
 - Fix plugin hanging forever when scanning for registries (#146)

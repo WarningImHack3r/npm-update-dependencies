@@ -11,6 +11,7 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import kotlinx.datetime.Clock
+import kotlinx.datetime.DateTimeArithmeticException
 import kotlinx.datetime.Instant
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.periodUntil
@@ -31,8 +32,8 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
     fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
         log.info("Checking for deprecations for $packageName with comparator $comparator")
         val state = NUDState.getInstance(project)
-        if (!isComparatorUpgradable(comparator)) {
-            log.warn("Comparator $comparator is not upgradable")
+        if (!isComparatorSupported(comparator)) {
+            log.warn("Comparator $comparator is not supported")
             if (state.deprecations.containsKey(packageName)) {
                 log.debug("Removing cached deprecation for $packageName")
                 state.deprecations.remove(packageName)
@@ -78,26 +79,31 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null.also {
                 log.warn("Couldn't get last modification date for $packageName")
             }
-            try {
-                val lastUpdateInstant = Instant.parse(lastUpdate)
-                if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
-                    log.debug("Package $packageName is unmaintained")
-                    val timeDiff = lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
-                    return Deprecation(
-                        Deprecation.Kind.UNMAINTAINED,
-                        "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
-                        null
-                    )
-                }
-            } catch (e: Exception) {
+            val lastUpdateInstant = try {
+                Instant.parse(lastUpdate)
+            } catch (e: IllegalArgumentException) {
                 log.warn("Couldn't parse last modification date for $packageName: $lastUpdate", e)
                 return null
+            }
+            if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
+                log.debug("Package $packageName is unmaintained")
+                val timeDiff = try {
+                    lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
+                } catch (e: DateTimeArithmeticException) {
+                    log.warn("Couldn't calculate time difference for $packageName", e)
+                    return null
+                }
+                return Deprecation(
+                    Deprecation.Kind.UNMAINTAINED,
+                    "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
+                    null
+                )
             }
             log.debug("Package $packageName is maintained")
             return null
         }
 
-        if (npmjsClient.getPackageDeprecation(packageName) == null) {
+        if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(packageName) == null) {
             // Only the current version is deprecated, not the latest: suggest to upgrade instead
             log.debug("Only the current version of $packageName is deprecated, suggesting to upgrade")
             npmjsClient.getLatestVersion(packageName)?.let { Semver.coerce(it) }?.let { latestVersion ->
