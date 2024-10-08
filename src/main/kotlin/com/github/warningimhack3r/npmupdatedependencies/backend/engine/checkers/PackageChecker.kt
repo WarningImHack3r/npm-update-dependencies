@@ -1,6 +1,9 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 abstract class PackageChecker {
+    companion object {
+        private val ONLY_DIGIT_X_OR_DOT = Regex("^[\\dx.]+$")
+    }
 
     /**
      * Checks if the given version is upgradable.
@@ -15,7 +18,7 @@ abstract class PackageChecker {
         return with(comparator) {
             when {
                 // If the version is "static", upgradable only if it includes (ends with?) a `x` or `X`
-                Regex("^[\\dx.]+$").matches(this) -> lowercase().contains("x")
+                ONLY_DIGIT_X_OR_DOT.matches(this) -> lowercase().contains("x")
                 // Symbols prefixes
                 startsWith("<") || startsWith("<=") -> false
                 // tags

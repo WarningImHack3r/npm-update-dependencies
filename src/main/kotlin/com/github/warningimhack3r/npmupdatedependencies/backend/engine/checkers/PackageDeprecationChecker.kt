@@ -22,6 +22,7 @@ import kotlin.time.Duration.Companion.minutes
 class PackageDeprecationChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageDeprecationChecker>()
+        private val ENDING_PUNCTUATION = Regex("[,;.!?:]$")
 
         @JvmStatic
         fun getInstance(project: Project): PackageDeprecationChecker = project.service()
@@ -114,7 +115,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         // Get the deprecation reason and check if it contains a package name
         val replacementPackage = reason.split(" ").map { word ->
             // Remove punctuation at the end of the word
-            word.replace(Regex("[,;.]$"), "")
+            word.replace(ENDING_PUNCTUATION, "")
         }.filter { word ->
             with(word) {
                 // Try to find a word that looks like a package name

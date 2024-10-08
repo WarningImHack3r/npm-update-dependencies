@@ -18,6 +18,7 @@ import kotlin.time.Duration.Companion.minutes
 class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageUpdateChecker>()
+        private val LOWERCASE_WORD = Regex("^[a-z]+$")
 
         @JvmStatic
         fun getInstance(project: Project): PackageUpdateChecker = project.service()
@@ -75,7 +76,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
             // Tag comparator, this should be avoided
             with(comparator.lowercase()) {
                 when {
-                    Regex("^[a-z]+$").matches(this) -> {
+                    LOWERCASE_WORD.matches(this) -> {
                         log.debug("Comparator $comparator is a tag, fetching version from tag")
                         val versionFromTag = NPMJSClient.getInstance(project).getVersionFromTag(
                             packageName, this
