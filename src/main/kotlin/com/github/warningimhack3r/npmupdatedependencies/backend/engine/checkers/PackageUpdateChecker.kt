@@ -88,7 +88,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                         return Update(Versions(potentialVersion))
                     }
 
-                    equals("*") -> {
+                    equals("*") || isEmpty() -> {
                         log.debug("Comparator $comparator is a wildcard, fetching latest version")
                         val latestVersion = NPMJSClient.getInstance(project).getLatestVersion(packageName)?.let {
                             Semver.coerce(it)

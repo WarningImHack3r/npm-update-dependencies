@@ -24,6 +24,7 @@
 ### Fixed
 
 - Fix plugin hanging forever when scanning for registries (#146)
+- Fix wrong order being applied for unmaintained dependencies quick-fixes
 
 ## [3.3.0] - 2024-10-07
 

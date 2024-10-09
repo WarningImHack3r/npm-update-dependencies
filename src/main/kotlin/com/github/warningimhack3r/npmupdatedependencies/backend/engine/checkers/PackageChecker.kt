@@ -47,7 +47,7 @@ abstract class PackageChecker {
                 // If the version is "static", upgradable only if it includes (ends with?) a `x` or `X`
                 ONLY_DIGIT_X_OR_DOT.matches(this) -> lowercase().contains("x")
                 // Symbols prefixes
-                startsWith("<") || startsWith("<=") || startsWith("=") -> false
+                startsWith("<") || startsWith("<=") -> false
                 // Anything else is considered upgradable by default
                 else -> true
             }

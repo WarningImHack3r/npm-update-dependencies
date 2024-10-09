@@ -132,7 +132,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     // Couldn't find a way to create them in a loop here
                     withFix(
                         BlacklistVersionFix(
-                            baseIndex + 0, property.name,
+                            baseIndex, property.name,
                             "${currentVersion.major + 1}.x.x"
                         )
                     )

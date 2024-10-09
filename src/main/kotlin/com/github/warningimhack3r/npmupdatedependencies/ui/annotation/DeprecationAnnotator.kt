@@ -113,8 +113,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 DeprecatedDependencyFix(
                                     property,
                                     Deprecation.Action.REPLACE,
-                                    deprecation.replacement,
-                                    true
+                                    deprecation.replacement
                                 )
                             )
                         }
@@ -123,7 +122,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 property,
                                 Deprecation.Action.REMOVE,
                                 null,
-                                deprecation.replacement != null
+                                deprecation.replacement?.let { emptyList() }
                             )
                         )
                         .needsUpdateOnTyping()
@@ -139,7 +138,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 property,
                                 Deprecation.Action.REMOVE,
                                 null,
-                                false
+                                listOf(Deprecation.Action.REPLACE)
                             )
                         )
                         .withFix(
@@ -147,7 +146,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 property,
                                 Deprecation.Action.IGNORE,
                                 null,
-                                false
+                                listOf(Deprecation.Action.REPLACE)
                             )
                         )
                         .needsUpdateOnTyping()

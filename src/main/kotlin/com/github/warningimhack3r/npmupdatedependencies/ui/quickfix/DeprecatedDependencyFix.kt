@@ -20,7 +20,7 @@ class DeprecatedDependencyFix(
     private val property: JsonProperty,
     private val actionType: Deprecation.Action,
     replacement: Deprecation.Replacement?,
-    private val showOrder: Boolean
+    private val excludedActionsFromOrder: List<Deprecation.Action>? = emptyList()
 ) : BaseIntentionAction() {
     companion object {
         private val log = logger<DeprecatedDependencyFix>()
@@ -38,9 +38,10 @@ class DeprecatedDependencyFix(
             Deprecation.Action.REMOVE -> "Remove dependency"
             Deprecation.Action.IGNORE -> "Ignore deprecation"
         }
-        return (if (showOrder) QuickFixesCommon.getPositionPrefix(
+        return (if (excludedActionsFromOrder != null) QuickFixesCommon.getPositionPrefix(
             actionType,
             Deprecation.Action.orderedActions(NUDSettingsState.instance.defaultDeprecationAction!!)
+                .filter { it !in excludedActionsFromOrder }
         ) else "") + baseText
     }
 
