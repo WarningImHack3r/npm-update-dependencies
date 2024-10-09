@@ -19,6 +19,8 @@
 
 ### Changed
 
+- Add back the ability to check for updates on static comparators (#148)
+  - This feature was intentionally removed in 3.1.0 but is now back as an option in the settings
 - Widen the kind of dependencies that can be checked for deprecations
 
 ### Fixed

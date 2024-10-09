@@ -87,6 +87,15 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.autoFixOnSave = value
         }
+    var checkStaticComparators: Boolean
+        get() = settings.checkStaticComparators
+        set(value) {
+            settings.checkStaticComparators = value
+            ProjectManager.getInstance().openProjects.forEach { project ->
+                NUDState.getInstance(project).availableUpdates.clear()
+                NUDHelper.reanalyzePackageJsonIfOpen(project)
+            }
+        }
     var suggestReplacingTags: Boolean
         get() = settings.suggestReplacingTags
         set(value) {
@@ -123,6 +132,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         var showStatusBarWidget: Boolean = true,
         var statusBarMode: StatusBarMode = StatusBarMode.FULL,
         var autoFixOnSave: Boolean = false,
+        var checkStaticComparators: Boolean = false,
         var suggestReplacingTags: Boolean = true,
         var excludedVersions: MutableMap<String, List<String>> = emptyMap<String, List<String>>().toMutableMap(),
         var excludedUnmaintainedPackages: List<String> = listOf()

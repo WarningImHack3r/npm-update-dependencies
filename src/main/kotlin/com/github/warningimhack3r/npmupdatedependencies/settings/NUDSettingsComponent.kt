@@ -202,6 +202,11 @@ class NUDSettingsComponent {
                     .bindSelected(settings::autoFixOnSave)
             }
             row {
+                checkBox("Check for updates on static comparators")
+                    .comment("Check for updates on static comparators like <code>\"1.2.3\"</code> (without any prefix, or starting with <code>v</code> and/or <code>=</code>).")
+                    .bindSelected(settings::checkStaticComparators)
+            }
+            row {
                 checkBox("Suggest replacing tags with versions")
                     .comment("Suggest replacing tags like <code>latest</code> or <code>next</code> with actual versions when a tag is used in a dependency comparator.")
                     .bindSelected(settings::suggestReplacingTags)
