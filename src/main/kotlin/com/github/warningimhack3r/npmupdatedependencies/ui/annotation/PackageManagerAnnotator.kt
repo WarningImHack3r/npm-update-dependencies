@@ -38,11 +38,12 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
             .firstOrNull { child ->
                 child.name == "packageManager"
             }?.let { property ->
-                Pair(
-                    file.project,
-                    Property(property, property.name, property.value?.stringValue())
+                file.project to Property(
+                    property,
+                    property.name,
+                    property.value?.stringValue()
                 ).also {
-                    log.debug("Found package manager: ${it.second.comparator}")
+                    log.debug("Found package manager: ${it.comparator}")
                 }
             }
     }
@@ -92,7 +93,7 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         }
         log.info("Found update for $managerName: $update")
         state.foundPackageManager = managerName
-        return Pair(property.jsonProperty, update)
+        return property.jsonProperty to update
     }
 
     override fun apply(file: PsiFile, annotationResult: Pair<JsonProperty, Update>?, holder: AnnotationHolder) {

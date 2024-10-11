@@ -36,7 +36,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
     }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
-        Pair(file.project, AnnotatorsCommon.getInfo(file))
+        file.project to AnnotatorsCommon.getInfo(file)
 
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Update> {
         val (project, info) = collectedInfo
@@ -98,7 +98,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 activeTasks--
 
                 if (updateAvailable) {
-                    Pair(property.jsonProperty, update)
+                    property.jsonProperty to update
                 } else null
             }.filterNotNull().toMap().also {
                 log.debug("Updates scanned, ${it.size} found out of ${info.size}")

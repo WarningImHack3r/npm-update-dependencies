@@ -33,7 +33,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
     }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
-        Pair(file.project, AnnotatorsCommon.getInfo(file))
+        file.project to AnnotatorsCommon.getInfo(file)
 
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Deprecation> {
         val (project, info) = collectedInfo
@@ -92,7 +92,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                 activeTasks--
 
                 deprecation?.let {
-                    Pair(property.jsonProperty, it)
+                    property.jsonProperty to it
                 }
             }.filterNotNull().toMap().also {
                 log.debug("Deprecations scanned, ${it.size} found out of ${info.size}")

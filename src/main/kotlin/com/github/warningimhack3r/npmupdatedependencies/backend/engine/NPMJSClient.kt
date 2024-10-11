@@ -21,7 +21,7 @@ import java.util.concurrent.TimeUnit
 @Service(Service.Level.PROJECT)
 class NPMJSClient(private val project: Project) {
     companion object {
-        private const val NPMJS_REGISTRY = "https://registry.npmjs.org"
+        private const val NPMJS_REGISTRY = "https://registry.npmjs.com"
         private val log = logger<NPMJSClient>()
 
         @JvmStatic

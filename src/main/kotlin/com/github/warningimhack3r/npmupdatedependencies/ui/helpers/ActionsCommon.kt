@@ -34,7 +34,7 @@ object ActionsCommon {
                     val prefix =
                         NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
                     val newElement = NUDHelper.createElement(property.project, "\"$prefix$newVersion\"", "JSON")
-                    Pair(property, newElement)
+                    property to newElement
                 }
             }.run {
                 if (isNotEmpty()) {
