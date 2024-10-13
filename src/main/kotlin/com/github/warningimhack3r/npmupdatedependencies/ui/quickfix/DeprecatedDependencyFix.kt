@@ -57,14 +57,29 @@ class DeprecatedDependencyFix(
         }
         when (actionType) {
             Deprecation.Action.REPLACE -> {
-                val prefix = NUDHelper.Regex.semverPrefix.find(property.value?.stringValue() ?: "")?.value ?: ""
-                val newName = NUDHelper.createElement(project, "\"$replacementName\"", "JSON")
-                val newVersion = NUDHelper.createElement(project, "\"$prefix$replacementVersion\"", "JSON")
-                NUDHelper.safeFileWrite(file, "Replace \"${property.name}\" by \"$replacementName\"", false) {
-                    property.nameElement.replace(newName)
-                    property.value?.replace(newVersion)
+                val value = property.value?.stringValue() ?: ""
+                val prefix = NUDHelper.Regex.semverPrefix.find(value)?.value ?: ""
+                if (value.startsWith("npm:")) {
+                    // Aliased value
+                    val realPrefix = prefix.substringAfterLast("@")
+                    val newVersion = NUDHelper.createElement(
+                        project,
+                        "\"npm:$replacementName@$realPrefix$replacementVersion\"",
+                        "JSON"
+                    )
+                    NUDHelper.safeFileWrite(file, "Replace \"${property.name}\" by \"$replacementName\"", false) {
+                        property.value?.replace(newVersion)
+                    }
+                } else {
+                    // Regular value
+                    val newName = NUDHelper.createElement(project, "\"$replacementName\"", "JSON")
+                    val newVersion = NUDHelper.createElement(project, "\"$prefix$replacementVersion\"", "JSON")
+                    NUDHelper.safeFileWrite(file, "Replace \"${property.name}\" by \"$replacementName\"", false) {
+                        property.nameElement.replace(newName)
+                        property.value?.replace(newVersion)
+                    }
+                    if (NUDSettingsState.instance.autoReorderDependencies) ActionsCommon.reorderAllDependencies(file)
                 }
-                if (NUDSettingsState.instance.autoReorderDependencies) ActionsCommon.reorderAllDependencies(file)
             }
 
             Deprecation.Action.REMOVE -> NUDHelper.safeFileWrite(file, "Delete \"${property.name}\"") {

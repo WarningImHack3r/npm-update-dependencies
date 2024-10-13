@@ -59,38 +59,42 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         } ?: log.debug("No cached deprecation found in cache for $packageName")
 
         // Check if the package is deprecated
-        val comparatorVersion = Semver.coerce(comparator)?.version ?: "latest".also {
-            log.warn("Couldn't coerce comparator $comparator to a version, using 'latest' instead")
+        val (realPackageName, realComparator) = getRealPackageAndValue(packageName, comparator)
+        if (realPackageName != packageName) {
+            log.debug("Real package name for $packageName is $realPackageName (comparator: $realComparator)")
+        }
+        val comparatorVersion = Semver.coerce(realComparator)?.version ?: "latest".also {
+            log.warn("Couldn't coerce comparator $realComparator to a version, using 'latest' instead")
         }
         val npmjsClient = NPMJSClient.getInstance(project)
-        val reason = npmjsClient.getPackageDeprecation(packageName, comparatorVersion) ?: run {
+        val reason = npmjsClient.getPackageDeprecation(realPackageName, comparatorVersion) ?: run {
             if (NUDSettingsState.instance.excludedUnmaintainedPackages
                     .split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                    .contains(packageName)
+                    .contains(realPackageName)
             ) {
-                log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
+                log.debug("No deprecation found for $realPackageName, but it's excluded from unmaintained check")
                 return null
             }
             if (NUDSettingsState.instance.unmaintainedDays == 0) {
-                log.debug("No deprecation found for $packageName, unmaintained check is disabled")
+                log.debug("No deprecation found for $realPackageName, unmaintained check is disabled")
                 return null
             }
-            log.debug("No deprecation found for $packageName, checking if it's unmaintained")
-            val lastUpdate = npmjsClient.getPackageLastModified(packageName) ?: return null.also {
-                log.warn("Couldn't get last modification date for $packageName")
+            log.debug("No deprecation found for $realPackageName, checking if it's unmaintained")
+            val lastUpdate = npmjsClient.getPackageLastModified(realPackageName) ?: return null.also {
+                log.warn("Couldn't get last modification date for $realPackageName")
             }
             val lastUpdateInstant = try {
                 Instant.parse(lastUpdate)
             } catch (e: IllegalArgumentException) {
-                log.warn("Couldn't parse last modification date for $packageName: $lastUpdate", e)
+                log.warn("Couldn't parse last modification date for $realPackageName: $lastUpdate", e)
                 return null
             }
             if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
-                log.debug("Package $packageName is unmaintained")
+                log.debug("Package $realPackageName is unmaintained")
                 val timeDiff = try {
                     lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
                 } catch (e: DateTimeArithmeticException) {
-                    log.warn("Couldn't calculate time difference for $packageName", e)
+                    log.warn("Couldn't calculate time difference for $realPackageName", e)
                     return null
                 }
                 return Deprecation(
@@ -99,23 +103,23 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                     null
                 )
             }
-            log.debug("Package $packageName is maintained")
+            log.debug("Package $realPackageName is maintained")
             return null
         }
 
-        if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(packageName) == null) {
+        if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(realPackageName) == null) {
             // Only the current version is deprecated, not the latest: suggest to upgrade instead
-            log.debug("Only the current version of $packageName is deprecated, suggesting to upgrade")
-            npmjsClient.getLatestVersion(packageName)?.let { Semver.coerce(it) }?.let { latestVersion ->
+            log.debug("Only the current version of $realPackageName is deprecated, suggesting to upgrade")
+            npmjsClient.getLatestVersion(realPackageName)?.let { Semver.coerce(it) }?.let { latestVersion ->
                 val currentVersionText = Semver.coerce(comparatorVersion)?.let {
-                    "$packageName ${it.major}"
-                } ?: "The current version of $packageName"
+                    "$realPackageName ${it.major}"
+                } ?: "The current version of $realPackageName"
                 return Deprecation(
                     Deprecation.Kind.DEPRECATED,
                     "$currentVersionText is deprecated, consider upgrading to v${latestVersion.major}",
-                    Deprecation.Replacement(packageName, latestVersion.version)
+                    Deprecation.Replacement(realPackageName, latestVersion.version)
                 )
-            } ?: log.warn("Couldn't get latest version for $packageName or can't coerce it")
+            } ?: log.warn("Couldn't get latest version for $realPackageName or can't coerce it")
         }
 
         // Get the deprecation reason and check if it contains a package name

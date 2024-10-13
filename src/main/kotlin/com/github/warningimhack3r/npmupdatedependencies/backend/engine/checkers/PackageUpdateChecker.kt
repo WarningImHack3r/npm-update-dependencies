@@ -120,7 +120,12 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 state.availableUpdates.remove(packageName)
                 return@let
             }
-            if (updateState.data == null || areVersionsMatchingComparatorNeeds(updateState.data.versions, comparator)) {
+            val (_, realComparator) = getRealPackageAndValue(packageName, comparator)
+            if (updateState.data == null || areVersionsMatchingComparatorNeeds(
+                    updateState.data.versions,
+                    realComparator
+                )
+            ) {
                 log.info("Cached versions for $packageName are still valid, returning them")
                 return updateState.data
             }
@@ -130,13 +135,17 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
         // Check if an update is available
         val npmjsClient = NPMJSClient.getInstance(project)
-        var newestVersion = npmjsClient.getLatestVersion(packageName)?.let {
+        val (realPackageName, realComparator) = getRealPackageAndValue(packageName, comparator)
+        if (realPackageName != packageName) {
+            log.debug("Real package name for $packageName is $realPackageName (comparator: $realComparator)")
+        }
+        var newestVersion = npmjsClient.getLatestVersion(realPackageName)?.let {
             Semver.coerce(it)
         } ?: return null.also {
-            log.warn("No latest version found for $packageName")
+            log.warn("No latest version found for $packageName (real: $realPackageName)")
         }
         var satisfyingVersion: Semver? = null
-        val updateAvailable = isVersionMoreRecentThanComparator(newestVersion, comparator)
+        val updateAvailable = isVersionMoreRecentThanComparator(newestVersion, realComparator)
         if (!updateAvailable) {
             log.info("No update available for $packageName")
             return null
@@ -144,29 +153,29 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
         // Check if the latest version is excluded, is a beta or doesn't satisfy the comparator
         val filtersAffectingVersions = mutableSetOf<String>()
-        if (getVersionExcludingFilter(packageName, newestVersion) != null
+        if (getVersionExcludingFilter(realPackageName, newestVersion) != null
             || newestVersion.preRelease.isNotEmpty()
             || newestVersion.build.isNotEmpty()
-            || !newestVersion.satisfies(comparator)
+            || !newestVersion.satisfies(realComparator)
         ) {
             log.debug("Latest version $newestVersion is excluded, a beta, or does not satisfy the comparator")
             val allVersions = try {
-                npmjsClient.getAllVersions(packageName)?.mapNotNull { version ->
+                npmjsClient.getAllVersions(realPackageName)?.mapNotNull { version ->
                     Semver.coerce(version)
                 }?.sortedDescending() ?: emptyList()
             } catch (e: Exception) {
-                log.warn("Failed to get all versions for $packageName", e)
+                log.warn("Failed to get all versions for $realPackageName", e)
                 emptyList()
             }
 
             // Downgrade the latest version if it's filtered out
             var latest: Semver? = null
             for (version in allVersions) {
-                val filter = getVersionExcludingFilter(packageName, version)
+                val filter = getVersionExcludingFilter(realPackageName, version)
                 if (filter != null) {
                     filtersAffectingVersions.add(filter)
                 } else if (version.preRelease.isEmpty() && version.build.isEmpty()
-                    && isVersionMoreRecentThanComparator(version, comparator)
+                    && isVersionMoreRecentThanComparator(version, realComparator)
                 ) {
                     log.debug("Found latest version $version that satisfies the comparator, excluding filters: $filtersAffectingVersions")
                     latest = version
@@ -174,21 +183,21 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 }
             }
             newestVersion = latest ?: return null.also { // No version greater than the comparator and not filtered
-                log.warn("No latest version found for $packageName that satisfies the comparator")
+                log.warn("No latest version found for $realPackageName that satisfies the comparator")
             }
 
             // Find satisfying version
-            if (!newestVersion.satisfies(comparator)) {
+            if (!newestVersion.satisfies(realComparator)) {
                 satisfyingVersion = allVersions.firstOrNull { version ->
-                    val filter = getVersionExcludingFilter(packageName, version)
+                    val filter = getVersionExcludingFilter(realPackageName, version)
                     if (filter != null) {
                         filtersAffectingVersions.add(filter)
                     }
                     version != newestVersion && filter == null
-                            && version.satisfies(comparator)
-                            && isVersionMoreRecentThanComparator(version, comparator)
+                            && version.satisfies(realComparator)
+                            && isVersionMoreRecentThanComparator(version, realComparator)
                 }
-                log.debug("Found satisfying version $satisfyingVersion for $packageName, excluding filters: $filtersAffectingVersions")
+                log.debug("Found satisfying version $satisfyingVersion for $realPackageName, excluding filters: $filtersAffectingVersions")
             }
         }
 

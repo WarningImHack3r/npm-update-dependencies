@@ -16,6 +16,7 @@
 
 - Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
   - Can be disabled in the settings
+- Add support for `npm:`-prefixed comparators
 
 ### Changed
 

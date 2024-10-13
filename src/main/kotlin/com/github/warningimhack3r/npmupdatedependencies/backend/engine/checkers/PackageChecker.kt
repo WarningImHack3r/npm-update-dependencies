@@ -23,8 +23,6 @@ abstract class PackageChecker {
                 startsWith("http") || startsWith("git") -> false
                 // GitHub URLs or local paths
                 contains("/") -> false
-                // NPM aliases
-                startsWith("npm:") -> false // TODO: support in the future
                 // Anything else is considered supported by default
                 else -> true
             }
@@ -53,6 +51,37 @@ abstract class PackageChecker {
                 // Anything else is considered upgradable by default
                 else -> true
             }
+        }
+    }
+
+    /**
+     * Gets the real package name and value from the given package name and comparator.
+     * This is useful for packages having a `npm:` prefix.
+     *
+     * @param packageName The package name.
+     * @param comparator The comparator.
+     * @return A pair containing the real package name and value.
+     */
+    protected fun getRealPackageAndValue(packageName: String, comparator: String): Pair<String, String> {
+        if (!comparator.startsWith("npm:")) {
+            return packageName to comparator
+        }
+        val aliasLessValue = comparator.removePrefix("npm:")
+        return if (aliasLessValue.startsWith("@")) {
+            // Scoped package
+            val pkg = "@${aliasLessValue.removePrefix("@").substringBeforeLast("@")}"
+            val value = aliasLessValue.removePrefix(pkg).removePrefix("@")
+            if (pkg.isNotEmpty() && value.isNotEmpty()) {
+                pkg to value
+            } else packageName to comparator
+        } else aliasLessValue.split("@").let { split ->
+            // Normal package
+            if (split.size == 2) {
+                val (pkg, value) = split
+                if (pkg.isNotEmpty() && value.isNotEmpty()) {
+                    pkg to value
+                } else packageName to comparator
+            } else packageName to comparator
         }
     }
 }
