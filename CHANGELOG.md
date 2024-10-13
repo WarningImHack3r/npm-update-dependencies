@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.4.0] - 2024-10-13
+
 ### Added
 
 - Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
@@ -324,7 +326,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.3.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...HEAD
+[3.4.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.1...v3.3.0
 [3.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...v3.2.1
 [3.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...v3.2.0
