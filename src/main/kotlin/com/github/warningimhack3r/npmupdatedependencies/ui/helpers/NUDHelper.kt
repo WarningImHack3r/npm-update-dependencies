@@ -13,7 +13,7 @@ import com.intellij.psi.PsiFileFactory
 
 object NUDHelper {
     object Regex {
-        val semverPrefix = Regex("^.+?(?=\\d\\.)") // Matches everything before the first "N." in a string
+        val semverPrefix = Regex("^.*?(?=\\d+\\.)") // Matches everything before the first "N." in a string
     }
 
     fun safeFileWrite(file: PsiFile, description: String, async: Boolean = true, action: () -> Unit) {

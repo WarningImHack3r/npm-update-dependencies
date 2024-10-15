@@ -10,10 +10,32 @@ import com.intellij.openapi.project.Project
 import com.jetbrains.rd.util.concurrentMapOf
 
 @Service(Service.Level.PROJECT)
-class NUDState {
+class NUDState(private val project: Project) {
     companion object {
         @JvmStatic
         fun getInstance(project: Project): NUDState = project.service()
+    }
+
+    /**
+     * Invalidates all caches, effectively resetting the state of the plugin.
+     * Called by [com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.InvalidateCachesAction.actionPerformed].
+     *
+     * @see [com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.InvalidateCachesAction]
+     */
+    fun invalidateCaches() {
+        availableUpdates.clear()
+        deprecations.clear()
+        packageRegistries.clear()
+
+        totalPackages = 0
+        scannedUpdates = 0
+        scannedDeprecations = 0
+        foundPackageManager = null
+
+        NPMJSClient.getInstance(project).cache.apply {
+            cleanUp()
+            invalidateAll()
+        }
     }
 
     /**

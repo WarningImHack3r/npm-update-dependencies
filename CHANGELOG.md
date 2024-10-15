@@ -12,6 +12,11 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix status bar not correctly showing the number of updates/deprecations available
+- Fix "Invalidate Scan Caches" action not working as expected
+
 ## [3.4.0] - 2024-10-13
 
 ### Added

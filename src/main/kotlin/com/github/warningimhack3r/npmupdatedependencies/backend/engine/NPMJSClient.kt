@@ -28,7 +28,7 @@ class NPMJSClient(private val project: Project) {
         fun getInstance(project: Project): NPMJSClient = project.service()
     }
 
-    private val cache = Caffeine.newBuilder()
+    val cache = Caffeine.newBuilder()
         .expireAfterWrite(NUDSettingsState.instance.cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
         .removalListener<String, String> { k, _, removalCause ->
             log.debug("Package $k removed from cache: $removalCause")
