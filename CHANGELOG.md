@@ -20,6 +20,7 @@
 
 - Fix status bar not correctly showing the number of updates/deprecations available
 - Fix "Invalidate Scan Caches" action not working as expected
+- Fix support for `styled-components` package, previously limited due to a bug in a dependency
 
 ## [3.4.0] - 2024-10-13
 

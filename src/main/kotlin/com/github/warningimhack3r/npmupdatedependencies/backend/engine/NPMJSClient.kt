@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoolean
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
@@ -28,12 +29,12 @@ class NPMJSClient(private val project: Project) {
         fun getInstance(project: Project): NPMJSClient = project.service()
     }
 
-    val cache = Caffeine.newBuilder()
+    val cache: Cache<String, String> = Caffeine.newBuilder()
         .expireAfterWrite(NUDSettingsState.instance.cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
         .removalListener<String, String> { k, _, removalCause ->
             log.debug("Package $k removed from cache: $removalCause")
         }
-        .build<String, String>()
+        .build()
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
