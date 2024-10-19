@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Update the `packageManager` from the `Update All` actions
+
 ### Fixed
 
 - Fix status bar not correctly showing the number of updates/deprecations available

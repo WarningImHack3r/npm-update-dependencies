@@ -15,14 +15,23 @@ import com.intellij.ui.EditorNotifications
 object ActionsCommon {
     private val log = logger<ActionsCommon>()
 
-    private fun getAllDependencies(file: PsiFile): List<JsonProperty> {
+    fun getAllDependencies(file: PsiFile): List<JsonProperty> {
+        if (file.name != "package.json") return emptyList()
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
-            .filter {
-                (it.parent.parent as? JsonProperty)?.name in listOf("dependencies", "devDependencies")
+            .filter { child ->
+                (child.parent.parent as? JsonProperty)?.name in listOf("dependencies", "devDependencies")
             }
     }
 
-    fun updateAll(file: PsiFile, kind: Versions.Kind) {
+    fun getPackageManager(file: PsiFile): JsonProperty? {
+        if (file.name != "package.json") return null
+        return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
+            .firstOrNull { child ->
+                child.name == "packageManager"
+            }
+    }
+
+    fun updateAllDependencies(file: PsiFile, kind: Versions.Kind) {
         val availableUpdates = NUDState.getInstance(file.project).availableUpdates
         getAllDependencies(file)
             .mapNotNull { property ->
@@ -45,6 +54,18 @@ object ActionsCommon {
                     }
                 }
             }
+    }
+
+    fun updatePackageManager(file: PsiFile) {
+        getPackageManager(file)?.let { property ->
+            val packageManager = property.value?.stringValue()?.substringBefore("@") ?: return
+            val targetVersion = NUDState.getInstance(file.project)
+                .availableUpdates[packageManager]?.data?.versions?.latest ?: return
+            val newElement = NUDHelper.createElement(file.project, "\"$packageManager@$targetVersion\"", "JSON")
+            NUDHelper.safeFileWrite(file, "Update $packageManager to $targetVersion") {
+                property.value?.replace(newElement)
+            }
+        }
     }
 
     fun replaceAllDeprecations(file: PsiFile) {

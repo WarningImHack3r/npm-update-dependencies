@@ -7,6 +7,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.strin
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdatePackageManagerFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -19,7 +20,6 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
-import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.applyIf
 import kotlinx.datetime.Clock
 import org.semver4j.Semver
@@ -33,19 +33,15 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
     }
 
     override fun collectInformation(file: PsiFile, editor: Editor, hasErrors: Boolean): Pair<Project, Property>? {
-        if (file.name != "package.json") return null
-        return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
-            .firstOrNull { child ->
-                child.name == "packageManager"
-            }?.let { property ->
-                file.project to Property(
-                    property,
-                    property.name,
-                    property.value?.stringValue()
-                ).also {
-                    log.debug("Found package manager: ${it.comparator}")
-                }
+        return ActionsCommon.getPackageManager(file)?.let { property ->
+            file.project to Property(
+                property,
+                property.name,
+                property.value?.stringValue()
+            ).also {
+                log.debug("Found package manager: ${it.comparator}")
             }
+        }
     }
 
     override fun doAnnotate(collectedInfo: Pair<Project, Property>?): Pair<JsonProperty, Update>? {

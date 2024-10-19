@@ -34,7 +34,7 @@ class UpdatePackageManagerFix(
             log.warn("Trying to update package manager but file is null")
             return
         }
-        val newElement = NUDHelper.createElement(project, "\"$packageManager@${targetVersion}\"", "JSON")
+        val newElement = NUDHelper.createElement(project, "\"$packageManager@$targetVersion\"", "JSON")
         NUDHelper.safeFileWrite(file, "Update $packageManager to $targetVersion") {
             property.value?.replace(newElement)
         }

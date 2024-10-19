@@ -4,11 +4,12 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageDeprecationChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
-import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.DeprecatedDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.json.psi.JsonProperty
@@ -33,7 +34,9 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
     }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
-        file.project to AnnotatorsCommon.getInfo(file)
+        file.project to ActionsCommon.getAllDependencies(file).map { dependency ->
+            Property(dependency, dependency.name, dependency.value?.stringValue())
+        }
 
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Deprecation> {
         val (project, info) = collectedInfo

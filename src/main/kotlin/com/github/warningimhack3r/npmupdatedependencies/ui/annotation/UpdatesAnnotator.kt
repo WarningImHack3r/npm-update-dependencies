@@ -10,7 +10,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
-import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -36,7 +36,9 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
     }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
-        file.project to AnnotatorsCommon.getInfo(file)
+        file.project to ActionsCommon.getAllDependencies(file).map { dependency ->
+            Property(dependency, dependency.name, dependency.value?.stringValue())
+        }
 
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Update> {
         val (project, info) = collectedInfo

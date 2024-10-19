@@ -29,7 +29,7 @@
                 <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
                         class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
                         text="Update All (Latest)"
-                        description="Bump all dependencies to their latest version, ignoring their satisfying range"
+                        description="Bump package manager and all dependencies to their latest version, ignoring their satisfying range"
                         icon="AllIcons.Actions.TraceInto">
                     <!-- Shortcut -->
                     <keyboard-shortcut keymap="$default" first-keystroke="control shift alt U"/>
@@ -38,7 +38,7 @@
                 <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
                         class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
                         text="Update All (Satisfying)"
-                        description="Bump all dependencies matching their satisfying range"
+                        description="Bump package manager and all dependencies matching their satisfying range"
                         icon="AllIcons.Actions.Download">
                     <!-- Shortcut -->
                     <keyboard-shortcut keymap="$default" first-keystroke="control shift alt S"/>

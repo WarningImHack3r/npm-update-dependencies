@@ -35,7 +35,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         // Fix updates if any
         if (hasUpdates) {
             actionsToPerform.add {
-                ActionsCommon.updateAll(file, Versions.Kind.entries.first {
+                ActionsCommon.updateAllDependencies(file, Versions.Kind.entries.first {
                     it == NUDSettingsState.instance.defaultUpdateType
                 })
             }

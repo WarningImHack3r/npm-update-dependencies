@@ -20,6 +20,7 @@ class UpdateAllLatestAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        ActionsCommon.updateAll(file, Kind.LATEST)
+        ActionsCommon.updateAllDependencies(file, Kind.LATEST)
+        ActionsCommon.updatePackageManager(file)
     }
 }

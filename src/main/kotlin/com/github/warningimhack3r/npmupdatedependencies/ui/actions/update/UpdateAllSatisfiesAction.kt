@@ -23,6 +23,7 @@ class UpdateAllSatisfiesAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         val file = e.getData(CommonDataKeys.PSI_FILE) ?: return
-        ActionsCommon.updateAll(file, Kind.SATISFIES)
+        ActionsCommon.updateAllDependencies(file, Kind.SATISFIES)
+        ActionsCommon.updatePackageManager(file)
     }
 }
