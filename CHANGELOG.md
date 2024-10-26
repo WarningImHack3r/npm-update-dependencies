@@ -22,7 +22,7 @@
 
 ### Fixed
 
-- Fix status bar not correctly showing the number of updates/deprecations available
+- Fix broken support for dependency versions >= 10.0.0
 - Fix "Invalidate Scan Caches" action not working as expected
 - Fix support for `styled-components` package, previously limited due to a bug in a dependency
 
