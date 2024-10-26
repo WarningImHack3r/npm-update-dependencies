@@ -16,6 +16,10 @@
 
 - Update the `packageManager` from the `Update All` actions
 
+### Changed
+
+- Broaden the deprecation replacement detection algorithm
+
 ### Fixed
 
 - Fix status bar not correctly showing the number of updates/deprecations available

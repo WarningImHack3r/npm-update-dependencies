@@ -23,10 +23,84 @@ import kotlin.time.Duration.Companion.minutes
 class PackageDeprecationChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageDeprecationChecker>()
-        private val ENDING_PUNCTUATION = Regex("[,;.!?:]$")
+        private val STARTING_PUNCTUATION = Regex("^\\[+")
+        private val ENDING_PUNCTUATION = Regex("[,;.!?:]+$")
+        private val MARKDOWN_LINK_LINK_PART = Regex("]\\([^)]+\\)")
 
         @JvmStatic
         fun getInstance(project: Project): PackageDeprecationChecker = project.service()
+    }
+
+    private fun checkUnmaintainedPackage(packageName: String): Deprecation? {
+        if (NUDSettingsState.instance.excludedUnmaintainedPackages
+                .split(",").map { it.trim() }.filter { it.isNotEmpty() }
+                .contains(packageName)
+        ) {
+            log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
+            return null
+        }
+        if (NUDSettingsState.instance.unmaintainedDays == 0) {
+            log.debug("No deprecation found for $packageName, unmaintained check is disabled")
+            return null
+        }
+        log.debug("No deprecation found for $packageName, checking if it's unmaintained")
+        val lastUpdate = NPMJSClient.getInstance(project).getPackageLastModified(packageName) ?: return null.also {
+            log.warn("Couldn't get last modification date for $packageName")
+        }
+        val lastUpdateInstant = try {
+            Instant.parse(lastUpdate)
+        } catch (e: IllegalArgumentException) {
+            log.warn("Couldn't parse last modification date for $packageName: $lastUpdate", e)
+            return null
+        }
+        val now = Clock.System.now()
+        if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
+            log.debug("Package $packageName is unmaintained")
+            val timeDiff = try {
+                lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
+            } catch (e: DateTimeArithmeticException) {
+                log.warn("Couldn't calculate time difference for $packageName", e)
+                return null
+            }
+            return Deprecation(
+                Deprecation.Kind.UNMAINTAINED,
+                "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
+                null
+            )
+        }
+        log.debug("Package $packageName is maintained")
+        return null
+    }
+
+    private fun getReplacementPackage(reason: String): Deprecation.Replacement? {
+        val npmjsClient = NPMJSClient.getInstance(project)
+        return reason.replace(MARKDOWN_LINK_LINK_PART, "").split(" ").map { word ->
+            word
+                .replace(STARTING_PUNCTUATION, "")
+                .replace(ENDING_PUNCTUATION, "")
+        }.filter { word ->
+            with(word) {
+                // Try to find a word that looks like a package name
+                when {
+                    // Scoped package
+                    startsWith("@") -> split("/").size == 2
+                    // If it contains a slash without being a scoped package, it's likely a URL
+                    contains("/") -> false
+                    // Other potential matches, if they're lowercase and contain a dash
+                    contains("-") -> lowercase() == this
+                    // If it's between backticks and lowercase, it's likely a package name
+                    startsWith("`") && endsWith("`") -> lowercase() == this
+                    // Else if we're unsure, we don't consider it as a package name
+                    else -> false
+                }
+            }
+        }.parallelMap {
+            val potentialPackage = it.removeSurrounding("`")
+            // Confirm that the word is a package name by trying to get its latest version
+            npmjsClient.getLatestVersion(potentialPackage)?.let { latestVersion ->
+                Deprecation.Replacement(potentialPackage, latestVersion)
+            }
+        }.filterNotNull().firstOrNull()
     }
 
     fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
@@ -42,7 +116,6 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }
 
         // Check if a deprecation has already been found
-        val now = Clock.System.now()
         state.deprecations[packageName]?.let { deprecationState ->
             log.debug("Deprecation found in cache for $packageName: $deprecationState")
             if (deprecationState.comparator != comparator) {
@@ -50,7 +123,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 state.deprecations.remove(packageName)
                 return@let
             }
-            if (now > deprecationState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes) {
+            if (Clock.System.now() > deprecationState.addedAt + NUDSettingsState.instance.cacheDurationMinutes.minutes) {
                 log.debug("Cached deprecation for $packageName has expired, removing it")
                 state.deprecations.remove(packageName)
                 return@let
@@ -67,45 +140,8 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             log.warn("Couldn't coerce comparator $realComparator to a version, using 'latest' instead")
         }
         val npmjsClient = NPMJSClient.getInstance(project)
-        val reason = npmjsClient.getPackageDeprecation(realPackageName, comparatorVersion) ?: run {
-            if (NUDSettingsState.instance.excludedUnmaintainedPackages
-                    .split(",").map { it.trim() }.filter { it.isNotEmpty() }
-                    .contains(realPackageName)
-            ) {
-                log.debug("No deprecation found for $realPackageName, but it's excluded from unmaintained check")
-                return null
-            }
-            if (NUDSettingsState.instance.unmaintainedDays == 0) {
-                log.debug("No deprecation found for $realPackageName, unmaintained check is disabled")
-                return null
-            }
-            log.debug("No deprecation found for $realPackageName, checking if it's unmaintained")
-            val lastUpdate = npmjsClient.getPackageLastModified(realPackageName) ?: return null.also {
-                log.warn("Couldn't get last modification date for $realPackageName")
-            }
-            val lastUpdateInstant = try {
-                Instant.parse(lastUpdate)
-            } catch (e: IllegalArgumentException) {
-                log.warn("Couldn't parse last modification date for $realPackageName: $lastUpdate", e)
-                return null
-            }
-            if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
-                log.debug("Package $realPackageName is unmaintained")
-                val timeDiff = try {
-                    lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
-                } catch (e: DateTimeArithmeticException) {
-                    log.warn("Couldn't calculate time difference for $realPackageName", e)
-                    return null
-                }
-                return Deprecation(
-                    Deprecation.Kind.UNMAINTAINED,
-                    "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
-                    null
-                )
-            }
-            log.debug("Package $realPackageName is maintained")
-            return null
-        }
+        val reason = npmjsClient.getPackageDeprecation(realPackageName, comparatorVersion)
+            ?: return checkUnmaintainedPackage(realPackageName)
 
         if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(realPackageName) == null) {
             // Only the current version is deprecated, not the latest: suggest to upgrade instead
@@ -122,35 +158,10 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             } ?: log.warn("Couldn't get latest version for $realPackageName or can't coerce it")
         }
 
-        // Get the deprecation reason and check if it contains a package name
-        val replacementPackage = reason.split(" ").map { word ->
-            // Remove punctuation at the end of the word
-            word.replace(ENDING_PUNCTUATION, "")
-        }.filter { word ->
-            with(word) {
-                // Try to find a word that looks like a package name
-                when {
-                    // Scoped package
-                    startsWith("@") -> split("/").size == 2
-                    // If it contains a slash without being a scoped package, it's likely a URL
-                    contains("/") -> false
-                    // Other potential matches, if they're lowercase and contain a dash
-                    contains("-") -> lowercase() == this
-                    // Else if we're unsure, we don't consider it as a package name
-                    else -> false
-                }
-            }
-        }.parallelMap { potentialPackage ->
-            // Confirm that the word is a package name by trying to get its latest version
-            npmjsClient.getLatestVersion(potentialPackage)?.let {
-                Deprecation.Replacement(potentialPackage, it)
-            }
-        }.filterNotNull().firstOrNull()
-
         return Deprecation(
             Deprecation.Kind.DEPRECATED,
             reason,
-            replacementPackage
+            getReplacementPackage(reason)
         )
     }
 }
