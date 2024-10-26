@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.5.0] - 2024-10-26
+
 ### Added
 
 - Update the `packageManager` from the `Update All` actions
@@ -340,7 +342,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.5.0...HEAD
+[3.5.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.3.0...v3.4.0
 [3.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.1...v3.3.0
 [3.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...v3.2.1
