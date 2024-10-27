@@ -113,6 +113,8 @@
                 implementation="com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarFactory"/>
         <editorNotificationProvider
                 implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.DeprecationBanner"/>
+        <editorNotificationProvider
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.UnmaintainedDependenciesBanner"/>
         <applicationConfigurable
                 parentId="tools"
                 displayName="NPM Update Dependencies"

@@ -38,15 +38,20 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             if (value != null) settings.defaultDeprecationAction = value
         }
+    var defaultUnmaintainedAction: Deprecation.Action?
+        get() = settings.defaultUnmaintainedAction
+        set(value) {
+            if (value != null) settings.defaultUnmaintainedAction = value
+        }
     var showDeprecationBanner: Boolean
         get() = settings.showDeprecationBanner
         set(value) {
             settings.showDeprecationBanner = value
         }
-    var bannerIncludesUnmaintained: Boolean
-        get() = settings.bannerIncludesUnmaintained
+    var showUnmaintainedBanner: Boolean
+        get() = settings.showUnmaintainedBanner
         set(value) {
-            settings.bannerIncludesUnmaintained = value
+            settings.showUnmaintainedBanner = value
         }
     var autoReorderDependencies: Boolean
         get() = settings.autoReorderDependencies
@@ -123,8 +128,9 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
     data class Settings(
         var defaultUpdateType: Versions.Kind = Versions.Kind.SATISFIES,
         var defaultDeprecationAction: Deprecation.Action = Deprecation.Action.REPLACE,
+        var defaultUnmaintainedAction: Deprecation.Action = Deprecation.Action.REMOVE,
         var showDeprecationBanner: Boolean = true,
-        var bannerIncludesUnmaintained: Boolean = true,
+        var showUnmaintainedBanner: Boolean = true,
         var autoReorderDependencies: Boolean = true,
         var unmaintainedDays: Int = 365,
         var maxParallelism: Int = 100,

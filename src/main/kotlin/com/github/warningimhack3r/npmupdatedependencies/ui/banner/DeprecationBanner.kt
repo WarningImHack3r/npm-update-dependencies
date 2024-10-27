@@ -26,13 +26,11 @@ class DeprecationBanner : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile
-    ): Function<in FileEditor, out JComponent?> = Function { _ ->
+    ): Function<in FileEditor, out JComponent?>? = Function { _ ->
         val psiFile = PsiManager.getInstance(project).findFile(file)
         val state = NUDState.getInstance(project)
         val foundDeprecations = state.deprecations.filter { deprecation ->
-            deprecation.value.data != null && if (NUDSettingsState.instance.bannerIncludesUnmaintained) {
-                true
-            } else deprecation.value.data?.kind != Deprecation.Kind.UNMAINTAINED
+            deprecation.value.data?.kind == Deprecation.Kind.DEPRECATED
         }
         if (psiFile == null || file.name != "package.json" || foundDeprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
             when {
@@ -77,11 +75,9 @@ class DeprecationBanner : EditorNotificationProvider {
             icon(AllIcons.General.Warning)
 
             // Actions
-            listOf(availableActions.firstOrNull { action ->
-                action == NUDSettingsState.instance.defaultDeprecationAction
-            }).plus(availableActions.filter { action ->
-                action != NUDSettingsState.instance.defaultDeprecationAction
-            }).filterNotNull().forEach { action ->
+            Deprecation.Action.orderedActions(
+                NUDSettingsState.instance.defaultDeprecationAction
+            ).filter { availableActions.contains(it) }.forEach { action ->
                 createActionLabel(
                     action.toString() + if (deprecationsCount > 1) {
                         " deprecations"
@@ -90,7 +86,7 @@ class DeprecationBanner : EditorNotificationProvider {
                     when (action) {
                         Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
                         Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
-                            foundDeprecations.keys.contains(it.name)
+                            it.data?.kind == Deprecation.Kind.DEPRECATED
                         }
 
                         Deprecation.Action.IGNORE -> {
@@ -103,7 +99,7 @@ class DeprecationBanner : EditorNotificationProvider {
             // Don't show again
             createActionLabel("Don't show again") {
                 NUDSettingsState.instance.showDeprecationBanner = false
-                EditorNotifications.getInstance(project).updateAllNotifications()
+                EditorNotifications.getInstance(project).updateNotifications(file)
             }
         }
     }

@@ -114,6 +114,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         .applyIf(deprecation.replacement != null) {
                             withFix(
                                 DeprecatedDependencyFix(
+                                    deprecation.kind,
                                     property,
                                     Deprecation.Action.REPLACE,
                                     deprecation.replacement
@@ -122,6 +123,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         }
                         .withFix(
                             DeprecatedDependencyFix(
+                                deprecation.kind,
                                 property,
                                 Deprecation.Action.REMOVE,
                                 null,
@@ -138,6 +140,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         .highlightType(ProblemHighlightType.WEAK_WARNING)
                         .withFix(
                             DeprecatedDependencyFix(
+                                deprecation.kind,
                                 property,
                                 Deprecation.Action.REMOVE,
                                 null,
@@ -146,6 +149,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                         )
                         .withFix(
                             DeprecatedDependencyFix(
+                                deprecation.kind,
                                 property,
                                 Deprecation.Action.IGNORE,
                                 null,

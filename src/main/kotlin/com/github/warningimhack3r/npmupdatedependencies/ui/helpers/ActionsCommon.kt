@@ -2,8 +2,11 @@ package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.json.psi.JsonProperty
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
@@ -138,12 +141,12 @@ object ActionsCommon {
         }
     }
 
-    fun deleteAllDeprecations(file: PsiFile, predicate: (JsonProperty) -> Boolean = { true }) {
+    fun deleteAllDeprecations(file: PsiFile, predicate: (DataState<Deprecation>) -> Boolean = { true }) {
         val deprecations = NUDState.getInstance(file.project).deprecations
-        val deprecationsToRemove = deprecations.filter { it.value.data != null }
+        val deprecationsToRemove = deprecations.filter { it.value.data != null && predicate(it.value) }
         getAllDependencies(file)
             .filter { property ->
-                deprecationsToRemove.containsKey(property.name) && predicate(property)
+                deprecationsToRemove.containsKey(property.name)
             }.run {
                 if (isNotEmpty()) {
                     NUDHelper.safeFileWrite(file, "Delete all deprecations", false) {
@@ -165,6 +168,26 @@ object ActionsCommon {
                 }
                 deprecationsToRemove.forEach { (key, _) ->
                     deprecations.remove(key)
+                }
+                deprecationsCompletion(file.project)
+            }
+    }
+
+    fun ignoreAllDeprecations(file: PsiFile, predicate: (DataState<Deprecation>) -> Boolean = { true }) {
+        val deprecations = NUDState.getInstance(file.project).deprecations
+        val deprecationsToIgnore = deprecations.filter { it.value.data != null && predicate(it.value) }
+        getAllDependencies(file)
+            .filter { property ->
+                deprecationsToIgnore.containsKey(property.name)
+            }.run {
+                if (isNotEmpty()) {
+                    NUDSettingsState.instance.excludedUnmaintainedPackages += ",${joinToString(",") { it.name }}"
+                }
+                deprecationsToIgnore.forEach { (key, _) ->
+                    deprecations.remove(key)
+                }
+                if (isNotEmpty()) {
+                    DaemonCodeAnalyzer.getInstance(file.project).restart(file)
                 }
                 deprecationsCompletion(file.project)
             }

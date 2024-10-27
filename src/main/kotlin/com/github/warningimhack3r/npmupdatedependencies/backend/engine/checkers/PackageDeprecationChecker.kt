@@ -31,7 +31,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         fun getInstance(project: Project): PackageDeprecationChecker = project.service()
     }
 
-    private fun checkUnmaintainedPackage(packageName: String): Deprecation? {
+    private fun checkUnmaintainedPackage(packageName: String, realPackageName: String): Deprecation? {
         if (NUDSettingsState.instance.excludedUnmaintainedPackages
                 .split(",").map { it.trim() }.filter { it.isNotEmpty() }
                 .contains(packageName)
@@ -40,35 +40,36 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             return null
         }
         if (NUDSettingsState.instance.unmaintainedDays == 0) {
-            log.debug("No deprecation found for $packageName, unmaintained check is disabled")
+            log.debug("No deprecation found for $realPackageName, unmaintained check is disabled")
             return null
         }
-        log.debug("No deprecation found for $packageName, checking if it's unmaintained")
-        val lastUpdate = NPMJSClient.getInstance(project).getPackageLastModified(packageName) ?: return null.also {
-            log.warn("Couldn't get last modification date for $packageName")
+        log.debug("No deprecation found for $realPackageName, checking if it's unmaintained")
+        val lastUpdate = NPMJSClient.getInstance(project).getPackageLastModified(realPackageName) ?: return null.also {
+            log.warn("Couldn't get last modification date for $realPackageName")
         }
         val lastUpdateInstant = try {
             Instant.parse(lastUpdate)
         } catch (e: IllegalArgumentException) {
-            log.warn("Couldn't parse last modification date for $packageName: $lastUpdate", e)
+            log.warn("Couldn't parse last modification date for $realPackageName: $lastUpdate", e)
             return null
         }
         val now = Clock.System.now()
         if (now > lastUpdateInstant + NUDSettingsState.instance.unmaintainedDays.days) {
-            log.debug("Package $packageName is unmaintained")
+            log.debug("Package $realPackageName is unmaintained")
             val timeDiff = try {
                 lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
             } catch (e: DateTimeArithmeticException) {
-                log.warn("Couldn't calculate time difference for $packageName", e)
+                log.warn("Couldn't calculate time difference for $realPackageName", e)
                 return null
             }
             return Deprecation(
                 Deprecation.Kind.UNMAINTAINED,
-                "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. " + "Consider looking for an alternative.",
+                "This package looks unmaintained, it hasn't been updated in ${timeDiff.toReadableString()}. "
+                        + "Consider looking for an alternative.",
                 null
             )
         }
-        log.debug("Package $packageName is maintained")
+        log.debug("Package $realPackageName is maintained")
         return null
     }
 
@@ -141,7 +142,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }
         val npmjsClient = NPMJSClient.getInstance(project)
         val reason = npmjsClient.getPackageDeprecation(realPackageName, comparatorVersion)
-            ?: return checkUnmaintainedPackage(realPackageName)
+            ?: return checkUnmaintainedPackage(packageName, realPackageName)
 
         if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(realPackageName) == null) {
             // Only the current version is deprecated, not the latest: suggest to upgrade instead

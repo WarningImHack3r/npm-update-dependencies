@@ -24,13 +24,18 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         // Initial checks
         val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
         val hasUpdates = state.availableUpdates.filter { it.value.data != null }.isNotEmpty()
-        val hasDeprecations = state.deprecations.filter { it.value.data != null }.isNotEmpty()
+        val hasDeprecations = state.deprecations.filter {
+            it.value.data?.kind == Deprecation.Kind.DEPRECATED
+        }.isNotEmpty()
+        val hasUnmaintained = state.deprecations.filter {
+            it.value.data?.kind == Deprecation.Kind.UNMAINTAINED
+        }.isNotEmpty()
         if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
             || (!hasUpdates && !hasDeprecations)
         ) return
 
         // Create a set of actions to perform
-        val actionsToPerform = mutableSetOf<() -> Unit>()
+        val actionsToPerform = mutableListOf<() -> Unit>()
 
         // Fix updates if any
         if (hasUpdates) {
@@ -43,19 +48,40 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
         // Fix deprecations if any
         if (hasDeprecations) {
-            when (Deprecation.Action.entries.first {
-                it == NUDSettingsState.instance.defaultDeprecationAction
-            }) {
+            when (NUDSettingsState.instance.defaultDeprecationAction) {
                 Deprecation.Action.REPLACE -> actionsToPerform.add {
                     ActionsCommon.replaceAllDeprecations(file)
                 }
 
                 Deprecation.Action.REMOVE -> actionsToPerform.add {
-                    ActionsCommon.deleteAllDeprecations(file)
+                    ActionsCommon.deleteAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.DEPRECATED
+                    }
                 }
 
-                Deprecation.Action.IGNORE -> {
-                    // Do nothing, not selectable
+                else -> {
+                    // Do nothing, IGNORE or null
+                }
+            }
+        }
+
+        // Fix unmaintained if any
+        if (hasUnmaintained) {
+            when (NUDSettingsState.instance.defaultUnmaintainedAction) {
+                Deprecation.Action.REMOVE -> actionsToPerform.add {
+                    ActionsCommon.deleteAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                    }
+                }
+
+                Deprecation.Action.IGNORE -> actionsToPerform.add {
+                    ActionsCommon.ignoreAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                    }
+                }
+
+                else -> {
+                    // Do nothing, REPLACE or null
                 }
             }
         }

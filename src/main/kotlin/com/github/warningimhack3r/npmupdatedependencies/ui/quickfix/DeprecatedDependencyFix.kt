@@ -17,6 +17,7 @@ import com.intellij.psi.PsiFile
 import com.intellij.psi.impl.source.tree.LeafPsiElement
 
 class DeprecatedDependencyFix(
+    private val kind: Deprecation.Kind,
     private val property: JsonProperty,
     private val actionType: Deprecation.Action,
     replacement: Deprecation.Replacement?,
@@ -40,7 +41,12 @@ class DeprecatedDependencyFix(
         }
         return (if (excludedActionsFromOrder != null) QuickFixesCommon.getPositionPrefix(
             actionType,
-            Deprecation.Action.orderedActions(NUDSettingsState.instance.defaultDeprecationAction!!)
+            Deprecation.Action.orderedActions(
+                when (kind) {
+                    Deprecation.Kind.UNMAINTAINED -> NUDSettingsState.instance.defaultUnmaintainedAction
+                    Deprecation.Kind.DEPRECATED -> NUDSettingsState.instance.defaultDeprecationAction
+                }
+            )
                 .filter { it !in excludedActionsFromOrder }
         ) else "") + baseText
     }

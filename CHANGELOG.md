@@ -12,6 +12,17 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add a dedicated banner for "unmaintained" dependencies (#154)
+  - This replaces the previous integration within the deprecation banner
+- Allow choosing a default action for "unmaintained" dependencies
+
+### Fixed
+
+- Fix mass deprecations deletion incorrectly targeting "unmaintained" dependencies
+- Fix "unmaintained" dependencies exclusion setting not always being respected
+
 ## [3.5.0] - 2024-10-26
 
 ### Added

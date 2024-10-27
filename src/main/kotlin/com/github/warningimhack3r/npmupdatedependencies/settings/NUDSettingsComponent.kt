@@ -131,25 +131,28 @@ class NUDSettingsComponent {
                 comboBox(Deprecation.Action.entries.toList().filter { it != Deprecation.Action.IGNORE })
                     .bindItem(settings::defaultDeprecationAction.toMutableProperty())
             }
+            row("Default action for \"unmaintained\" packages:") {
+                comboBox(Deprecation.Action.entries.toList().filter { it != Deprecation.Action.REPLACE })
+                    .bindItem(settings::defaultUnmaintainedAction.toMutableProperty())
+            }
         }
         group("Deprecations") {
-            lateinit var bannerEnabled: Cell<JBCheckBox>
             row {
-                bannerEnabled = checkBox("Show deprecation banner")
+                checkBox("Show deprecation banner")
                     .comment("Show a warning banner when at least one dependency is deprecated.")
                     .bindSelected(settings::showDeprecationBanner)
-            }
-            indent {
-                row {
-                    checkBox("Include \"unmaintained\" packages")
-                        .comment("Also show the banner when a package hasn't been updated in a specified amount of time.")
-                        .bindSelected(settings::bannerIncludesUnmaintained)
-                }.enabledIf(bannerEnabled.selected)
             }
             row {
                 checkBox("Automatically reorder dependencies")
                     .comment("Reorder dependencies after replacing deprecated ones.<br>Useful when a new dependency starts with a different letter than the old one.")
                     .bindSelected(settings::autoReorderDependencies)
+            }
+        }
+        group("\"Unmaintained\" Packages") {
+            row {
+                checkBox("Show a banner for \"unmaintained\" packages")
+                    .comment("Show a banner for packages that haven't been updated in a specified amount of time.")
+                    .bindSelected(settings::showUnmaintainedBanner)
             }
             row("Days until a package is considered unmaintained:") {
                 spinner(0..365 * 10)
