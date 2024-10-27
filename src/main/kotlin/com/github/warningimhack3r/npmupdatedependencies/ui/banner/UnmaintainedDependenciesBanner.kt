@@ -25,7 +25,7 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile
-    ): Function<in FileEditor, out JComponent?>? = Function { _ ->
+    ): Function<in FileEditor, out JComponent?>? {
         val psiFile = PsiManager.getInstance(project).findFile(file)
         val state = NUDState.getInstance(project)
         val unmaintainedDependencies = state.deprecations.filter { deprecation ->
@@ -39,50 +39,52 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
                     else log.warn("Leaving: deprecations not scanned yet")
                 }
 
-                !NUDSettingsState.instance.showUnmaintainedBanner -> log.debug("Leaving: deprecation banner is disabled")
+                !NUDSettingsState.instance.showUnmaintainedBanner -> log.debug("Leaving: unmaintained banner is disabled")
             }
-            return@Function null
+            return null
         }
-        return@Function EditorNotificationPanel(JBColor.CYAN.darker()).apply {
-            // Description text & icon
-            text(
-                if (unmaintainedDependencies.size > 1) {
-                    "${unmaintainedDependencies.size} unmaintained dependencies found in this project. Consider looking for alternatives."
-                } else {
-                    "Unmaintained dependency found in this project. Consider looking for an alternative."
-                }
-            )
-            icon(AllIcons.General.Information)
+        return Function { _ ->
+            EditorNotificationPanel(JBColor.CYAN.darker()).apply {
+                // Description text & icon
+                text(
+                    if (unmaintainedDependencies.size > 1) {
+                        "${unmaintainedDependencies.size} unmaintained dependencies found in this project. Consider looking for alternatives."
+                    } else {
+                        "${unmaintainedDependencies.size} unmaintained dependency found in this project. Consider looking for an alternative."
+                    }
+                )
+                icon(AllIcons.General.Information)
 
-            // Actions
-            Deprecation.Action.orderedActions(
-                NUDSettingsState.instance.defaultUnmaintainedAction
-            ).filter { it != Deprecation.Action.REPLACE }.forEach { action ->
-                createActionLabel(
-                    action.toString() + if (unmaintainedDependencies.size > 1) {
-                        " them"
-                    } else " \"${unmaintainedDependencies.keys.firstOrNull()}\""
-                ) {
-                    when (action) {
-                        Deprecation.Action.REPLACE -> {
-                            // Replace unmaintained dependencies, cannot happen
-                        }
+                // Actions
+                Deprecation.Action.orderedActions(
+                    NUDSettingsState.instance.defaultUnmaintainedAction
+                ).filter { it != Deprecation.Action.REPLACE }.forEach { action ->
+                    createActionLabel(
+                        action.toString() + if (unmaintainedDependencies.size > 1) {
+                            " them"
+                        } else " \"${unmaintainedDependencies.keys.firstOrNull()}\""
+                    ) {
+                        when (action) {
+                            Deprecation.Action.REPLACE -> {
+                                // Replace unmaintained dependencies, cannot happen
+                            }
 
-                        Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
-                            it.data?.kind == Deprecation.Kind.UNMAINTAINED
-                        }
+                            Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
+                                it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                            }
 
-                        Deprecation.Action.IGNORE -> ActionsCommon.ignoreAllDeprecations(psiFile) {
-                            it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                            Deprecation.Action.IGNORE -> ActionsCommon.ignoreAllDeprecations(psiFile) {
+                                it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                            }
                         }
                     }
                 }
-            }
 
-            // Don't show again
-            createActionLabel("Don't show again") {
-                NUDSettingsState.instance.showUnmaintainedBanner = false
-                EditorNotifications.getInstance(project).updateNotifications(file)
+                // Don't show again
+                createActionLabel("Don't show again") {
+                    NUDSettingsState.instance.showUnmaintainedBanner = false
+                    EditorNotifications.getInstance(project).updateNotifications(file)
+                }
             }
         }
     }

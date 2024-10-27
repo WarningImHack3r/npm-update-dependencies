@@ -26,7 +26,7 @@ class DeprecationBanner : EditorNotificationProvider {
     override fun collectNotificationData(
         project: Project,
         file: VirtualFile
-    ): Function<in FileEditor, out JComponent?>? = Function { _ ->
+    ): Function<in FileEditor, out JComponent?>? {
         val psiFile = PsiManager.getInstance(project).findFile(file)
         val state = NUDState.getInstance(project)
         val foundDeprecations = state.deprecations.filter { deprecation ->
@@ -42,64 +42,66 @@ class DeprecationBanner : EditorNotificationProvider {
 
                 !NUDSettingsState.instance.showDeprecationBanner -> log.debug("Leaving: deprecation banner is disabled")
             }
-            return@Function null
+            return null
         }
-        return@Function EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
-            val availableActions = Deprecation.Action.entries.filter { action ->
-                // Exclude REPLACE if there are no replaceable deprecations
-                val isActionReplace = action == Deprecation.Action.REPLACE
-                val hasReplaceableDeprecations = foundDeprecations.values.any { state ->
-                    state.data?.replacement != null
+        return Function { _ ->
+            EditorNotificationPanel(JBColor.YELLOW.darker()).apply {
+                val availableActions = Deprecation.Action.entries.filter { action ->
+                    // Exclude REPLACE if there are no replaceable deprecations
+                    val isActionReplace = action == Deprecation.Action.REPLACE
+                    val hasReplaceableDeprecations = foundDeprecations.values.any { state ->
+                        state.data?.replacement != null
+                    }
+                    (isActionReplace && hasReplaceableDeprecations) || (!isActionReplace && action != Deprecation.Action.IGNORE)
                 }
-                (isActionReplace && hasReplaceableDeprecations) || (!isActionReplace && action != Deprecation.Action.IGNORE)
-            }
-            // Description text & icon
-            val actionsTitles = availableActions.mapIndexed { index, action ->
-                action.toString().applyIf(index > 0) {
-                    lowercase()
+                // Description text & icon
+                val actionsTitles = availableActions.mapIndexed { index, action ->
+                    action.toString().applyIf(index > 0) {
+                        lowercase()
+                    }
                 }
-            }
-            val actionsString = if (actionsTitles.size > 1) {
-                actionsTitles.dropLast(1).joinToString(", ") + " or " + actionsTitles.last()
-            } else {
-                actionsTitles.first()
-            }
-            val deprecationsCount = foundDeprecations.size
-            text(
-                if (deprecationsCount > 1) {
-                    "You have $deprecationsCount deprecated packages. $actionsString them"
+                val actionsString = if (actionsTitles.size > 1) {
+                    actionsTitles.dropLast(1).joinToString(", ") + " or " + actionsTitles.last()
                 } else {
-                    "$deprecationsCount package is deprecated. $actionsString it"
-                } + " to avoid issues."
-            )
-            icon(AllIcons.General.Warning)
+                    actionsTitles.first()
+                }
+                val deprecationsCount = foundDeprecations.size
+                text(
+                    if (deprecationsCount > 1) {
+                        "$deprecationsCount deprecated packages found in this project. $actionsString them"
+                    } else {
+                        "$deprecationsCount package is deprecated in this project. $actionsString it"
+                    } + " to avoid issues."
+                )
+                icon(AllIcons.General.Warning)
 
-            // Actions
-            Deprecation.Action.orderedActions(
-                NUDSettingsState.instance.defaultDeprecationAction
-            ).filter { availableActions.contains(it) }.forEach { action ->
-                createActionLabel(
-                    action.toString() + if (deprecationsCount > 1) {
-                        " deprecations"
-                    } else " \"${foundDeprecations.keys.firstOrNull()}\""
-                ) {
-                    when (action) {
-                        Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
-                        Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
-                            it.data?.kind == Deprecation.Kind.DEPRECATED
-                        }
+                // Actions
+                Deprecation.Action.orderedActions(
+                    NUDSettingsState.instance.defaultDeprecationAction
+                ).filter { availableActions.contains(it) }.forEach { action ->
+                    createActionLabel(
+                        action.toString() + if (deprecationsCount > 1) {
+                            " deprecations"
+                        } else " \"${foundDeprecations.keys.firstOrNull()}\""
+                    ) {
+                        when (action) {
+                            Deprecation.Action.REPLACE -> ActionsCommon.replaceAllDeprecations(psiFile)
+                            Deprecation.Action.REMOVE -> ActionsCommon.deleteAllDeprecations(psiFile) {
+                                it.data?.kind == Deprecation.Kind.DEPRECATED
+                            }
 
-                        Deprecation.Action.IGNORE -> {
-                            // Ignore all deprecations, won't happen as they can all be removed
+                            Deprecation.Action.IGNORE -> {
+                                // Ignore all deprecations, won't happen as they can all be removed
+                            }
                         }
                     }
                 }
-            }
 
-            // Don't show again
-            createActionLabel("Don't show again") {
-                NUDSettingsState.instance.showDeprecationBanner = false
-                EditorNotifications.getInstance(project).updateNotifications(file)
+                // Don't show again
+                createActionLabel("Don't show again") {
+                    NUDSettingsState.instance.showDeprecationBanner = false
+                    EditorNotifications.getInstance(project).updateNotifications(file)
+                }
             }
         }
     }
