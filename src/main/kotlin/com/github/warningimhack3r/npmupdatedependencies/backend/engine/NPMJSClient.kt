@@ -11,6 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import io.ktor.http.HttpStatusCode
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.net.URI
@@ -24,6 +25,9 @@ class NPMJSClient(private val project: Project) {
     companion object {
         private const val NPMJS_REGISTRY = "https://registry.npmjs.com"
         private val log = logger<NPMJSClient>()
+        private val httpClient = HttpClient.newBuilder()
+            .followRedirects(HttpClient.Redirect.NORMAL)
+            .build()
 
         @JvmStatic
         fun getInstance(project: Project): NPMJSClient = project.service()
@@ -80,12 +84,14 @@ class NPMJSClient(private val project: Project) {
         val request = HttpRequest
             .newBuilder(uri)
             .build()
-        return HttpClient.newHttpClient()
-            .send(request, HttpResponse.BodyHandlers.ofString())
-            .body().also { body ->
-                log.debug("Caching response for $uri")
-                cache.put(uri.toString(), body)
-            }
+        val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
+        if (response.statusCode() != HttpStatusCode.OK.value) {
+            throw Exception("Non-ok status code from $uri: ${response.statusCode()}")
+        }
+        return response.body().also { body ->
+            log.debug("Caching response for $uri")
+            cache.put(uri.toString(), body)
+        }
     }
 
     private fun getBodyAsJSON(uri: String): JsonObject? {
