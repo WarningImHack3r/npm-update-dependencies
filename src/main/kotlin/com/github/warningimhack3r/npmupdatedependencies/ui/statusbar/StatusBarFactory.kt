@@ -168,8 +168,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
             Status.SCANNING_FOR_PACKAGE_MANAGER -> "Scanning for package manager updates..."
             Status.READY -> {
-                val outdated = state.availableUpdates.filter { it.value.data != null }.size +
-                        if (state.foundPackageManager != null) 1 else 0
+                val outdated = state.availableUpdates.filter { it.value.data != null }.size
                 val deprecated = state.deprecations.filter { it.value.data != null }.size
                 when (NUDSettingsState.instance.statusBarMode) {
                     StatusBarMode.FULL -> when {

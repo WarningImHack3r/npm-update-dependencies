@@ -22,6 +22,7 @@
 
 - Fix mass deprecations deletion incorrectly targeting "unmaintained" dependencies
 - Fix "unmaintained" dependencies exclusion setting not always being respected
+- Fix packageManager update being incorrectly counted twice in the status bar widget
 
 ## [3.5.0] - 2024-10-26
 
