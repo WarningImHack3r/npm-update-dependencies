@@ -107,52 +107,47 @@ class NPMJSClient(private val project: Project) {
 
     fun getLatestVersion(packageName: String): String? {
         log.info("Getting latest version for package $packageName")
-        return getVersionFromTag(packageName, "latest") ?: ShellRunner.getInstance(project).execute(
-            arrayOf("npm", "v", packageName, "version", "--registry=${getRegistry(packageName)}")
-        )?.trim()?.let { it.ifEmpty { null } }.also {
-            if (it != null) {
-                log.info("Latest version for package $packageName found locally: $it")
-            } else {
-                log.warn("Latest version for package $packageName not found")
-            }
-        }
+        return getVersionFromTag(packageName, "latest")
     }
 
     fun getVersionFromTag(packageName: String, tag: String): String? {
         log.info("Getting version for package $packageName with tag $tag")
-        return getBodyAsJSON("${getRegistry(packageName)}/$packageName/$tag")?.get("version")?.asString?.also {
+        val registry = getRegistry(packageName)
+        return getBodyAsJSON("$registry/$packageName/$tag")?.get("version")?.asString?.also {
             log.info("Version for package $packageName with tag $tag found online: $it")
-        } ?: null.also {
-            log.warn("Version for package $packageName with tag $tag not found online")
+        } ?: ShellRunner.getInstance(project).execute(
+            arrayOf("npm", "v", packageName, "dist-tags.$tag", "--registry=$registry")
+        )?.trim()?.let { it.ifEmpty { null } }.also {
+            if (it != null) {
+                log.info("Version for package $packageName with tag $tag found locally: $it")
+            } else {
+                log.warn("Version for package $packageName with tag $tag not found")
+            }
         }
     }
 
     fun getAllVersions(packageName: String): List<String>? {
         log.info("Getting all versions for package $packageName")
         val registry = getRegistry(packageName)
-        val json = getBodyAsJSON("${registry}/$packageName")
-        return json?.get("versions")?.asJsonObject?.keys?.toList()?.also {
+        return getBodyAsJSON("$registry/$packageName")?.get("versions")?.asJsonObject?.keys?.toList()?.also {
             log.info("All versions for package $packageName found in online (${it.size} versions)")
             log.debug("Versions for $packageName: $it")
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "versions", "--json", "--registry=$registry")
         )?.trim()?.let { versions ->
-            if (versions.isEmpty()) {
-                log.warn("All versions for package $packageName not found")
-                return null
-            } else if (versions.startsWith("[")) {
-                try {
-                    Json.parseToJsonElement(versions)
-                } catch (e: Exception) {
-                    log.warn("Error while parsing all versions for package $packageName", e)
-                    null
-                }?.asJsonArray?.mapNotNull { it.asString } ?: emptyList()
-            } else {
-                listOf(versions.replace("\"", ""))
+            try {
+                Json.parseToJsonElement(versions)
+            } catch (e: Exception) {
+                log.warn("Error while parsing all versions for package $packageName", e)
+                null
+            }?.asJsonArray?.mapNotNull { it.asString }?.also {
+                log.info("All versions for package $packageName found locally (${it.size} versions)")
+                log.debug("Local versions for $packageName: $it")
             }
-        }?.also { versions ->
-            log.info("All versions for package $packageName found locally (${versions.size} versions)")
-            log.debug("Local versions for $packageName: $versions")
+        }.also {
+            if (it == null) {
+                log.warn("All versions for package $packageName not found")
+            }
         }
     }
 
@@ -173,8 +168,7 @@ class NPMJSClient(private val project: Project) {
     fun getPackageDeprecation(packageName: String, currentVersion: String = "latest"): String? {
         log.info("Getting deprecation status for package $packageName with version $currentVersion")
         val registry = getRegistry(packageName)
-
-        return getBodyAsJSON("${registry}/$packageName/$currentVersion")?.let { json ->
+        return getBodyAsJSON("$registry/$packageName/$currentVersion")?.let { json ->
             val deprecation = json["deprecated"] ?: run {
                 log.debug("No deprecation present in online response for package $packageName")
                 return null
@@ -204,8 +198,7 @@ class NPMJSClient(private val project: Project) {
     fun getPackageLastModified(packageName: String): String? {
         log.info("Getting last modified date for package $packageName")
         val registry = getRegistry(packageName)
-        val json = getBodyAsJSON("${registry}/$packageName")
-        return json?.get("time")?.asJsonObject?.get("modified")?.asString?.also {
+        return getBodyAsJSON("$registry/$packageName")?.get("time")?.asJsonObject?.get("modified")?.asString?.also {
             log.info("Last modified date for package $packageName found online: $it")
         } ?: ShellRunner.getInstance(project).execute(
             arrayOf("npm", "v", packageName, "time.modified", "--registry=$registry")
