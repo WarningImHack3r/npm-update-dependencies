@@ -1,16 +1,19 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.project.Project
+import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiFileFactory
 
 object NUDHelper {
     object Regex {
-        val semverPrefix = Regex("^[\"']?\\D+") // Matches everything before the first digit
+        val semverPrefix = Regex("^.*?(?=\\d+\\.)") // Matches everything before the first "N." in a string
     }
 
     fun safeFileWrite(file: PsiFile, description: String, async: Boolean = true, action: () -> Unit) {
@@ -54,5 +57,15 @@ object NUDHelper {
             sibling = sibling.prevSibling
         }
         return null
+    }
+
+    fun reanalyzePackageJsonIfOpen(project: Project) {
+        FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
+            PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
+                if (file.name == "package.json") {
+                    DaemonCodeAnalyzer.getInstance(project).restart(file)
+                }
+            }
+        }
     }
 }

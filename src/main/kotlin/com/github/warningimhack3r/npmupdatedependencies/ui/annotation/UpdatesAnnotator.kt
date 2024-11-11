@@ -1,15 +1,16 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Property
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.ScanResult
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
+import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
-import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -23,20 +24,23 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
+import kotlinx.datetime.Clock
 import org.semver4j.Semver
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
-        Map<JsonProperty, ScanResult>
+        Map<JsonProperty, Update>
         >() {
     companion object {
         private val log = logger<UpdatesAnnotator>()
     }
 
     override fun collectInformation(file: PsiFile): Pair<Project, List<Property>> =
-        Pair(file.project, AnnotatorsCommon.getInfo(file))
+        file.project to ActionsCommon.getAllDependencies(file).map { dependency ->
+            Property(dependency, dependency.name, dependency.value?.stringValue())
+        }
 
-    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, ScanResult> {
+    override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Update> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
@@ -64,6 +68,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 state.totalPackages = properties.size
                 state.scannedUpdates = 0
                 state.isScanningForUpdates = true
+                log.debug("Starting batching ${info.size} dependencies for updates")
             }.parallelMap { property ->
                 if (maxParallelism < 100) {
                     while (activeTasks >= maxParallelism) {
@@ -75,16 +80,27 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                 }
                 val value = property.comparator ?: return@parallelMap null.also {
                     log.debug("Empty comparator for ${property.name}, skipping")
+                    state.scannedUpdates++
                     activeTasks--
                 }
-                val scanResult = updateChecker.areUpdatesAvailable(property.name, value)
-                state.scannedUpdates++
 
+                val update = updateChecker.checkAvailableUpdates(property.name, value)
+                state.availableUpdates[property.name] = state.availableUpdates[property.name].let { currentState ->
+                    if (currentState == null || currentState.data != update) DataState(
+                        data = update,
+                        addedAt = Clock.System.now(),
+                        comparator = value
+                    ) else currentState
+                }
                 val coerced = Semver.coerce(value)
-                log.debug("Task finished for ${property.name}")
+                val updateAvailable =
+                    update != null && ((coerced != null && !update.versions.isEqualToAny(coerced)) || coerced == null)
+                log.debug("Task finished for ${property.name}, update found: $updateAvailable")
+                state.scannedUpdates++
                 activeTasks--
-                if (scanResult != null && coerced != null && !scanResult.versions.isEqualToAny(coerced)) {
-                    Pair(property.jsonProperty, scanResult)
+
+                if (updateAvailable) {
+                    property.jsonProperty to update
                 } else null
             }.filterNotNull().toMap().also {
                 log.debug("Updates scanned, ${it.size} found out of ${info.size}")
@@ -92,11 +108,17 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             }
     }
 
-    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, ScanResult>, holder: AnnotationHolder) {
+    override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Update>, holder: AnnotationHolder) {
         if (annotationResult.isNotEmpty()) log.debug("Creating annotations...")
         annotationResult.forEach { (property, scanResult) ->
             val versions = scanResult.versions
-            val text = "An update is available!" + if (scanResult.affectedByFilters.isNotEmpty()) {
+            val wasNonNumeric = property.value?.stringValue()?.none { it.isDigit() } == true
+            val text = (if (wasNonNumeric) {
+                "Avoid using a non-numeric version, replace it with its numeric equivalent."
+            } else "An update is available!") + when (val channel = scanResult.channel) {
+                is Update.Channel.Other -> " (channel: ${channel.name})"
+                else -> ""
+            } + if (scanResult.affectedByFilters.isNotEmpty()) {
                 " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
             } else ""
             val currentVersion = property.value?.stringValue()?.let { Semver.coerce(it) }
@@ -108,14 +130,14 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                     withFix(UpdateDependencyFix(versions, Kind.SATISFIES, property))
                 }
                 // Exclude next Major/Minor/Exact/all versions
-                .applyIf(currentVersion != null) {
+                .applyIf(currentVersion != null && !wasNonNumeric) {
                     if (currentVersion == null) return@applyIf this
 
                     val baseIndex = if (versions.satisfies == null) -1 else 0
                     // Couldn't find a way to create them in a loop here
                     withFix(
                         BlacklistVersionFix(
-                            baseIndex + 0, property.name,
+                            baseIndex, property.name,
                             "${currentVersion.major + 1}.x.x"
                         )
                     )

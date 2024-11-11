@@ -5,6 +5,7 @@
     <vendor url="https://github.com/WarningImHack3r">WarningImHack3r</vendor>
 
     <depends>com.intellij.modules.platform</depends>
+    <depends>com.intellij.modules.json</depends>
 
     <actions>
         <!-- Main action group -->
@@ -15,9 +16,9 @@
                description="Action group for npm-update-dependencies"
                icon="NUDIcons.Logo">
             <!-- Add to the “Tools” menu -->
-            <add-to-group group-id="ToolsMenu" anchor="last" />
+            <add-to-group group-id="ToolsMenu" anchor="last"/>
             <!-- Add to the right-click context menu -->
-            <add-to-group group-id="EditorPopupMenu" anchor="last" />
+            <add-to-group group-id="EditorPopupMenu" anchor="last"/>
 
             <!-- Update group -->
             <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateActionGroup"
@@ -28,22 +29,22 @@
                 <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
                         class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllLatestAction"
                         text="Update All (Latest)"
-                        description="Bump all dependencies to their latest version, ignoring their satisfying range"
+                        description="Bump package manager and all dependencies to their latest version, ignoring their satisfying range"
                         icon="AllIcons.Actions.TraceInto">
                     <!-- Shortcut -->
-                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt U" />
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt U"/>
                 </action>
                 <!-- Update all satisfies -->
                 <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
                         class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.update.UpdateAllSatisfiesAction"
                         text="Update All (Satisfying)"
-                        description="Bump all dependencies matching their satisfying range"
+                        description="Bump package manager and all dependencies matching their satisfying range"
                         icon="AllIcons.Actions.Download">
                     <!-- Shortcut -->
-                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt S" />
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt S"/>
                 </action>
             </group>
-            <separator />
+            <separator/>
             <!-- Deprecation group -->
             <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
                    class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.DeprecationActionGroup"
@@ -56,7 +57,7 @@
                         description="Replace all deprecated dependencies with their recommended alternatives"
                         icon="AllIcons.Actions.SwapPanels">
                     <!-- Shortcut -->
-                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt R" />
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt R"/>
                 </action>
                 <!-- Remove all deprecations -->
                 <action id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation.RemoveAllDeprecationsAction"
@@ -65,10 +66,10 @@
                         description="Remove all deprecated dependencies"
                         icon="AllIcons.Actions.DeleteTagHover">
                     <!-- Shortcut -->
-                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt D" />
+                    <keyboard-shortcut keymap="$default" first-keystroke="control shift alt D"/>
                 </action>
             </group>
-            <separator />
+            <separator/>
             <!-- Scan group -->
             <group id="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
                    class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.ScanActionGroup"
@@ -79,44 +80,49 @@
                         class="com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan.InvalidateCachesAction"
                         text="Invalidate Scan Caches"
                         description="Clear temporary caches used to store scan results"
-                        icon="CollaborationToolsIcons.DeleteHovered" />
+                        icon="CollaborationToolsIcons.DeleteHovered"/>
             </group>
             <action id="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.ErrorThrowingAction"
                     class="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.ErrorThrowingAction"
                     text="[Debug] Throw an Error"
                     description="[Debug] Try out the error handler"
-                    icon="AllIcons.Debugger.Db_exception_breakpoint" />
+                    icon="AllIcons.Debugger.Db_exception_breakpoint"/>
         </group>
     </actions>
 
     <projectListeners>
         <listener
                 topic="com.intellij.openapi.fileEditor.FileDocumentManagerListener"
-                class="com.github.warningimhack3r.npmupdatedependencies.ui.listeners.OnSaveListener" />
+                class="com.github.warningimhack3r.npmupdatedependencies.ui.listeners.OnSaveListener"/>
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
         <iconMapper
-                mappingFile="NUDIconMappings.json" />
+                mappingFile="NUDIconMappings.json"/>
         <externalAnnotator
                 language="JSON"
-                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator" />
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.DeprecationAnnotator"/>
         <externalAnnotator
                 language="JSON"
-                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator" />
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.UpdatesAnnotator"/>
+        <externalAnnotator
+                language="JSON"
+                implementationClass="com.github.warningimhack3r.npmupdatedependencies.ui.annotation.PackageManagerAnnotator"/>
         <statusBarWidgetFactory
                 id="NpmUpdateDependenciesStatusBarEditorFactory"
-                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarFactory" />
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarFactory"/>
         <editorNotificationProvider
-                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.DeprecationBanner" />
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.DeprecationBanner"/>
+        <editorNotificationProvider
+                implementation="com.github.warningimhack3r.npmupdatedependencies.ui.banner.UnmaintainedDependenciesBanner"/>
         <applicationConfigurable
                 parentId="tools"
                 displayName="NPM Update Dependencies"
                 id="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable"
-                instance="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable" />
+                instance="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsConfigurable"/>
         <applicationService
-                serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState" />
+                serviceImplementation="com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState"/>
         <errorHandler
-                implementation="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.GitHubErrorReportSubmitter" />
+                implementation="com.github.warningimhack3r.npmupdatedependencies.errorsubmitter.GitHubErrorReportSubmitter"/>
     </extensions>
 </idea-plugin>

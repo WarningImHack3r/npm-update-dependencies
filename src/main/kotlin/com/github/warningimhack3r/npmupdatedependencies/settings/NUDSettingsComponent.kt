@@ -1,24 +1,18 @@
 package com.github.warningimhack3r.npmupdatedependencies.settings
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.ui.statusbar.StatusBarMode
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.fileEditor.FileEditorManager
 import com.intellij.openapi.options.ex.Settings
-import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
-import com.intellij.psi.PsiDocumentManager
 import com.intellij.ui.ToolbarDecorator
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.dsl.builder.*
-import com.intellij.ui.dsl.gridLayout.HorizontalAlign
 import com.intellij.ui.table.TableView
 import com.intellij.util.ui.ColumnInfo
 import com.intellij.util.ui.ListTableModel
@@ -102,7 +96,7 @@ class NUDSettingsComponent {
                         .disableUpDownActions()
                         .createPanel()
                 )
-                    .horizontalAlign(HorizontalAlign.FILL)
+                    .align(AlignX.FILL)
             }
         }
         setTitle("Excluded Versions")
@@ -130,12 +124,16 @@ class NUDSettingsComponent {
         val settings = NUDSettingsState.instance
         group("Annotation Actions") {
             row("Default update type:") {
-                comboBox(enumValues<Versions.Kind>().toList())
+                comboBox(Versions.Kind.entries.toList())
                     .bindItem(settings::defaultUpdateType.toMutableProperty())
             }
             row("Default deprecation action:") {
-                comboBox(enumValues<Deprecation.Action>().toList())
+                comboBox(Deprecation.Action.entries.toList().filter { it != Deprecation.Action.IGNORE })
                     .bindItem(settings::defaultDeprecationAction.toMutableProperty())
+            }
+            row("Default action for \"unmaintained\" packages:") {
+                comboBox(Deprecation.Action.entries.toList().filter { it != Deprecation.Action.REPLACE })
+                    .bindItem(settings::defaultUnmaintainedAction.toMutableProperty())
             }
         }
         group("Deprecations") {
@@ -150,7 +148,24 @@ class NUDSettingsComponent {
                     .bindSelected(settings::autoReorderDependencies)
             }
         }
-        group("Parallelism") {
+        group("\"Unmaintained\" Packages") {
+            row {
+                checkBox("Show a banner for \"unmaintained\" packages")
+                    .comment("Show a banner for packages that haven't been updated in a specified amount of time.")
+                    .bindSelected(settings::showUnmaintainedBanner)
+            }
+            row("Days until a package is considered unmaintained:") {
+                spinner(0..365 * 10)
+                    .comment(
+                        """
+                        Control how many days a package can go without an update before it's considered "likely unmaintained". Set to 0 to disable.<br>
+                        <em>A package might still be maintained even if it hasn't been updated in a while. You can adjust this value to your liking, or even exclude packages from this check if you know they're still maintained.</em>
+                        """.trimIndent()
+                    )
+                    .bindIntValue(settings::unmaintainedDays)
+            }
+        }
+        group("Optimization") {
             row("Maximum parallel processes:") {
                 spinner(1..100)
                     .comment(
@@ -162,6 +177,11 @@ class NUDSettingsComponent {
                     )
                     .bindIntValue(settings::maxParallelism)
             }
+            row("Cache duration (minutes):") {
+                spinner(1..60 * 24)
+                    .comment("Control how long valid scan results are cached for. Lower values can cause more scans to be run, but higher values can cause outdated results to be shown.")
+                    .bindIntValue(settings::cacheDurationMinutes)
+            }
         }
         group("Status Bar") {
             lateinit var statusBarEnabled: Cell<JBCheckBox>
@@ -172,17 +192,27 @@ class NUDSettingsComponent {
             }
             indent {
                 row("Status Bar mode:") {
-                    comboBox(enumValues<StatusBarMode>().toList())
+                    comboBox(StatusBarMode.entries.toList())
                         .comment("Compact mode only shows \"U\" for outdated dependencies and \"D\" for deprecated dependencies.")
                         .bindItem(settings::statusBarMode.toMutableProperty())
                 }.enabledIf(statusBarEnabled.selected)
             }
         }
-        group("Auto-Fix") {
+        group("Miscellaneous") {
             row {
                 checkBox("Auto-fix on save")
                     .comment("Auto-fix applies the default update type and deprecation action to all dependencies when saving <code>package.json</code>.")
                     .bindSelected(settings::autoFixOnSave)
+            }
+            row {
+                checkBox("Check for updates on static comparators")
+                    .comment("Check for updates on static comparators like <code>\"1.2.3\"</code> (without any prefix, or starting with <code>v</code> and/or <code>=</code>).")
+                    .bindSelected(settings::checkStaticComparators)
+            }
+            row {
+                checkBox("Suggest replacing tags with versions")
+                    .comment("Suggest replacing tags like <code>latest</code> or <code>next</code> with actual versions when a tag is used in a dependency comparator.")
+                    .bindSelected(settings::suggestReplacingTags)
             }
         }
         group("Exclusions") {
@@ -198,22 +228,13 @@ class NUDSettingsComponent {
                                 values.isNotEmpty()
                             }
                         }.toMutableMap()
-                        ProjectManager.getInstance().openProjects.forEach { project ->
-                            // Clear the cache for packages with excluded versions
-                            settings.excludedVersions.keys.forEach { packageName ->
-                                NUDState.getInstance(project).availableUpdates.remove(packageName)
-                            }
-                            // if project's currently open file is package.json, re-analyze it
-                            FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
-                                PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
-                                    if (file.name == "package.json") {
-                                        DaemonCodeAnalyzer.getInstance(project).restart(file)
-                                    }
-                                }
-                            }
-                        }
                     }.showAndGet()
                 }
+            }
+            row("Packages excluded from the \"unmaintained\" check:") {
+                textField()
+                    .comment("Comma-separated list of package names that should be excluded from the \"unmaintained\" check.")
+                    .bindText(settings::excludedUnmaintainedPackages)
             }
         }
 

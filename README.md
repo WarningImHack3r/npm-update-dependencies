@@ -15,24 +15,26 @@ version depending on your choice.
 ## Features
 
 - Update a dependency to the latest or satisfying version
-- Support for custom registries and private packages
 - Keep comparators (e.g. `^`, `~`, `>`, `<`, `>=`, `<=`) when replacing versions
-- Detect and replace/remove deprecated dependencies
-- Batch update all dependencies (latest or satisfying), all deprecated dependencies
 - Get notified of deprecated dependencies with a banner
+- Detect and replace/remove deprecated dependencies
+- Configure and spot dependencies that are likely unmaintained
+- Batch update all dependencies (latest or satisfying) and/or all deprecated dependencies
+- Support for custom registries and private packages
+- Support of the `packageManager` field
 - See your outdated dependencies at a glance in the status bar
 - Exclude dependencies or versions from the scan
 - Configure everything in the settings
 - Manually invalidate the cache in case of issues
-- ...and more!
+- …and more!
 
 ## Usage
 
-There are 3 ways to invoke the extension menu:
+There are 3 ways to invoke the extension menus:
 
 - Hover over an annotated dependency and click the action you want to perform
-- Right click in the package.json file and select the extension from the context menu
-- Use the Tools menu
+- Right click in the `package.json` file and select the extension from the context menu
+- Use the <kbd>Tools</kbd> menu
 
 Configuration options are available in the settings.
 
@@ -42,19 +44,16 @@ Configuration options are available in the settings.
 
 ## Installation
 
-- Using IDE built-in plugin system:
+- Using the IDE built-in plugin system:
 
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> > <kbd>Search for "
-  npm-update-dependencies"</kbd> >
-  <kbd>Install Plugin</kbd>
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>Marketplace</kbd> >
+  <kbd>Search for "npm-update-dependencies"</kbd> > <kbd>Install Plugin</kbd>
 
 - Manually:
 
   Download the [latest release](https://github.com/WarningImHack3r/npm-update-dependencies/releases/latest) and install
   it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk...</kbd>
+  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk…</kbd>
 
 ---
-Plugin based on the [IntelliJ Platform Plugin Template][template].
-
-[template]: https://github.com/JetBrains/intellij-platform-plugin-template
+Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)

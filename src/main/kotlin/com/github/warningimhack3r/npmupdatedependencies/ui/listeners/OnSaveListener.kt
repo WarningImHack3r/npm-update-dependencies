@@ -1,8 +1,8 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.listeners
 
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Deprecation
-import com.github.warningimhack3r.npmupdatedependencies.backend.data.Versions
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
+import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
@@ -23,33 +23,65 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         val state = NUDState.getInstance(project)
         // Initial checks
         val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+        val hasUpdates = state.availableUpdates.filter { it.value.data != null }.isNotEmpty()
+        val hasDeprecations = state.deprecations.filter {
+            it.value.data?.kind == Deprecation.Kind.DEPRECATED
+        }.isNotEmpty()
+        val hasUnmaintained = state.deprecations.filter {
+            it.value.data?.kind == Deprecation.Kind.UNMAINTAINED
+        }.isNotEmpty()
         if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
-            || (state.availableUpdates.isEmpty() && state.deprecations.isEmpty())
+            || (!hasUpdates && !hasDeprecations)
         ) return
 
         // Create a set of actions to perform
-        val actionsToPerform = mutableSetOf<() -> Unit>()
+        val actionsToPerform = mutableListOf<() -> Unit>()
 
         // Fix updates if any
-        if (state.availableUpdates.isNotEmpty()) {
+        if (hasUpdates) {
             actionsToPerform.add {
-                ActionsCommon.updateAll(file, enumValues<Versions.Kind>().first {
+                ActionsCommon.updateAllDependencies(file, Versions.Kind.entries.first {
                     it == NUDSettingsState.instance.defaultUpdateType
                 })
             }
         }
 
         // Fix deprecations if any
-        if (state.deprecations.isNotEmpty()) {
-            when (enumValues<Deprecation.Action>().first {
-                it == NUDSettingsState.instance.defaultDeprecationAction
-            }) {
+        if (hasDeprecations) {
+            when (NUDSettingsState.instance.defaultDeprecationAction) {
                 Deprecation.Action.REPLACE -> actionsToPerform.add {
                     ActionsCommon.replaceAllDeprecations(file)
                 }
 
                 Deprecation.Action.REMOVE -> actionsToPerform.add {
-                    ActionsCommon.deleteAllDeprecations(file)
+                    ActionsCommon.deleteAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.DEPRECATED
+                    }
+                }
+
+                else -> {
+                    // Do nothing, IGNORE or null
+                }
+            }
+        }
+
+        // Fix unmaintained if any
+        if (hasUnmaintained) {
+            when (NUDSettingsState.instance.defaultUnmaintainedAction) {
+                Deprecation.Action.REMOVE -> actionsToPerform.add {
+                    ActionsCommon.deleteAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                    }
+                }
+
+                Deprecation.Action.IGNORE -> actionsToPerform.add {
+                    ActionsCommon.ignoreAllDeprecations(file) {
+                        it.data?.kind == Deprecation.Kind.UNMAINTAINED
+                    }
+                }
+
+                else -> {
+                    // Do nothing, REPLACE or null
                 }
             }
         }

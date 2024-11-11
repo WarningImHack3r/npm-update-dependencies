@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.data
+package com.github.warningimhack3r.npmupdatedependencies.backend.models
 
 import com.intellij.json.psi.JsonProperty
 

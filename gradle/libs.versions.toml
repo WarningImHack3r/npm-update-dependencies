@@ -1,25 +1,31 @@
 [versions]
 # libraries
-annotations = "24.1.0"
-semver4j = "5.3.0"
+caffeine = "3.1.8"
+datetime = "0.6.1"
 jnpm = "1.5"
+junit = "4.13.2"
+serialization = "1.7.3"
+semver4j = "5.4.1"
 
 # plugins
-kotlin = "1.9.24"
-changelog = "2.2.0"
-gradleIntelliJPlugin = "1.17.3"
-qodana = "2024.1.5"
-kover = "0.8.0"
+changelog = "2.2.1"
+intellijPlatform = "2.1.0"
+kotlin = "2.0.21"
+kover = "0.8.3"
+qodana = "2024.2.6"
 
 [libraries]
-annotations = { group = "org.jetbrains", name = "annotations", version.ref = "annotations" }
-semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
+caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
+datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
 jnpm = { group = "org.orienteer.jnpm", name = "jnpm", version.ref = "jnpm" }
+junit = { group = "junit", name = "junit", version.ref = "junit" }
+semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
+serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }
 
 [plugins]
 changelog = { id = "org.jetbrains.changelog", version.ref = "changelog" }
-gradleIntelliJPlugin = { id = "org.jetbrains.intellij", version.ref = "gradleIntelliJPlugin" }
+intellijPlatform = { id = "org.jetbrains.intellij.platform", version.ref = "intellijPlatform" }
 kotlin = { id = "org.jetbrains.kotlin.jvm", version.ref = "kotlin" }
-serialization = { id = "plugin.serialization", version.ref = "kotlin" }
 kover = { id = "org.jetbrains.kotlinx.kover", version.ref = "kover" }
 qodana = { id = "org.jetbrains.qodana", version.ref = "qodana" }
+serialization = { id = "plugin.serialization", version.ref = "kotlin" }

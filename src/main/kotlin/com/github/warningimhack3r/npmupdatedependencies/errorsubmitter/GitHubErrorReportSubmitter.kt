@@ -39,7 +39,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
     ): Boolean {
         return try {
             // Base data
-            val event = if (events.isNotEmpty()) events.first() else null
+            val event = events.firstOrNull()
 
             val stackTrace = event?.throwableText ?: ""
             val simpleErrorMessage = if (event != null && !event.message.isNullOrEmpty()) {
@@ -54,7 +54,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
             var causedByLastIndex = -1
             val splitStackTrace = stackTrace.split("\n")
             splitStackTrace.reversed().forEachIndexed { index, s ->
-                if (s.lowercase().startsWith("caused by")) {
+                if (s.startsWith("caused by", ignoreCase = true)) {
                     causedByLastIndex = splitStackTrace.size - index
                     return@forEachIndexed
                 }
@@ -77,10 +77,10 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
                                 && !line.startsWith("at kotlinx.")
                                 && !line.startsWith("at com.intellij.")
                     }.joinToString("\n"),
-                    /*"device-os" to with(System.getProperty("os.name").lowercase()) {
+                    /*"device-os" to with(System.getProperty("os.name")) {
                         when { // Windows, macOS or Linux
-                            startsWith("windows") -> "Windows"
-                            startsWith("mac") -> "macOS"
+                            startsWith("windows", ignoreCase = true) -> "Windows"
+                            startsWith("mac", ignoreCase = true) -> "macOS"
                             else -> "Linux"
                         }
                     },*/ // currently cannot be set (https://github.com/orgs/community/discussions/44983)
@@ -89,7 +89,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
             ))
             consumer.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.NEW_ISSUE))
             true
-        } catch (e: Exception) {
+        } catch (_: Exception) {
             consumer.consume(SubmittedReportInfo(SubmittedReportInfo.SubmissionStatus.FAILED))
             false
         }
@@ -184,7 +184,7 @@ class GitHubErrorReportSubmitter : ErrorReportSubmitter() {
         return IdeFocusManager.getGlobalInstance().lastFocusedFrame?.project ?: run {
             val projectManager = ProjectManager.getInstance()
             val openProjects = projectManager.openProjects
-            if (openProjects.isNotEmpty()) openProjects.first() else projectManager.defaultProject
+            openProjects.firstOrNull() ?: projectManager.defaultProject
         }
     }
 }

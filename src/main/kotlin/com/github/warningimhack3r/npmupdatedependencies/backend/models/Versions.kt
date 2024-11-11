@@ -1,4 +1,4 @@
-package com.github.warningimhack3r.npmupdatedependencies.backend.data
+package com.github.warningimhack3r.npmupdatedependencies.backend.models
 
 import org.semver4j.Semver
 

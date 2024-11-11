@@ -1,21 +1,33 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions.scan
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.actionSystem.UpdateInBackground
+import com.intellij.openapi.diagnostic.logger
 
-class InvalidateCachesAction : AnAction(), UpdateInBackground {
+class InvalidateCachesAction : AnAction() {
+    companion object {
+        private val log = logger<InvalidateCachesAction>()
+    }
+
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     override fun update(e: AnActionEvent) {
-        val state = e.project?.let { NUDState.getInstance(it) }
-        e.presentation.isEnabled = if (state != null) {
+        e.presentation.isEnabled = e.project?.let { project ->
+            val state = NUDState.getInstance(project)
             state.availableUpdates.isNotEmpty() || state.deprecations.isNotEmpty()
-        } else false
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
-        val state = e.project?.let { NUDState.getInstance(it) } ?: return
-        state.availableUpdates.clear()
-        state.deprecations.clear()
+        log.debug("Cache invalidation requested")
+        val state = e.project?.let { NUDState.getInstance(it) } ?: return.also {
+            log.warn("No project found")
+        }
+        state.invalidateCaches()
+        log.debug("Cache invalidated")
     }
 }

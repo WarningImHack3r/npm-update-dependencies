@@ -12,6 +12,125 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add a dedicated banner for "unmaintained" dependencies (#154)
+  - This replaces the previous integration within the deprecation banner
+- Add support for packages with multiple channels, automatically picking the relevant one (#150)
+- Allow choosing a default action for "unmaintained" dependencies
+
+### Fixed
+
+- Correctly handle non-200 HTTP responses from npm registries
+- Fix mass deprecations deletion incorrectly targeting "unmaintained" dependencies
+- Fix "unmaintained" dependencies exclusion setting not always being respected
+- Fix packageManager update being incorrectly counted twice in the status bar widget
+
+## [3.5.0] - 2024-10-26
+
+### Added
+
+- Update the `packageManager` from the `Update All` actions
+
+### Changed
+
+- Broaden the deprecation replacement detection algorithm
+
+### Fixed
+
+- Fix broken support for dependency versions >= 10.0.0
+- Fix "Invalidate Scan Caches" action not working as expected
+- Fix support for `styled-components` package, previously limited due to a bug in a dependency
+
+## [3.4.0] - 2024-10-13
+
+### Added
+
+- Add a suggestion to replace vague version tags like `latest` or `next` with their actual current version
+  - Can be disabled in the settings
+- Add support for `npm:`-prefixed comparators
+
+### Changed
+
+- Add back the ability to check for updates on static comparators (#148)
+  - This feature was intentionally removed in 3.1.0 but is now back as an option in the settings
+- Widen the kind of dependencies that can be checked for deprecations
+
+### Fixed
+
+- Fix plugin hanging forever when scanning for registries (#146)
+- Fix wrong order being applied for unmaintained dependencies quick-fixes
+
+## [3.3.0] - 2024-10-07
+
+### Added
+
+- Add warnings for unmaintained dependencies (#140)
+  - Dependencies are considered likely unmaintained if they have not been updated for a long time, **configurable in the settings**
+- Suggest replacing a deprecated dependency with its latest version when applicable
+
+### Fixed
+
+- Fix inaccurate cache invalidation when tweaking excluded packages setting
+- Fix some deprecations not being detected
+- Fix deprecation replacement action sometimes leading to weird results when auto-sorting is enabled
+- (Likely) fix a concurrency crash (#144)
+
+## [3.2.1] - 2024-09-30
+
+### Fixed
+
+- Fix a crash when no `packageManager` tag is present in the `package.json` file
+
+## [3.2.0] - 2024-09-28
+
+### Added
+
+- **Add support for updating the `packageManager` tag**
+- Add HTTP caching for some requests to the npm registry, improving performance (#135)
+- Attempt to batch registries scan without network requests before falling back to the original behavior, speeding up the first scan (#136)
+  - Many thanks to [@SCjona](https://github.com/SCjona) for the whole 3.1.0 and the two issues of this release!
+
+### Fixed
+
+- Remove a useless call to the local `npm` command when checking for deprecations, slightly speeding up the scan (#136)
+
+## [3.1.0] - 2024-09-25
+
+### Changed
+
+- Cache the "no deprecation" and "no update" status, avoiding checking everytime (#129)
+- Cache the comparator compared upon, avoiding re-scanning the same dependency multiple times (#129)
+- Invalidate the cache after a configurable amount of time (#129)
+- Check the validity of a comparator before trying to scan for deprecations, as already done for updates (#130)
+- Improve the accuracy of the comparator validity verifier (#130)
+
+## [3.0.2] - 2024-09-13
+
+### Fixed
+
+- Fix compatibility with 2024.3 IDEs
+
+## [3.0.1] - 2024-09-03
+
+### Fixed
+
+- Fix `false` deprecated field flagging dependencies as deprecated (#122)
+- Fix registry affectation logic freezing the plugin
+
+## [3.0.0] - 2024-08-01
+
+### Removed
+
+- Drop support for 2022.1 and 2022.2 IDEs (#116)
+
+## [2.3.3] - 2024-06-15
+
+### Fixed
+
+- Fix plugin hanging forever when trying to find a dependency's registry (#110)
+- Mitigate crashes when checking version for some dependencies (#109)
+
 ## [2.3.2] - 2024-05-17
 
 ### Fixed
@@ -237,7 +356,17 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.5.0...HEAD
+[3.5.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...v3.5.0
+[3.4.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.3.0...v3.4.0
+[3.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.1...v3.3.0
+[3.2.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.2.0...v3.2.1
+[3.2.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.1.0...v3.2.0
+[3.1.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.2...v3.1.0
+[3.0.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.1...v3.0.2
+[3.0.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.0.0...v3.0.1
+[3.0.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.3...v3.0.0
+[2.3.3]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.2...v2.3.3
 [2.3.2]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.1...v2.3.2
 [2.3.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.3.0...v2.3.1
 [2.3.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v2.2.1...v2.3.0

@@ -2,15 +2,20 @@ package com.github.warningimhack3r.npmupdatedependencies.ui.actions.deprecation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
+import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.actionSystem.UpdateInBackground
 
-class ReplaceAllDeprecationsAction : AnAction(), UpdateInBackground {
+class ReplaceAllDeprecationsAction : AnAction() {
+    override fun getActionUpdateThread(): ActionUpdateThread {
+        return ActionUpdateThread.BGT
+    }
+
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled =
-            e.project?.let { NUDState.getInstance(it) }?.deprecations?.isNotEmpty() ?: false
+        e.presentation.isEnabled = e.project?.let { project ->
+            NUDState.getInstance(project).deprecations.isNotEmpty()
+        } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

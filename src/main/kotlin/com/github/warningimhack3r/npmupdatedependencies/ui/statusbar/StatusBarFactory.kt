@@ -16,8 +16,6 @@ import com.intellij.openapi.wm.impl.status.EditorBasedWidget
 import com.intellij.openapi.wm.impl.status.widget.StatusBarEditorBasedWidgetFactory
 import com.intellij.psi.search.FilenameIndex
 import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.util.Consumer
-import java.awt.event.MouseEvent
 
 class StatusBarFactory : StatusBarEditorBasedWidgetFactory() {
     companion object {
@@ -57,6 +55,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         SCANNING_PACKAGES,
         SCANNING_FOR_UPDATES,
         SCANNING_FOR_DEPRECATIONS,
+        SCANNING_FOR_PACKAGE_MANAGER,
         READY
     }
 
@@ -72,12 +71,11 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         Status.SCANNING_PACKAGES -> "Scanning packages..."
         Status.SCANNING_FOR_UPDATES -> "Scanning for updates..."
         Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations..."
+        Status.SCANNING_FOR_PACKAGE_MANAGER -> "Scanning for package manager updates..."
         Status.READY -> "Click to see available updates"
     }
 
-    override fun getClickConsumer(): Consumer<MouseEvent>? = null
-
-    // Replaced with getPopup() in 2023.1
+    @Deprecated("Replaced with getPopup() in 2023.1", ReplaceWith("getPopup()"))
     override fun getPopupStep(): ListPopup? {
         if (project.isDisposed || currentStatus != Status.READY) return null
 
@@ -89,7 +87,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                 if (size == 1) first() else {
                     // Filter all files containing the dependency name
                     filter { file ->
-                        FileDocumentManager.getInstance().getDocument(file)?.text?.contains(dependencyName) ?: false
+                        FileDocumentManager.getInstance().getDocument(file)?.text?.contains(dependencyName) == true
                     }.run {
                         if (size == 1) first() else {
                             // Show a dialog to choose the file
@@ -106,7 +104,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                 // Find the line number of the dependency
                 val lineNumber = document?.let {
                     it.text.split("\n").indexOfFirst { line ->
-                        line.contains("\"$dependencyName\":")
+                        line.contains("\"$dependencyName\":") || line.contains("\"$dependencyName@")
                     }
                 } ?: 0
                 // Find the column number at the end of the dependency line
@@ -115,26 +113,43 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
                         char == ','
                     }?.plus(1)
                 } ?: 0
+                if (lineNumber == 0) return
                 // Open the file
                 OpenFileDescriptor(project, file, lineNumber, columnNumber).navigate(true)
             }
         }
 
+        val state = NUDState.getInstance(project)
         return JBPopupFactory.getInstance().createActionGroupPopup(
             "Available Changes",
             DefaultActionGroup().apply {
+                if (state.foundPackageManager != null) {
+                    addSeparator("Package Manager")
+                    add(DumbAwareAction.create(state.foundPackageManager) {
+                        val packageManagerName = state.foundPackageManager
+                        if (packageManagerName != null) {
+                            openPackageJson(packageManagerName)
+                        }
+                    })
+                }
                 addSeparator("Updates")
-                addAll(NUDState.getInstance(project).availableUpdates.toSortedMap().map { update ->
-                    DumbAwareAction.create(update.key) {
-                        openPackageJson(update.key)
-                    }
-                })
+                addAll(
+                    state.availableUpdates.filter { (packageName, currentState) ->
+                        currentState.data != null && packageName != state.foundPackageManager
+                    }.toSortedMap()
+                        .map { (key, _) ->
+                            DumbAwareAction.create(key) {
+                                openPackageJson(key)
+                            }
+                        })
                 addSeparator("Deprecations")
-                addAll(NUDState.getInstance(project).deprecations.toSortedMap().map { deprecation ->
-                    DumbAwareAction.create(deprecation.key) {
-                        openPackageJson(deprecation.key)
-                    }
-                })
+                addAll(
+                    state.deprecations.filter { it.value.data != null }.toSortedMap()
+                        .map { (key, _) ->
+                            DumbAwareAction.create(key) {
+                                openPackageJson(key)
+                            }
+                        })
             },
             DataManager.getInstance().getDataContext(myStatusBar.component),
             JBPopupFactory.ActionSelectionAid.SPEEDSEARCH,
@@ -151,9 +166,10 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             Status.SCANNING_PACKAGES -> "Scanning packages (${state.scannedUpdates + state.scannedDeprecations}/${state.totalPackages * 2})..."
             Status.SCANNING_FOR_UPDATES -> "Scanning for updates (${state.scannedUpdates}/${state.totalPackages})..."
             Status.SCANNING_FOR_DEPRECATIONS -> "Scanning for deprecations (${state.scannedDeprecations}/${state.totalPackages})..."
+            Status.SCANNING_FOR_PACKAGE_MANAGER -> "Scanning for package manager updates..."
             Status.READY -> {
-                val outdated = state.availableUpdates.size
-                val deprecated = state.deprecations.size
+                val outdated = state.availableUpdates.filter { it.value.data != null }.size
+                val deprecated = state.deprecations.filter { it.value.data != null }.size
                 when (NUDSettingsState.instance.statusBarMode) {
                     StatusBarMode.FULL -> when {
                         outdated == 0 && deprecated == 0 -> null
@@ -184,6 +200,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             state.isScanningForUpdates && state.isScanningForDeprecations -> Status.SCANNING_PACKAGES
             state.isScanningForUpdates -> Status.SCANNING_FOR_UPDATES
             state.isScanningForDeprecations -> Status.SCANNING_FOR_DEPRECATIONS
+            state.isScanningForPackageManager -> Status.SCANNING_FOR_PACKAGE_MANAGER
             else -> Status.READY
         }
         myStatusBar.updateWidget(ID())
