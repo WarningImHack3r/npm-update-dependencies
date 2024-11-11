@@ -51,7 +51,7 @@ class NPMJSClient(private val project: Project) {
             *RegistriesScanner.getInstance(project).registries.toTypedArray()
         ).firstOrNull { registry ->
             log.debug("Trying registry $registry for package $packageName")
-            getResponseStatus(URI("$registry/$packageName"))
+            getResponseStatus(URI("$registry/$packageName")) == HttpStatusCode.OK.value
         }?.let { computedRegistry ->
             log.debug("Found registry for $packageName: $computedRegistry")
             state.packageRegistries[packageName] = computedRegistry
@@ -61,13 +61,13 @@ class NPMJSClient(private val project: Project) {
         }
     }
 
-    private fun getResponseStatus(uri: URI): Boolean {
+    private fun getResponseStatus(uri: URI): Int {
         log.debug("HEAD $uri")
         val request = HttpRequest.newBuilder(uri)
             .method(HttpMethod.Head.value, HttpRequest.BodyPublishers.noBody())
             .build()
         val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
-        return response.statusCode() == HttpStatusCode.OK.value
+        return response.statusCode()
     }
 
     private fun getResponseBody(uri: URI): String {
@@ -106,6 +106,10 @@ class NPMJSClient(private val project: Project) {
         val registry = getRegistry(packageName)
         return getBodyAsJSON("$registry/$packageName/$tag")?.get("version")?.asString?.also {
             log.info("Version for package $packageName with tag $tag found online: $it")
+        }.also {
+            if (it == null) {
+                log.warn("Version for package $packageName with tag $tag not found")
+            }
         }
     }
 
