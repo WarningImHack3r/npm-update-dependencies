@@ -38,7 +38,10 @@ fun <T, R> Iterable<T>.parallelMap(mapper: suspend (T) -> R) = runBlocking(Super
 fun DateTimePeriod.toReadableString() = buildString {
     if (years > 0) append("$years year${if (years > 1) "s" else ""}")
     if (months > 0) {
-        if (years > 0) append(", ")
+        if (years > 0) {
+            if (days > 0) append(", ")
+            else append(" and ")
+        }
         append("$months month${if (months > 1) "s" else ""}")
     }
     if (days > 0) {
