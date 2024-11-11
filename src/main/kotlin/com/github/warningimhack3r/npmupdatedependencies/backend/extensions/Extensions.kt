@@ -6,7 +6,6 @@ import kotlinx.datetime.DateTimePeriod
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -18,9 +17,6 @@ fun <T> safeConversion(block: () -> T): T? = try {
 
 val JsonElement.asJsonObject
     get() = safeConversion { jsonObject }
-
-val JsonElement.asJsonArray
-    get() = safeConversion { jsonArray }
 
 val JsonElement.asString
     get() = jsonPrimitive.contentOrNull

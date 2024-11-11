@@ -6,7 +6,7 @@ data class Update(
     val affectedByFilters: Collection<String> = emptyList()
 ) {
     sealed interface Channel {
-        class Latest() : Channel {
+        class Latest : Channel {
             companion object {
                 const val LATEST = "latest"
             }

@@ -2,9 +2,11 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
+import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
+import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -16,6 +18,16 @@ class RegistriesScanner(private val project: Project) {
 
         @JvmStatic
         fun getInstance(project: Project): RegistriesScanner = project.service()
+    }
+
+    init {
+        log.info(
+            "Initializing NPM Update Dependencies plugin v${
+                PluginManagerCore.getPlugin(
+                    PluginId.getId("com.github.warningimhack3r.npmupdatedependencies")
+                )?.version ?: "???"
+            }"
+        )
     }
 
     /**

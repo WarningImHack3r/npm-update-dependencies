@@ -34,9 +34,9 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
         val (tag, version) = sortedTagsPairs.firstOrNull { (_, v) ->
             v.isGreaterThan(coercedComparator)
         } ?: return null
-        return when (val rawChannel = tag) {
+        return when (tag) {
             Update.Channel.Latest.LATEST -> Update.Channel.Latest()
-            else -> Update.Channel.Other(rawChannel)
+            else -> Update.Channel.Other(tag)
         } to version
     }
 

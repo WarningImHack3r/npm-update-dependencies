@@ -32,6 +32,7 @@ class NUDState(private val project: Project) {
         scannedDeprecations = 0
         foundPackageManager = null
 
+        RegistriesScanner.getInstance(project).scanned = false
         NPMJSClient.getInstance(project).cache.apply {
             cleanUp()
             invalidateAll()

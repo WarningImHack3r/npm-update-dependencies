@@ -23,6 +23,7 @@
 
 - Correctly handle non-200 HTTP responses from npm registries
 - Improve code to avoid using `npm` shell command from the plugin as much as possible (#104)
+- Add missing registry scan purging to the "Invalidate Caches" action
 - Fix mass deprecations deletion incorrectly targeting "unmaintained" dependencies
 - Fix "unmaintained" dependencies exclusion setting not always being respected
 - Fix packageManager update being incorrectly counted twice in the status bar widget
