@@ -2,7 +2,6 @@
 # libraries
 caffeine = "3.1.8"
 datetime = "0.6.1"
-jnpm = "1.5"
 junit = "4.13.2"
 serialization = "1.7.3"
 semver4j = "5.4.1"
@@ -17,7 +16,6 @@ qodana = "2024.2.6"
 [libraries]
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
 datetime = { group = "org.jetbrains.kotlinx", name = "kotlinx-datetime", version.ref = "datetime" }
-jnpm = { group = "org.orienteer.jnpm", name = "jnpm", version.ref = "jnpm" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 semver4j = { group = "org.semver4j", name = "semver4j", version.ref = "semver4j" }
 serialization = { group = "org.jetbrains.kotlinx", name = "kotlinx-serialization-json", version.ref = "serialization" }

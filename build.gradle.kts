@@ -35,21 +35,6 @@ repositories {
 dependencies {
     implementation(libs.caffeine)
     implementation(libs.datetime)
-    implementation(libs.jnpm)
-    constraints {
-        implementation("com.squareup.okhttp3:okhttp:4.9.3") {
-            because("4.9.0 has a security vulnerability")
-        }
-        implementation("org.apache.commons:commons-compress:1.26.1") {
-            because("1.21 has a security vulnerability")
-        }
-        implementation("com.fasterxml.jackson.core:jackson-databind:2.17.1") {
-            because("2.10.1 has a security vulnerability")
-        }
-        implementation("com.squareup.okio:okio:3.4.0") {
-            because("2.8.0 has a security vulnerability")
-        }
-    }
     implementation(libs.semver4j)
     implementation(libs.serialization)
     testImplementation(libs.junit)
