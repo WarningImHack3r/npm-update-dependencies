@@ -2,6 +2,7 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.filterNotNullValues
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
@@ -22,6 +23,21 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
         @JvmStatic
         fun getInstance(project: Project): PackageUpdateChecker = project.service()
+    }
+
+    private fun computeMatchingTag(packageName: String, comparator: String): Pair<Update.Channel, Semver>? {
+        val allTags = NPMJSClient.getInstance(project).getAllTags(packageName) ?: return null
+        val coercedComparator = Semver.coerce(comparator) ?: return null
+        val sortedTagsPairs = allTags.mapValues { (_, v) ->
+            Semver.coerce(v)
+        }.filterNotNullValues().toList().sortedBy { (_, v) -> v }
+        val (tag, version) = sortedTagsPairs.firstOrNull { (_, v) ->
+            v.isGreaterThan(coercedComparator)
+        } ?: return null
+        return when (val rawChannel = tag) {
+            Update.Channel.Latest.LATEST -> Update.Channel.Latest()
+            else -> Update.Channel.Other(rawChannel)
+        } to version
     }
 
     private fun isVersionMoreRecentThanComparator(version: Semver, comparator: String): Boolean {
@@ -90,11 +106,12 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
                     equals("*") || isEmpty() -> {
                         log.debug("Comparator $comparator is a wildcard, fetching latest version")
-                        val latestVersion = NPMJSClient.getInstance(project).getLatestVersion(packageName)?.let {
-                            Semver.coerce(it)
-                        } ?: return null.also {
-                            log.warn("No latest version found for $packageName with wildcard comparator")
-                        }
+                        val latestVersion =
+                            NPMJSClient.getInstance(project).getVersionFromTag(packageName, "latest")?.let {
+                                Semver.coerce(it)
+                            } ?: return null.also {
+                                log.warn("No latest version found for $packageName with wildcard comparator")
+                            }
                         log.debug("Latest version $latestVersion for $packageName")
                         return Update(Versions(latestVersion))
                     }
@@ -139,9 +156,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
         if (realPackageName != packageName) {
             log.debug("Real package name for $packageName is $realPackageName (comparator: $realComparator)")
         }
-        var newestVersion = npmjsClient.getLatestVersion(realPackageName)?.let {
-            Semver.coerce(it)
-        } ?: return null.also {
+        var (channel, newestVersion) = computeMatchingTag(realPackageName, realComparator) ?: return null.also {
             log.warn("No latest version found for $packageName (real: $realPackageName)")
         }
         var satisfyingVersion: Semver? = null
@@ -203,6 +218,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
         return Update(
             Versions(newestVersion, satisfyingVersion),
+            channel,
             filtersAffectingVersions
         )
     }

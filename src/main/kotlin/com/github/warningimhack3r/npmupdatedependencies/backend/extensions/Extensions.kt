@@ -30,6 +30,9 @@ val JsonElement.asBoolean
 
 fun JsonValue.stringValue(): String = text.replace("\"", "")
 
+@Suppress("UNCHECKED_CAST")
+fun <K, V> Map<K, V?>.filterNotNullValues() = filterValues { it != null } as Map<K, V>
+
 // Credit: https://jivimberg.io/blog/2018/05/04/parallel-map-in-kotlin/
 fun <T, R> Iterable<T>.parallelMap(mapper: suspend (T) -> R) = runBlocking(SupervisorJob() + Dispatchers.Default) {
     coroutineScope { map { async { mapper(it) } }.awaitAll() }

@@ -98,7 +98,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }.parallelMap {
             val potentialPackage = it.removeSurrounding("`")
             // Confirm that the word is a package name by trying to get its latest version
-            npmjsClient.getLatestVersion(potentialPackage)?.let { latestVersion ->
+            npmjsClient.getVersionFromTag(potentialPackage, "latest")?.let { latestVersion ->
                 Deprecation.Replacement(potentialPackage, latestVersion)
             }
         }.filterNotNull().firstOrNull()
@@ -147,16 +147,18 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(realPackageName) == null) {
             // Only the current version is deprecated, not the latest: suggest to upgrade instead
             log.debug("Only the current version of $realPackageName is deprecated, suggesting to upgrade")
-            npmjsClient.getLatestVersion(realPackageName)?.let { Semver.coerce(it) }?.let { latestVersion ->
-                val currentVersionText = Semver.coerce(comparatorVersion)?.let {
-                    "$realPackageName ${it.major}"
-                } ?: "The current version of $realPackageName"
-                return Deprecation(
-                    Deprecation.Kind.DEPRECATED,
-                    "$currentVersionText is deprecated, consider upgrading to v${latestVersion.major}",
-                    Deprecation.Replacement(realPackageName, latestVersion.version)
-                )
-            } ?: log.warn("Couldn't get latest version for $realPackageName or can't coerce it")
+            npmjsClient.getVersionFromTag(realPackageName, "latest")
+                ?.let { Semver.coerce(it) }
+                ?.let { latestVersion ->
+                    val currentVersionText = Semver.coerce(comparatorVersion)?.let {
+                        "$realPackageName ${it.major}"
+                    } ?: "The current version of $realPackageName"
+                    return Deprecation(
+                        Deprecation.Kind.DEPRECATED,
+                        "$currentVersionText is deprecated, consider upgrading to v${latestVersion.major}",
+                        Deprecation.Replacement(realPackageName, latestVersion.version)
+                    )
+                } ?: log.warn("Couldn't get latest version for $realPackageName or can't coerce it")
         }
 
         return Deprecation(

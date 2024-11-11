@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoo
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonArray
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
+import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.filterNotNullValues
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
@@ -105,11 +106,6 @@ class NPMJSClient(private val project: Project) {
         return Json.parseToJsonElement(responseBody).asJsonObject
     }
 
-    fun getLatestVersion(packageName: String): String? {
-        log.info("Getting latest version for package $packageName")
-        return getVersionFromTag(packageName, "latest")
-    }
-
     fun getVersionFromTag(packageName: String, tag: String): String? {
         log.info("Getting version for package $packageName with tag $tag")
         val registry = getRegistry(packageName)
@@ -122,6 +118,32 @@ class NPMJSClient(private val project: Project) {
                 log.info("Version for package $packageName with tag $tag found locally: $it")
             } else {
                 log.warn("Version for package $packageName with tag $tag not found")
+            }
+        }
+    }
+
+    fun getAllTags(packageName: String): Map<String, String>? {
+        log.info("Getting all tags for package $packageName")
+        val registry = getRegistry(packageName)
+        return getBodyAsJSON("$registry/$packageName")?.get("dist-tags")?.asJsonObject?.toMap()
+            ?.mapValues { it.value.toString().replace("\"", "") }?.filterNotNullValues()?.also {
+                log.info("All tags for package $packageName found in online (${it.size} tags)")
+                log.debug("Tags for $packageName: $it")
+            } ?: ShellRunner.getInstance(project).execute(
+            arrayOf("npm", "v", packageName, "dist-tags", "--json", "--registry=$registry")
+        )?.trim()?.let { it.ifEmpty { null } }?.let { tags ->
+            try {
+                Json.parseToJsonElement(tags)
+            } catch (e: Exception) {
+                log.warn("Error while parsing all tags for package $packageName", e)
+                null
+            }?.asJsonObject?.toMap()?.mapValues { it.value.toString().replace("\"", "") }?.filterNotNullValues()?.also {
+                log.info("All tags for package $packageName found locally (${it.size} tags)")
+                log.debug("Local tags for $packageName: $it")
+            }
+        }.also {
+            if (it == null) {
+                log.warn("All tags for package $packageName not found")
             }
         }
     }

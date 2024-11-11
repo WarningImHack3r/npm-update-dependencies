@@ -16,6 +16,7 @@
 
 - Add a dedicated banner for "unmaintained" dependencies (#154)
   - This replaces the previous integration within the deprecation banner
+- Add support for packages with multiple channels, automatically picking the relevant one (#150)
 - Allow choosing a default action for "unmaintained" dependencies
 
 ### Fixed

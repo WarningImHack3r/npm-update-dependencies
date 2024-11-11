@@ -115,7 +115,10 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             val wasNonNumeric = property.value?.stringValue()?.none { it.isDigit() } == true
             val text = (if (wasNonNumeric) {
                 "Avoid using a non-numeric version, replace it with its numeric equivalent."
-            } else "An update is available!") + if (scanResult.affectedByFilters.isNotEmpty()) {
+            } else "An update is available!") + when (val channel = scanResult.channel) {
+                is Update.Channel.Other -> " (channel: ${channel.name})"
+                else -> ""
+            } + if (scanResult.affectedByFilters.isNotEmpty()) {
                 " (The following filters affected the result: ${scanResult.affectedByFilters.joinToString(", ")})"
             } else ""
             val currentVersion = property.value?.stringValue()?.let { Semver.coerce(it) }
