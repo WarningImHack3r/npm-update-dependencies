@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.actions
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -13,6 +14,6 @@ class MainActionGroup : DefaultActionGroup() {
     override fun update(e: AnActionEvent) {
         val editor = e.getData(CommonDataKeys.EDITOR)
         val file = e.getData(CommonDataKeys.PSI_FILE)
-        e.presentation.isEnabledAndVisible = editor != null && file?.name == "package.json"
+        e.presentation.isEnabledAndVisible = editor != null && file?.name == PACKAGE_JSON
     }
 }

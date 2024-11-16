@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.intellij.openapi.editor.Editor
 import com.intellij.psi.PsiFile
 
@@ -9,6 +10,6 @@ object QuickFixesCommon {
     }
 
     fun getAvailability(editor: Editor?, file: PsiFile?): Boolean {
-        return editor != null && file?.name == "package.json"
+        return editor != null && file?.name == PACKAGE_JSON
     }
 }

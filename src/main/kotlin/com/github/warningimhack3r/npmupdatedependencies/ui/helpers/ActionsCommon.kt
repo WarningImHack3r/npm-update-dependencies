@@ -1,5 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.dependenciesKeys
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
@@ -19,15 +21,15 @@ object ActionsCommon {
     private val log = logger<ActionsCommon>()
 
     fun getAllDependencies(file: PsiFile): List<JsonProperty> {
-        if (file.name != "package.json") return emptyList()
+        if (file.name != PACKAGE_JSON) return emptyList()
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .filter { child ->
-                (child.parent.parent as? JsonProperty)?.name in listOf("dependencies", "devDependencies")
+                (child.parent.parent as? JsonProperty)?.name in dependenciesKeys
             }
     }
 
     fun getPackageManager(file: PsiFile): JsonProperty? {
-        if (file.name != "package.json") return null
+        if (file.name != PACKAGE_JSON) return null
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .firstOrNull { child ->
                 child.name == "packageManager"

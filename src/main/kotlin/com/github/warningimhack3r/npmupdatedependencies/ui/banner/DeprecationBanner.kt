@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.banner
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
@@ -32,7 +33,7 @@ class DeprecationBanner : EditorNotificationProvider {
         val foundDeprecations = state.deprecations.filter { deprecation ->
             deprecation.value.data?.kind == Deprecation.Kind.DEPRECATED
         }
-        if (psiFile == null || file.name != "package.json" || foundDeprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
+        if (psiFile == null || file.name != PACKAGE_JSON || foundDeprecations.isEmpty() || !NUDSettingsState.instance.showDeprecationBanner) {
             when {
                 psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
                 foundDeprecations.isEmpty() -> {

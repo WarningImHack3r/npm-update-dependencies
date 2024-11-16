@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.statusbar
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.ide.DataManager
@@ -81,7 +82,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
         fun openPackageJson(dependencyName: String) {
             FilenameIndex.getVirtualFilesByName(
-                "package.json",
+                PACKAGE_JSON,
                 GlobalSearchScope.projectScope(project)
             ).filter { !it.path.contains("node_modules") }.run {
                 if (size == 1) first() else {

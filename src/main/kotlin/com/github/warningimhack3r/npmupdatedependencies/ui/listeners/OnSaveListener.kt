@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.listeners
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
@@ -30,7 +31,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         val hasUnmaintained = state.deprecations.filter {
             it.value.data?.kind == Deprecation.Kind.UNMAINTAINED
         }.isNotEmpty()
-        if (file.name != "package.json" || !NUDSettingsState.instance.autoFixOnSave
+        if (file.name != PACKAGE_JSON || !NUDSettingsState.instance.autoFixOnSave
             || (!hasUpdates && !hasDeprecations)
         ) return
 

@@ -2,6 +2,7 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.NPMJS_REGISTRY
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoolean
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
@@ -23,7 +24,6 @@ import java.util.concurrent.TimeUnit
 @Service(Service.Level.PROJECT)
 class NPMJSClient(private val project: Project) {
     companion object {
-        private const val NPMJS_REGISTRY = "https://registry.npmjs.com"
         private val log = logger<NPMJSClient>()
         private val httpClient = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)

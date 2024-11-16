@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.lang.Language
 import com.intellij.openapi.application.ApplicationManager
@@ -62,7 +63,7 @@ object NUDHelper {
     fun reanalyzePackageJsonIfOpen(project: Project) {
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
-                if (file.name == "package.json") {
+                if (file.name == PACKAGE_JSON) {
                     DaemonCodeAnalyzer.getInstance(project).restart(file)
                 }
             }

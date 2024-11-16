@@ -1,5 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.NPMJS_REGISTRY
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
@@ -19,10 +20,9 @@ class PackageDeprecationCheckerTests : BasePlatformTestCase() {
 
     private fun assertNameEquals(expectedPackage: String?, reason: String) {
         if (expectedPackage != null) {
-            val registry = "https://registry.npmjs.com"
-            NUDState.getInstance(project).packageRegistries[expectedPackage] = registry
+            NUDState.getInstance(project).packageRegistries[expectedPackage] = NPMJS_REGISTRY
             NPMJSClient.getInstance(project).cache.put(
-                "$registry/$expectedPackage/latest",
+                "$NPMJS_REGISTRY/$expectedPackage/latest",
                 """{"version": "1.0.0"}"""
             )
         }
