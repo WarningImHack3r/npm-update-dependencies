@@ -97,6 +97,7 @@
     </projectListeners>
 
     <extensions defaultExtensionNs="com.intellij">
+        <fileType name="JSON" fileNames="package.json"/>
         <iconMapper
                 mappingFile="NUDIconMappings.json"/>
         <externalAnnotator
