@@ -51,9 +51,12 @@ Configuration options are available in the settings.
 
 - Manually:
 
-  Download the [latest release](https://github.com/WarningImHack3r/npm-update-dependencies/releases/latest) and install
-  it manually using
-  <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install plugin from disk…</kbd>
+  1. Either:
+     - Download the [latest release](https://github.com/WarningImHack3r/npm-update-dependencies/releases/latest)
+     - Build it manually by installing Java 17+ and running `./gradlew buildPlugin`:
+       the output zip is available at `build/distributions/npm-update-dependencies-X.X.X.zip`
+  2. Install it manually using
+     <kbd>Settings/Preferences</kbd> > <kbd>Plugins</kbd> > <kbd>⚙️</kbd> > <kbd>Install Plugin from Disk…</kbd>
 
 ---
-Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)
+> Plugin based on the [IntelliJ Platform Plugin Template](https://github.com/JetBrains/intellij-platform-plugin-template)

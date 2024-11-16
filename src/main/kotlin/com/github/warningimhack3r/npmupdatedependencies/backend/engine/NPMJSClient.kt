@@ -11,8 +11,7 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import io.ktor.http.HttpMethod
-import io.ktor.http.HttpStatusCode
+import io.ktor.http.*
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
 import java.net.URI
@@ -66,8 +65,13 @@ class NPMJSClient(private val project: Project) {
         val request = HttpRequest.newBuilder(uri)
             .method(HttpMethod.Head.value, HttpRequest.BodyPublishers.noBody())
             .build()
-        val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
-        return response.statusCode()
+        try {
+            val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
+            return response.statusCode()
+        } catch (_: Exception) {
+            log.warn("Failed to fetch $uri, returning Internal Server Error")
+            return HttpStatusCode.InternalServerError.value
+        }
     }
 
     private fun getResponseBody(uri: URI): String {

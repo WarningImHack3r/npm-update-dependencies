@@ -12,6 +12,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve the contrast ratio for the "unmaintained" dependencies banner (#160)
+
+### Fixed
+
+- Fix crash during repositories fetching with bad network conditions
+
 ## [3.6.0] - 2024-11-11
 
 ### Added

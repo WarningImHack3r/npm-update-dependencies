@@ -13,7 +13,6 @@ import com.intellij.psi.PsiManager
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.EditorNotificationProvider
 import com.intellij.ui.EditorNotifications
-import com.intellij.ui.JBColor
 import java.util.function.Function
 import javax.swing.JComponent
 
@@ -44,7 +43,7 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
             return null
         }
         return Function { _ ->
-            EditorNotificationPanel(JBColor.CYAN.darker()).apply {
+            EditorNotificationPanel().apply {
                 // Description text & icon
                 text(
                     if (unmaintainedDependencies.size > 1) {
