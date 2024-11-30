@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.6.1] - 2024-11-30
+
 ### Changed
 
 - Improve the contrast ratio for the "unmaintained" dependencies banner (#160)
@@ -368,7 +370,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.1...HEAD
+[3.6.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...v3.5.0
 [3.4.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.3.0...v3.4.0
