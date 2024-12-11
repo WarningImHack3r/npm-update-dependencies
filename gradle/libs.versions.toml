@@ -8,10 +8,10 @@ semver4j = "5.4.1"
 
 # plugins
 changelog = "2.2.1"
-intellijPlatform = "2.1.0"
+intellijPlatform = "2.2.0"
 kotlin = "2.1.0"
 kover = "0.8.3"
-qodana = "2024.2.6"
+qodana = "2024.3.2"
 
 [libraries]
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
