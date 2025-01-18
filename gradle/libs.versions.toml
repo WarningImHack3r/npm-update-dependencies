@@ -1,17 +1,17 @@
 [versions]
 # libraries
-caffeine = "3.1.8"
+caffeine = "3.2.0"
 datetime = "0.6.1"
 junit = "4.13.2"
-serialization = "1.7.3"
-semver4j = "5.4.1"
+serialization = "1.8.0"
+semver4j = "5.5.0"
 
 # plugins
 changelog = "2.2.1"
-intellijPlatform = "2.1.0"
+intellijPlatform = "2.2.1"
 kotlin = "2.1.0"
-kover = "0.8.3"
-qodana = "2024.2.6"
+kover = "0.9.1"
+qodana = "2024.3.4"
 
 [libraries]
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
