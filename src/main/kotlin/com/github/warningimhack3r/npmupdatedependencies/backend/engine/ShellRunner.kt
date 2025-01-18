@@ -58,9 +58,7 @@ class ShellRunner(private val project: Project) {
                         e
                     )
                     failedWindowsPrograms.add(program)
-                    return execute(arrayOf("$program.cmd") + command.drop(1).toTypedArray())
-                }
-                log.warn("Error while executing \"${command.joinToString(" ")}\"", e)
+                } else log.warn("Error while executing \"${command.joinToString(" ")}\"", e)
                 null
             }
         }

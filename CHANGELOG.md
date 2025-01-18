@@ -12,6 +12,14 @@
 
 ## [Unreleased]
 
+### Changed
+
+- Improve code for registry parsing
+
+### Fixed
+
+- Fix shell commands not being retried on failure
+
 ## [3.6.1] - 2024-11-30
 
 ### Changed

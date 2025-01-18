@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 class RegistriesScanner(private val project: Project) {
     companion object {
         private val log = logger<RegistriesScanner>()
+        private val REGISTRY_KEY = Regex("^(@\\S+:)?registry$")
 
         @JvmStatic
         fun getInstance(project: Project): RegistriesScanner = project.service()
@@ -38,7 +39,7 @@ class RegistriesScanner(private val project: Project) {
     /**
      * The list of registries found parsing the npm configuration.
      */
-    var registries: List<String> = emptyList()
+    var registries = setOf<String>()
 
     fun scan() {
         log.info("Starting to scan registries")
@@ -79,7 +80,7 @@ class RegistriesScanner(private val project: Project) {
                 registriesSet.add(formattedRegistry)
                 state.packageRegistries[packageName] = formattedRegistry
             }
-            registries = registriesSet.toList()
+            registries = registriesSet
             log.debug("Found ${registries.size} registries and ${state.packageRegistries.size} package registries bindings from `npm ls --json`")
         }
         if (registries.isNotEmpty()) {
@@ -95,22 +96,21 @@ class RegistriesScanner(private val project: Project) {
             return
         }
         // Run `npm config ls` to get the list of registries
-        val config = shellRunner.execute(arrayOf("npm", "config", "ls")) ?: return
-        registries = config.lines().asSequence().map { it.trim() }.filter { line ->
-            line.isNotEmpty() && line.isNotBlank() && !line.startsWith(";") &&
-                    (line.contains("registry =") || line.contains("registry=")
-                            || line.startsWith("//"))
-        }.map { line ->
-            if (line.startsWith("//")) {
-                // We assume that registries use TLS in 2024
-                "https:${line.substringBefore("/:")}"
-            } else {
-                line.substringAfter("registry")
-                    .substringAfter("=")
-                    .trim()
-                    .replace("\"", "")
-            }
-        }.map { it.removeSuffix("/") }.distinct().toList()
+        val rawConfig = shellRunner.execute(arrayOf("npm", "config", "ls", "--json")) ?: return
+        val config = try {
+            Json.parseToJsonElement(rawConfig)
+        } catch (e: SerializationException) {
+            log.warn("Failed to parse JSON from npm ls config", e)
+            return
+        }
+        val jsonConfig = config.asJsonObject ?: return.also {
+            log.warn("Failed to extract object from npm ls config")
+        }
+        registries = jsonConfig.filterKeys { key ->
+            REGISTRY_KEY.matches(key)
+        }.mapValues { (_, v) ->
+            v.asString
+        }.values.filterNotNull().toSet()
         log.info("Found registries: $registries")
         if (!scanned) scanned = true
     }
