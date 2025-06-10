@@ -12,7 +12,7 @@ changelog = "2.2.1"
 intellijPlatform = "2.6.0"
 kotlin = "2.1.21"
 kover = "0.9.1"
-qodana = "2024.3.4"
+qodana = "2025.1.1"
 
 [libraries]
 caffeine = { group = "com.github.ben-manes.caffeine", name = "caffeine", version.ref = "caffeine" }
