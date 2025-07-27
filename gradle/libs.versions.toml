@@ -1,16 +1,16 @@
 [versions]
 # libraries
-caffeine = "3.2.1"
-datetime = "0.6.2"
+caffeine = "3.2.2"
+datetime = "0.7.1"
 junit = "4.13.2"
 opentest4j = "1.3.0"
-serialization = "1.8.1"
-semver4j = "5.7.1"
+serialization = "1.9.0"
+semver4j = "6.0.0"
 
 # plugins
-changelog = "2.2.1"
-intellijPlatform = "2.6.0"
-kotlin = "2.1.21"
+changelog = "2.3.0"
+intellijPlatform = "2.7.0"
+kotlin = "2.2.0"
 kover = "0.9.1"
 qodana = "2025.1.1"
 
