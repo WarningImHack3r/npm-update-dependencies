@@ -9,7 +9,7 @@ semver4j = "6.0.0"
 
 # plugins
 changelog = "2.4.0"
-intellijPlatform = "2.7.0"
+intellijPlatform = "2.7.1"
 kotlin = "2.2.0"
 kover = "0.9.1"
 qodana = "2025.1.1"
