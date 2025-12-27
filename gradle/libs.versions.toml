@@ -10,7 +10,7 @@ semver4j = "6.0.0"
 # plugins
 changelog = "2.5.0"
 intellijPlatform = "2.10.5"
-kotlin = "2.3.0"
+kotlin = "2.2.21"
 kover = "0.9.4"
 qodana = "2025.3.1"
 
