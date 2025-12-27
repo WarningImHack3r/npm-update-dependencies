@@ -8,6 +8,10 @@
       "matchManagers": ["github-actions", "gradle"],
       "groupName": "{{manager}}",
       "addLabels": ["{{manager}}"]
+    },
+    {
+      "matchManagers": ["gradle"],
+      "allowedVersions": "!/\\-compat$/"
     }
   ]
 }
