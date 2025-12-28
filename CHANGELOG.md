@@ -19,6 +19,7 @@
 ### Fixed
 
 - Fix shell commands not being retried on failure
+- Fix rare crashes on project opening with the plugin's auto-save enabled
 
 ## [3.6.1] - 2024-11-30
 

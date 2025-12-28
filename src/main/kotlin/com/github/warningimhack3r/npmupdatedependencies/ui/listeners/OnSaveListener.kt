@@ -8,6 +8,7 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.codeInsight.hint.HintManager
+import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
 import com.intellij.openapi.fileEditor.FileEditorManager
@@ -19,11 +20,20 @@ import java.awt.Point
 import javax.swing.JLabel
 
 class OnSaveListener(val project: Project) : FileDocumentManagerListener {
+    companion object {
+        private val log = logger<OnSaveListener>()
+    }
 
     override fun beforeDocumentSaving(document: Document) {
+        if (!project.isInitialized) return
         val state = NUDState.getInstance(project)
         // Initial checks
-        val file = PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+        val file = try {
+            PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
+        } catch (e: Exception) {
+            log.warn("Failed to get PsiFile from document: ${e.message}")
+            return
+        }
         val hasUpdates = state.availableUpdates.filter { it.value.data != null }.isNotEmpty()
         val hasDeprecations = state.deprecations.filter {
             it.value.data?.kind == Deprecation.Kind.DEPRECATED
