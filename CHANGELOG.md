@@ -20,6 +20,8 @@
 
 - Fix shell commands not being retried on failure
 - Fix rare crashes on project opening with the plugin's auto-save enabled
+- Fix dependencies versions getting blacklisted for no reason
+- Fix some crashes when hovering over quick fixes
 
 ## [3.6.1] - 2024-11-30
 

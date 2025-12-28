@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -23,6 +24,9 @@ class BlacklistVersionFix(
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?) =
         QuickFixesCommon.getAvailability(editor, file)
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         // Exclude pattern

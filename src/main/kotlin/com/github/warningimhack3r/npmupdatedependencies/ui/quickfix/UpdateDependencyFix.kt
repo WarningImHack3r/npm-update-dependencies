@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCommon
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
+import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.json.psi.JsonProperty
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
@@ -35,6 +36,9 @@ class UpdateDependencyFix(
 
     override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean =
         QuickFixesCommon.getAvailability(editor, file)
+
+    override fun generatePreview(project: Project, editor: Editor, file: PsiFile): IntentionPreviewInfo =
+        IntentionPreviewInfo.EMPTY
 
     override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
         if (file == null) {
