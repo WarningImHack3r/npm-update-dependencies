@@ -6,6 +6,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecati
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.icons.AllIcons
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -27,11 +28,11 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?>? {
         val psiFile = PsiManager.getInstance(project).findFile(file)
-        val state = NUDState.getInstance(project)
+        val state = project.service<NUDState>()
         val unmaintainedDependencies = state.deprecations.filter { deprecation ->
             deprecation.value.data?.kind == Deprecation.Kind.UNMAINTAINED
         }
-        if (psiFile == null || file.name != PACKAGE_JSON || unmaintainedDependencies.isEmpty() || !NUDSettingsState.instance.showUnmaintainedBanner) {
+        if (psiFile == null || file.name != PACKAGE_JSON || unmaintainedDependencies.isEmpty() || !service<NUDSettingsState>().showUnmaintainedBanner) {
             when {
                 psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
                 unmaintainedDependencies.isEmpty() -> {
@@ -39,7 +40,7 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
                     else log.warn("Leaving: deprecations not scanned yet")
                 }
 
-                !NUDSettingsState.instance.showUnmaintainedBanner -> log.debug("Leaving: unmaintained banner is disabled")
+                !service<NUDSettingsState>().showUnmaintainedBanner -> log.debug("Leaving: unmaintained banner is disabled")
             }
             return null
         }
@@ -57,7 +58,7 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
 
                 // Actions
                 Deprecation.Action.orderedActions(
-                    NUDSettingsState.instance.defaultUnmaintainedAction
+                    service<NUDSettingsState>().defaultUnmaintainedAction
                 ).filter { it != Deprecation.Action.REPLACE }.forEach { action ->
                     createActionLabel(
                         action.toString() + if (unmaintainedDependencies.size > 1) {
@@ -82,7 +83,7 @@ class UnmaintainedDependenciesBanner : EditorNotificationProvider {
 
                 // Don't show again
                 createActionLabel("Don't show again") {
-                    NUDSettingsState.instance.showUnmaintainedBanner = false
+                    service<NUDSettingsState>().showUnmaintainedBanner = false
                     EditorNotifications.getInstance(project).updateNotifications(file)
                 }
             }

@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 
 class UpdateAllSatisfiesAction : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -14,7 +15,7 @@ class UpdateAllSatisfiesAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        val availableUpdates = e.project?.let { NUDState.getInstance(it) }?.availableUpdates
+        val availableUpdates = e.project?.service<NUDState>()?.availableUpdates
         e.presentation.isEnabled = availableUpdates?.let {
             availableUpdates.isNotEmpty()
                     && availableUpdates.values.any { it.data?.versions?.satisfies != null }

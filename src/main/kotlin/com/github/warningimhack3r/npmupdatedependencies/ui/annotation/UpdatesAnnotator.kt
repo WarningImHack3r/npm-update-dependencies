@@ -18,6 +18,7 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
@@ -44,8 +45,8 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
-        val state = NUDState.getInstance(project)
-        val registriesScanner = RegistriesScanner.getInstance(project)
+        val state = project.service<NUDState>()
+        val registriesScanner = project.service<RegistriesScanner>()
         if (!registriesScanner.scanned && !state.isScanningForRegistries) {
             log.debug("Registries not scanned yet, scanning now")
             state.isScanningForRegistries = true
@@ -54,8 +55,8 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             log.debug("Registries scanned")
         }
 
-        val updateChecker = PackageUpdateChecker.getInstance(project)
-        val maxParallelism = NUDSettingsState.instance.maxParallelism
+        val updateChecker = project.service<PackageUpdateChecker>()
+        val maxParallelism = service<NUDSettingsState>().maxParallelism
         var activeTasks = 0
 
         log.debug("Scanning for updates...")

@@ -15,6 +15,7 @@ import com.intellij.json.psi.JsonProperty
 import com.intellij.lang.annotation.AnnotationHolder
 import com.intellij.lang.annotation.ExternalAnnotator
 import com.intellij.lang.annotation.HighlightSeverity
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAware
@@ -48,8 +49,8 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         if (collectedInfo == null) return null
         val (project, property) = collectedInfo
 
-        val state = NUDState.getInstance(project)
-        val registriesScanner = RegistriesScanner.getInstance(project)
+        val state = project.service<NUDState>()
+        val registriesScanner = project.service<RegistriesScanner>()
         if (!registriesScanner.scanned && !state.isScanningForRegistries) {
             log.debug("Registries not scanned yet, scanning now")
             state.isScanningForRegistries = true
@@ -73,7 +74,7 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         }
 
         val (managerName, managerVersion) = property.comparator.substringBefore("+").split("@")
-        val update = PackageUpdateChecker.getInstance(project)
+        val update = project.service<PackageUpdateChecker>()
             .checkAvailableUpdates(managerName, "^$managerVersion")
         state.availableUpdates[managerName] = state.availableUpdates[managerName].let { currentState ->
             if (currentState == null || currentState.data != update) DataState(

@@ -6,6 +6,7 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
+import com.intellij.openapi.components.service
 
 class RemoveAllDeprecationsAction : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -13,9 +14,7 @@ class RemoveAllDeprecationsAction : AnAction() {
     }
 
     override fun update(e: AnActionEvent) {
-        e.presentation.isEnabled = e.project?.let { project ->
-            NUDState.getInstance(project).deprecations.isNotEmpty()
-        } == true
+        e.presentation.isEnabled = e.project?.service<NUDState>()?.deprecations?.isNotEmpty() == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

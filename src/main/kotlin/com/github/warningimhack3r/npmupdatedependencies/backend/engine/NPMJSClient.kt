@@ -28,13 +28,10 @@ class NPMJSClient(private val project: Project) {
         private val httpClient = HttpClient.newBuilder()
             .followRedirects(HttpClient.Redirect.NORMAL)
             .build()
-
-        @JvmStatic
-        fun getInstance(project: Project): NPMJSClient = project.service()
     }
 
     val cache: Cache<String, String> = Caffeine.newBuilder()
-        .expireAfterWrite(NUDSettingsState.instance.cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
+        .expireAfterWrite(service<NUDSettingsState>().cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
         .removalListener<String, String> { k, _, removalCause ->
             log.debug("Package $k removed from cache: $removalCause")
         }
@@ -42,12 +39,12 @@ class NPMJSClient(private val project: Project) {
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
-        val state = NUDState.getInstance(project)
+        val state = project.service<NUDState>()
         return state.packageRegistries[packageName]?.also {
             log.debug("Registry for package $packageName found in cache: $it")
         } ?: setOf(
             NPMJS_REGISTRY,
-            *RegistriesScanner.getInstance(project).registries.toTypedArray()
+            *project.service<RegistriesScanner>().registries.toTypedArray()
         ).firstOrNull { registry ->
             log.debug("Trying registry $registry for package $packageName")
             getResponseStatus(URI("$registry/$packageName")) == HttpStatusCode.OK.value

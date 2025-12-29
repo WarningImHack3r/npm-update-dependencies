@@ -16,9 +16,6 @@ class RegistriesScanner(private val project: Project) {
     companion object {
         private val log = logger<RegistriesScanner>()
         private val REGISTRY_KEY = Regex("^(@\\S+:)?registry$")
-
-        @JvmStatic
-        fun getInstance(project: Project): RegistriesScanner = project.service()
     }
 
     init {
@@ -43,8 +40,8 @@ class RegistriesScanner(private val project: Project) {
 
     fun scan() {
         log.info("Starting to scan registries")
-        val shellRunner = ShellRunner.getInstance(project)
-        val state = NUDState.getInstance(project)
+        val shellRunner = project.service<ShellRunner>()
+        val state = project.service<NUDState>()
         // Populate packageRegistries with the contents of `npm ls --json`
         shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { output ->
             val json = try {
