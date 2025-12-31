@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Added
+
+- Add support for Bun workspace catalogs (#182)
+
 ### Changed
 
 - Improve code for registry parsing

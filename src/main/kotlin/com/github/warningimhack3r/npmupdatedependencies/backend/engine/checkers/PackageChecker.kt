@@ -18,7 +18,7 @@ abstract class PackageChecker {
     protected fun isComparatorSupported(comparator: String): Boolean {
         return with(comparator) {
             when {
-                // tags
+                // tags or catalog entry
                 none { it.isDigit() } -> false
                 // URLs
                 startsWith("http") || startsWith("git") -> false

@@ -1,6 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.helpers
 
 import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_JSON
+import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.PACKAGE_MANAGER_KEY
 import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.dependenciesKeys
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
@@ -20,12 +21,23 @@ import com.intellij.ui.EditorNotifications
 
 object ActionsCommon {
     private val log = logger<ActionsCommon>()
+    private val dependenciesBlocks: List<(JsonProperty) -> Boolean> =
+        dependenciesKeys.map { key ->
+            { property: JsonProperty -> (property.parent.parent as? JsonProperty)?.name == key }
+        } + listOf(
+            { property: JsonProperty -> (property.parent.parent as? JsonProperty)?.name == "catalog" && (property.parent.parent.parent.parent as? JsonProperty)?.name == "workspaces" },
+            { property: JsonProperty ->
+                (property.parent.parent.parent.parent as? JsonProperty)?.name == "catalogs"
+                        // this is getting out of hand
+                        && (property.parent.parent.parent.parent.parent.parent as? JsonProperty)?.name == "workspaces"
+            }
+        )
 
     fun getAllDependencies(file: PsiFile): List<JsonProperty> {
         if (file.name != PACKAGE_JSON) return emptyList()
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .filter { child ->
-                (child.parent.parent as? JsonProperty)?.name in dependenciesKeys
+                dependenciesBlocks.any { block -> block(child) }
             }
     }
 
@@ -33,7 +45,7 @@ object ActionsCommon {
         if (file.name != PACKAGE_JSON) return null
         return PsiTreeUtil.findChildrenOfType(file, JsonProperty::class.java)
             .firstOrNull { child ->
-                child.name == "packageManager"
+                child.name == PACKAGE_MANAGER_KEY
             }
     }
 
@@ -105,30 +117,18 @@ object ActionsCommon {
     fun reorderAllDependencies(file: PsiFile) {
         // Get all dependencies, split them into two lists (dev and normal) and sort each list
         val dependencies = getAllDependencies(file)
-        val devDependencies = dependencies.filter {
-            (it.parent.parent as? JsonProperty)?.name == "devDependencies"
-        }
-        val normalDependencies = dependencies.filter {
-            (it.parent.parent as? JsonProperty)?.name == "dependencies"
-        }
-        val sortedDevDependencies = devDependencies.sortedBy { it.name }
-        val sortedNormalDependencies = normalDependencies.sortedBy { it.name }
-
-        // Loop through all devDependencies and store them in a map with the old dependency and a copy of the new one
         val sortedDependenciesMap = mutableMapOf<JsonProperty, JsonProperty>()
-        if (devDependencies != sortedDevDependencies) {
-            devDependencies.forEachIndexed { index, jsonProperty ->
-                if (jsonProperty != sortedDevDependencies[index]) {
-                    sortedDependenciesMap[jsonProperty] = sortedDevDependencies[index].copy() as JsonProperty
-                }
-            }
-        }
 
-        // Loop through all normalDependencies and store them in the same map the same way as above
-        if (normalDependencies != sortedNormalDependencies) {
-            normalDependencies.forEachIndexed { index, jsonProperty ->
-                if (jsonProperty != sortedNormalDependencies[index]) {
-                    sortedDependenciesMap[jsonProperty] = sortedNormalDependencies[index].copy() as JsonProperty
+        dependenciesBlocks.forEach { block ->
+            val deps = dependencies.filter(block)
+            val sortedDeps = deps.sortedBy { it.name }
+
+            // Loop through all dependencies and store them in a map with the old dependency and a copy of the new one
+            if (deps != sortedDeps) {
+                deps.forEachIndexed { index, jsonProperty ->
+                    if (jsonProperty != sortedDeps[index]) {
+                        sortedDependenciesMap[jsonProperty] = sortedDeps[index].copy() as JsonProperty
+                    }
                 }
             }
         }

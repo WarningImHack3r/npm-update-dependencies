@@ -5,9 +5,9 @@
 You can enable the plugin's debug logs to help diagnose your issue. Here's how you can do it:
 
 1. Enable the plugin's debug logs by setting the line below in <kbd>Help</kbd> > <kbd>Diagnostic Tools</kbd> > <kbd>Debug Log Settings…</kbd>:
-  ```
-  #com.github.warningimhack3r.npmupdatedependencies
-  ```
+   ```
+   #com.github.warningimhack3r.npmupdatedependencies
+   ```
 
 2. Restart your IDE, wait for your problem to occur or trigger it, and open the directory containing the `idea.log` file by going to <kbd>Help</kbd> > <kbd>Show Log in Finder</kbd>/<kbd>Show Log in Explorer</kbd>.
 
@@ -26,11 +26,12 @@ You can enable the plugin's debug logs to help diagnose your issue. Here's how y
 ## Share your `package.json` file
 
 The `package.json` file is the key for the plugin to get most of the information it needs to work.  
-In most cases of crashes or unexpected behavior, I'll ask you to share your `package.json` file so I can reproduce the issue on my side.
+In most cases of crashes or unexpected behavior, I'll ask you to share your `package.json` file so that I can reproduce the issue on my side.
 
 If you don't want to share it, you're free to do so, but it may be harder for me to help you.
 
-Only a few fields are relevant to me: `dependencies`, `devDependencies`, and `packageManager`. When you share them or the whole file, please do not omit any information from them, as it may be crucial to diagnosing the issue.
+Only a few fields are relevant to me: `dependencies`, `devDependencies`, and `packageManager`, as well as the whole [`workspaces` block](https://bun.sh/docs/pm/catalogs) if you're using Bun.
+When you share them or the entire file, please do not omit any information from them, as it may be crucial to diagnose the issue.
 
 You can either:
 - Copy the content of the `package.json` file or the relevant fields and paste it/them in the issue using [Markdown code blocks](https://docs.github.com/en/get-started/writing-on-github/working-with-advanced-formatting/creating-and-highlighting-code-blocks#fenced-code-blocks)
@@ -41,11 +42,12 @@ You can either:
 
 If you're having trouble with the plugin, I may ask you to run some commands manually in the terminal. Here's how you can do it:
 
-1. **Open the terminal** in your IDE by going to <kbd>View</kbd> > <kbd>Tool Windows</kbd> > <kbd>Terminal</kbd>. You can also use the terminal of your choice outside of the IDE, but you'll need to navigate to your project's directory.
+1. **Open the terminal** in your IDE by going to <kbd>View</kbd> > <kbd>Tool Windows</kbd> > <kbd>Terminal</kbd>. You can also use the terminal of your choice outside the IDE, but you'll need to navigate to your project's directory.
 
 2. **Run the command(s)** I ask you to run. They often have no side effects and are run by the plugin in its regular operation, but it's always good to double-check. If you're unsure about the command, you can ask me for more details or search for the command's documentation.
 
-3. **I most often don't need the output of the command**; I just need to know if it runs without errors. If it does, you can tell me that it ran successfully. If it doesn't, you can share the error message with me. If you're comfortable with it, the output is short, and you don't really understand the output, you can share it with me: I'll pick the relevant parts and delete your message afterward if it contains sensitive information.
+3. **I most often don't need the output of the command**; I just need to know if it runs without errors. If it does, you can tell me that it ran successfully. If it doesn't, you can share the error message with me. 
+   Alternatively, if you're comfortable with it, the output is short, and you don't really understand the output, you can share it with me: I'll pick the relevant parts and delete your message afterward if it contains sensitive information.
 
 ## Clear the plugin's cache
 
