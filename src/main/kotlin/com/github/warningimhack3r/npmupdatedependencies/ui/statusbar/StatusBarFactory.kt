@@ -10,8 +10,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.ui.popup.JBPopup
 import com.intellij.openapi.ui.popup.JBPopupFactory
-import com.intellij.openapi.ui.popup.ListPopup
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.wm.StatusBarWidget
 import com.intellij.openapi.wm.impl.status.EditorBasedWidget
@@ -77,8 +77,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
         Status.READY -> "Click to see available updates"
     }
 
-    @Deprecated("Replaced with getPopup() in 2023.1", ReplaceWith("getPopup()"))
-    override fun getPopupStep(): ListPopup? {
+    override fun getPopup(): JBPopup? {
         if (project.isDisposed || currentStatus != Status.READY) return null
 
         fun openPackageJson(dependencyName: String) {
