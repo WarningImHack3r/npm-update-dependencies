@@ -25,8 +25,9 @@ class InvalidateCachesAction : AnAction() {
 
     override fun actionPerformed(e: AnActionEvent) {
         log.debug("Cache invalidation requested")
-        val state = e.project?.service<NUDState>() ?: return.also {
+        val state = e.project?.service<NUDState>() ?: run {
             log.warn("No project found")
+            return
         }
         state.invalidateCaches()
         log.debug("Cache invalidated")
