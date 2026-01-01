@@ -26,6 +26,7 @@
 - Fix rare crashes on project opening with the plugin's auto-save enabled
 - Fix dependencies versions getting blacklisted for no reason
 - Fix some crashes when hovering over quick fixes
+- Fix some inaccuracies in deprecation messages
 
 ## [3.6.1] - 2024-11-30
 

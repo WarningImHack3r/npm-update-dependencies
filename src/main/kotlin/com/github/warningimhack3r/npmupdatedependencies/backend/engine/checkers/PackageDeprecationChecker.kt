@@ -138,17 +138,21 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             ?: return checkUnmaintainedPackage(packageName, realPackageName)
 
         if (comparatorVersion != "latest" && npmjsClient.getPackageDeprecation(realPackageName) == null) {
-            // Only the current version is deprecated, not the latest: suggest to upgrade instead
-            log.debug("Only the current version of $realPackageName is deprecated, suggesting to upgrade")
+            // Only the current version is deprecated, not the latest: suggest upgrade instead
+            log.debug("Only the current version of $realPackageName is deprecated, suggesting upgrade")
             npmjsClient.getVersionFromTag(realPackageName, "latest")
                 ?.let { Semver.coerce(it) }
                 ?.let { latestVersion ->
-                    val currentVersionText = Semver.coerce(comparatorVersion)?.let {
-                        "$realPackageName ${it.major}"
+                    val currentSemver = Semver.coerce(comparatorVersion)
+                    val differentMajors = currentSemver != null && latestVersion.major != currentSemver.major
+                    val currentVersionText = currentSemver?.let {
+                        "$realPackageName ${if (differentMajors) currentSemver.major else currentSemver.version}"
                     } ?: "The current version of $realPackageName"
+                    val targetVersionText =
+                        if (differentMajors) "v${latestVersion.major}" else "${latestVersion.version}: \"$reason\""
                     return Deprecation(
                         Deprecation.Kind.DEPRECATED,
-                        "$currentVersionText is deprecated, consider upgrading to v${latestVersion.major}",
+                        "$currentVersionText is deprecated, consider upgrading to $targetVersionText",
                         Deprecation.Replacement(realPackageName, latestVersion.version)
                     )
                 } ?: log.warn("Couldn't get latest version for $realPackageName or can't coerce it")
