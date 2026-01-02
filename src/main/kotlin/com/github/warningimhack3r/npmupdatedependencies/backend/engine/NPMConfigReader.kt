@@ -92,7 +92,7 @@ class NPMConfigReader(project: Project) {
         companion object {
             private val log = logger<NPMConfigResolver>()
             private val npmHelpPathRegex = Regex("""^npm@[\d.]+ \S+$""")
-            private val scopeRegex = Regex("""^(@\w+):registry=(\S+)$""")
+            private val scopeRegex = Regex("""^(@\S+):registry=(\S+)$""")
             private val valueRegex = Regex("""^//(\S+):(\w+)=(\S+)$""")
         }
 
