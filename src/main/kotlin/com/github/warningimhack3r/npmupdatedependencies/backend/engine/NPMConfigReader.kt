@@ -84,7 +84,7 @@ class NPMConfigReader(project: Project) {
             }
             ?.let { headersForRegistry(it) }
             ?.also { log.debug("Headers for URL: ${it.values}") }
-            ?: Headers(emptyMap()).also { log.debug("No matching registry found for URL $it") }
+            ?: Headers(emptyMap()).also { log.debug("No matching registry found") }
     }
 
     /**
@@ -105,7 +105,7 @@ class NPMConfigReader(project: Project) {
             private val log = logger<NPMConfigResolver>()
             private val npmHelpPathRegex = Regex("""^npm@[\d.]+ \S+$""")
             private val scopeRegex = Regex("""^(@\w+):registry=(\S+)$""")
-            private val valueRegex = Regex("""^//(\S+):(\w+)=(\w+)$""")
+            private val valueRegex = Regex("""^//(\S+):(\w+)=(.+)$""")
         }
 
         private var parsed = false
@@ -113,8 +113,8 @@ class NPMConfigReader(project: Project) {
             // Source: https://docs.npmjs.com/cli/v11/configuring-npm/npmrc#files
             listOfNotNull(
                 Path(project.basePath ?: "", ".npmrc").takeIf { project.basePath != null },
-                Path(System.getProperty("user.home"), ".npmrc"),
-                Path(System.getenv("PREFIX"), "etc", "npmrc"),
+                Path(System.getProperty("user.home") ?: "", ".npmrc"),
+                Path(System.getenv("PREFIX") ?: "/", "etc", "npmrc"),
                 run {
                     val helpOutput = project.service<ShellRunner>().execute(arrayOf("npm", "help")) ?: return@run null
                     // after trimming, it's effectively always the last line, but we're ensured it's correct with the regex

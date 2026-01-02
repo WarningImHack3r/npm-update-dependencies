@@ -5,6 +5,7 @@ import java.lang.reflect.Field
 import java.lang.reflect.Method
 import java.net.URI
 import kotlin.io.path.createTempFile
+import kotlin.io.path.deleteIfExists
 import kotlin.io.path.writeText
 
 class NPMConfigReaderTests : BasePlatformTestCase() {
@@ -20,9 +21,13 @@ class NPMConfigReaderTests : BasePlatformTestCase() {
     private fun getPopulatedRegistries(rawContent: String): List<NPMConfigReader.RawRegistry> {
         val resolver = NPMConfigReader.NPMConfigResolver(project)
         val tempFile = createTempFile()
-        tempFile.writeText(rawContent)
-        parseConfigMethod.invoke(resolver, tempFile.toString())
-        return registriesField.get(resolver) as List<NPMConfigReader.RawRegistry>
+        try {
+            tempFile.writeText(rawContent)
+            parseConfigMethod.invoke(resolver, tempFile.toString())
+            return registriesField.get(resolver) as List<NPMConfigReader.RawRegistry>
+        } finally {
+            tempFile.deleteIfExists()
+        }
     }
 
     fun testExampleConfigParsing() {
