@@ -28,34 +28,22 @@ class NPMConfigReader(project: Project) {
      * @return the headers map required to authenticate to the registry
      */
     private fun headersForRegistry(raw: RawRegistry): Headers {
-        for ((key, value) in raw.props.entries.sortedBy { it.key }) { // sorted to ensure method priority
-            return Headers(
-                when (key) {
-                    // _authToken/_authtoken/-authtoken: _authToken=X => "Authorization: Bearer X"
-                    "_authToken", "_authtoken", "-authtoken" -> mapOf("Authorization" to "Bearer $value")
-                    // _auth: _auth="username:password".base64() => "Authorization: Basic X"
-                    "_auth" -> mapOf("Authorization" to "Basic $value")
-                    // username => used with password to reproduce `_auth`
-                    "username",
-                        // _password: password=password.base64() => same as username
-                    "_password" -> {
-                        val username = if (key == "username") value else raw.props["username"]
-                        var password = if (key == "_password") value else raw.props["_password"]
-                        if (username == null || password == null) continue // incomplete
-                        password = Base64.decode(password).decodeToString() // decode the password
-                        mapOf(
-                            "Authorization" to "Basic ${Base64.encode("$username:$password".encodeToByteArray())}"
-                        )
-                    }
-                    // email
-                    "email" -> continue // unused during authentication
-                    // path to mTLS files
-                    "cafile", "certfile", "keyfile" -> continue // unsupported for now
-                    else -> continue
-                }
-            )
+        val headers = mutableMapOf<String, String>()
+        raw.props.authToken?.let {
+            headers["Authorization"] = "Bearer $it"
+        } ?: raw.props.auth?.let {
+            headers["Authorization"] = "Basic $it"
+        } ?: run {
+            val username = raw.props.username
+            val password = raw.props.password
+            if (username == null || password == null) return@run // incomplete
+            val decodedPassword = Base64.decode(password).decodeToString() // password is stored in base64
+            headers["Authorization"] = "Basic ${Base64.encode("$username:$decodedPassword".encodeToByteArray())}"
         }
-        return Headers(emptyMap())
+        // for the other properties:
+        // - email is unused during authentication
+        // - mTLS files are unsupported for now
+        return Headers(headers)
     }
 
     /**
@@ -83,7 +71,7 @@ class NPMConfigReader(project: Project) {
                 )
             }
             ?.let { headersForRegistry(it) }
-            ?.also { log.debug("Headers for URL: ${it.values}") }
+            ?.also { log.debug("Headers for URL: ${it.map}") }
             ?: Headers(emptyMap()).also { log.debug("No matching registry found") }
     }
 
@@ -105,7 +93,7 @@ class NPMConfigReader(project: Project) {
             private val log = logger<NPMConfigResolver>()
             private val npmHelpPathRegex = Regex("""^npm@[\d.]+ \S+$""")
             private val scopeRegex = Regex("""^(@\w+):registry=(\S+)$""")
-            private val valueRegex = Regex("""^//(\S+):(\w+)=(.+)$""")
+            private val valueRegex = Regex("""^//(\S+):(\w+)=(\S+)$""")
         }
 
         private var parsed = false
@@ -114,7 +102,7 @@ class NPMConfigReader(project: Project) {
             listOfNotNull(
                 Path(project.basePath ?: "", ".npmrc").takeIf { project.basePath != null },
                 Path(System.getProperty("user.home") ?: "", ".npmrc"),
-                Path(System.getenv("PREFIX") ?: "/", "etc", "npmrc"),
+                Path(System.getenv("PREFIX") ?: "", "etc", "npmrc").takeIf { System.getenv("PREFIX") != null },
                 run {
                     val helpOutput = project.service<ShellRunner>().execute(arrayOf("npm", "help")) ?: return@run null
                     // after trimming, it's effectively always the last line, but we're ensured it's correct with the regex
@@ -181,13 +169,11 @@ class NPMConfigReader(project: Project) {
                         registries.add(
                             RawRegistry(
                                 url = parsed,
-                                props = mapOf(key to value)
+                                props = RawRegistry.Properties().withRaw(key, value)
                             )
                         )
                     } else {
-                        val mutableMap = existing.props.toMutableMap()
-                        mutableMap[key] = value
-                        existing.props = mutableMap
+                        existing.props.withRaw(key, value)
                     }
                 }
                 // any other line is not relevant
@@ -217,9 +203,37 @@ class NPMConfigReader(project: Project) {
 
     internal data class RawRegistry(
         val url: URI,
-        var props: Map<String, String> = emptyMap(),
-        var scopes: List<String> = emptyList(),
+        val scopes: List<String> = emptyList(),
+        var props: Properties = Properties()
     ) {
+        data class Properties(
+            var authToken: String? = null,
+            var auth: String? = null,
+            var username: String? = null,
+            var password: String? = null,
+            var email: String? = null,
+            var caFile: String? = null,
+            var certFile: String? = null,
+            var keyFile: String? = null
+        ) {
+            fun withRaw(rawKey: String, value: String): Properties {
+                when (rawKey) {
+                    "_authToken", "_authtoken", "-authtoken" -> this.authToken = value
+                    "_auth" -> this.auth = value
+                    "username" -> this.username = value
+                    "_password" -> this.password = value
+                    "email" -> this.email = value
+                    "cafile" -> this.caFile = value
+                    "certfile" -> this.certFile = value
+                    "keyfile" -> this.keyFile = value
+                    else -> {
+                        // unsupported property
+                    }
+                }
+                return this
+            }
+        }
+
         internal fun belongsTo(url: URI): Boolean {
             return url.host == this.url.host &&
                     (this.url.path.startsWith(url.path) || this.url.path.startsWith(url.path.substringBeforeLast('/')))
@@ -237,7 +251,7 @@ class NPMConfigReader(project: Project) {
         }
     }
 
-    class Headers(val values: Map<String, String>) {
-        fun asStringsList() = values.entries.flatMap { (key, value) -> listOf(key, value) }
+    class Headers(val map: Map<String, String>) {
+        fun asStringsList() = map.entries.flatMap { (key, value) -> listOf(key, value) }
     }
 }
