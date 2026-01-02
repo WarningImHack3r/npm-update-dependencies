@@ -1,6 +1,5 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
-import com.github.benmanes.caffeine.cache.Cache
 import com.github.benmanes.caffeine.cache.Caffeine
 import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.NPMJS_REGISTRY
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asBoolean
@@ -30,17 +29,18 @@ class NPMJSClient(private val project: Project) {
             .build()
     }
 
-    val cache: Cache<String, String> = Caffeine.newBuilder()
+    val cache = Caffeine.newBuilder()
         .expireAfterWrite(service<NUDSettingsState>().cacheDurationMinutes.toLong(), TimeUnit.MINUTES)
         .removalListener<String, String> { k, _, removalCause ->
             log.debug("Package $k removed from cache: $removalCause")
         }
-        .build()
+        .build<String, String>()
 
     private fun getRegistry(packageName: String): String {
         log.info("Getting registry for package $packageName")
         val state = project.service<NUDState>()
-        return state.packageRegistries[packageName]?.also {
+        return (state.packageRegistries[packageName]
+            ?: state.packageRegistries[packageName.substringBefore("/")])?.also {
             log.debug("Registry for package $packageName found in cache: $it")
         } ?: setOf(
             NPMJS_REGISTRY,
@@ -59,8 +59,10 @@ class NPMJSClient(private val project: Project) {
 
     private fun getResponseStatus(uri: URI): Int {
         log.debug("HEAD $uri")
+        val configReader = project.service<NPMConfigReader>()
         val request = HttpRequest.newBuilder(uri)
             .method(HttpMethod.Head.value, HttpRequest.BodyPublishers.noBody())
+            .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())
             .build()
         try {
             val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
@@ -78,8 +80,10 @@ class NPMJSClient(private val project: Project) {
         }
 
         log.debug("GET $uri")
+        val configReader = project.service<NPMConfigReader>()
         val request = HttpRequest
             .newBuilder(uri)
+            .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())
             .build()
         val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
         if (response.statusCode() != HttpStatusCode.OK.value) {

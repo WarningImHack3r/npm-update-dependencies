@@ -2,11 +2,9 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asJsonObject
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.asString
-import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
-import com.intellij.openapi.extensions.PluginId
 import com.intellij.openapi.project.Project
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.Json
@@ -15,17 +13,6 @@ import kotlinx.serialization.json.Json
 class RegistriesScanner(private val project: Project) {
     companion object {
         private val log = logger<RegistriesScanner>()
-        private val REGISTRY_KEY = Regex("^(@\\S+:)?registry$")
-    }
-
-    init {
-        log.info(
-            "Initializing NPM Update Dependencies plugin v${
-                PluginManagerCore.getPlugin(
-                    PluginId.getId("com.github.warningimhack3r.npmupdatedependencies")
-                )?.version ?: "???"
-            }"
-        )
     }
 
     /**
@@ -42,6 +29,7 @@ class RegistriesScanner(private val project: Project) {
         log.info("Starting to scan registries")
         val shellRunner = project.service<ShellRunner>()
         val state = project.service<NUDState>()
+        state.packageRegistries.clear()
         // Populate packageRegistries with the contents of `npm ls --json`
         shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { output ->
             val json = try {
@@ -82,7 +70,7 @@ class RegistriesScanner(private val project: Project) {
                 state.packageRegistries[packageName] = formattedRegistry
             }
             registries = registriesSet
-            log.debug("Found ${registries.size} registries and ${state.packageRegistries.size} package registries bindings from `npm ls --json`")
+            log.debug("Found ${state.packageRegistries.size} package registries with bindings from `npm ls --json`")
         }
         if (registries.isNotEmpty()) {
             // There are extra thin chances of missing registries with
@@ -96,23 +84,12 @@ class RegistriesScanner(private val project: Project) {
             if (!scanned) scanned = true
             return
         }
-        // Run `npm config ls` to get the list of registries
-        val rawConfig = shellRunner.execute(arrayOf("npm", "config", "ls", "--json")) ?: return
-        val config = try {
-            Json.parseToJsonElement(rawConfig)
-        } catch (e: SerializationException) {
-            log.warn("Failed to parse JSON from npm ls config", e)
-            return
+        // Get the list of registries
+        val registriesItems = project.service<NPMConfigReader>().getAllRegistries()
+        registries = registriesItems.map { it.url }.toSet()
+        registriesItems.filterIsInstance<NPMConfigReader.Registry.ScopedRegistry>().forEach { item ->
+            state.packageRegistries[item.scope] = item.url
         }
-        val jsonConfig = config.asJsonObject ?: run {
-            log.warn("Failed to extract object from npm ls config")
-            return
-        }
-        registries = jsonConfig.filterKeys { key ->
-            REGISTRY_KEY.matches(key)
-        }.mapValues { (_, v) ->
-            v.asString
-        }.values.filterNotNull().toSet()
         log.info("Found registries: $registries")
         if (!scanned) scanned = true
     }
