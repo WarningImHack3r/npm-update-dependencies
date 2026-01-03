@@ -104,11 +104,18 @@ class NPMConfigReader(project: Project) {
         private val configLocations by lazy {
             // Source: https://docs.npmjs.com/cli/v11/configuring-npm/npmrc#files
             listOfNotNull(
+                // project
                 Path(project.basePath ?: "", ".npmrc").takeIf { project.basePath != null },
+                // user
                 Path(System.getProperty("user.home") ?: "", ".npmrc"),
+                // global
                 Path(System.getenv("PREFIX") ?: "", "etc", "npmrc").takeIf { System.getenv("PREFIX") != null },
-                run {
-                    val helpOutput = project.service<ShellRunner>().execute(arrayOf("npm", "help")) ?: return@run null
+                // builtin
+                run outer@{
+                    val helpOutput = project.service<ShellRunner>().execute(arrayOf("npm", "help")) ?: run {
+                        log.debug("Unable to get help output, ignoring global npm configuration")
+                        return@outer null
+                    }
                     // after trimming, it's effectively always the last line, but we're ensured it's correct with the regex
                     val rawPath = helpOutput.trim().lines().firstOrNull { line ->
                         npmHelpPathRegex.matches(line)
@@ -121,7 +128,7 @@ class NPMConfigReader(project: Project) {
                 exists
             }.map { path -> path.toAbsolutePath().toString() }.also {
                 log.debug("npm config locations found: ${it.joinToString(", ")}")
-            }.asReversed() // ensure the priority is correct
+            }.asReversed() // ensure the priority is correct and it goes from wider to narrower
         }
         private val registries = mutableListOf<RawRegistry>()
 
