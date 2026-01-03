@@ -110,6 +110,7 @@ class DeprecatedDependencyFix(
 
             Deprecation.Action.IGNORE -> {
                 NUDSettingsState.getInstance().excludedUnmaintainedPackages += ",${property.name}"
+                // add `, this` on 2025.3+
                 DaemonCodeAnalyzer.getInstance(project).restart(file)
             }
         }

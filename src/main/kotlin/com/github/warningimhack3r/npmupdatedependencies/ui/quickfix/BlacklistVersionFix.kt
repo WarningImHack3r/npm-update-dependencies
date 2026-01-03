@@ -35,6 +35,7 @@ class BlacklistVersionFix(
                 ?.plus(versionPattern)?.distinct()
                 ?: listOf(versionPattern)
         file?.let {
+            // add `, this` on 2025.3+
             DaemonCodeAnalyzer.getInstance(project).restart(it)
         }
         // Clear the cache

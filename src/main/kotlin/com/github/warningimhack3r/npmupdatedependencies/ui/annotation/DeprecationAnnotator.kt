@@ -23,7 +23,8 @@ import com.intellij.psi.PsiFile
 import com.intellij.ui.EditorNotifications
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class DeprecationAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -38,6 +39,7 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
             Property(dependency, dependency.name, dependency.value?.stringValue())
         }
 
+    @OptIn(ExperimentalTime::class)
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Deprecation> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
@@ -130,7 +132,6 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 deprecation.replacement?.let { emptyList() }
                             )
                         )
-                        .needsUpdateOnTyping()
                         .create()
                 }
 
@@ -156,7 +157,6 @@ class DeprecationAnnotator : DumbAware, ExternalAnnotator<
                                 listOf(Deprecation.Action.REPLACE)
                             )
                         )
-                        .needsUpdateOnTyping()
                         .create()
                 }
             }

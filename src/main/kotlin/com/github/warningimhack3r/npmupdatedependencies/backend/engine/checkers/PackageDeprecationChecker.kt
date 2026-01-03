@@ -10,10 +10,15 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import kotlinx.datetime.*
+import kotlinx.datetime.DateTimeArithmeticException
+import kotlinx.datetime.TimeZone
+import kotlinx.datetime.periodUntil
 import org.semver4j.Semver
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.days
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 @Service(Service.Level.PROJECT)
 class PackageDeprecationChecker(private val project: Project) : PackageChecker() {
@@ -27,6 +32,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         fun getInstance(project: Project): PackageDeprecationChecker = project.service()
     }
 
+    @OptIn(ExperimentalTime::class)
     private fun checkUnmaintainedPackage(packageName: String, realPackageName: String): Deprecation? {
         if (NUDSettingsState.getInstance().excludedUnmaintainedPackages
                 .split(",").map { it.trim() }.filter { it.isNotEmpty() }
@@ -100,6 +106,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         }.filterNotNull().firstOrNull()
     }
 
+    @OptIn(ExperimentalTime::class)
     fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
         log.info("Checking for deprecations for $packageName with comparator $comparator")
         val state = NUDState.getInstance(project)

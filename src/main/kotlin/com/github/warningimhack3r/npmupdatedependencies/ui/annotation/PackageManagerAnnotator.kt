@@ -21,8 +21,9 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
-import kotlinx.datetime.Clock
 import org.semver4j.Semver
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, Property>,
@@ -44,6 +45,7 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     override fun doAnnotate(collectedInfo: Pair<Project, Property>?): Pair<JsonProperty, Update>? {
         if (collectedInfo == null) return null
         val (project, property) = collectedInfo
@@ -133,7 +135,6 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
                     )
                 )
             }
-            .needsUpdateOnTyping()
             .create()
 
         log.debug("Annotation applied for ${property.name}")

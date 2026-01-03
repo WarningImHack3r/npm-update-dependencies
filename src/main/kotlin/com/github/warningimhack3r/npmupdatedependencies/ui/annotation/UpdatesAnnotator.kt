@@ -24,8 +24,9 @@ import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
 import kotlinx.coroutines.delay
-import kotlinx.datetime.Clock
 import org.semver4j.Semver
+import kotlin.time.Clock
+import kotlin.time.ExperimentalTime
 
 class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         Pair<Project, List<Property>>,
@@ -40,6 +41,7 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
             Property(dependency, dependency.name, dependency.value?.stringValue())
         }
 
+    @OptIn(ExperimentalTime::class)
     override fun doAnnotate(collectedInfo: Pair<Project, List<Property>>): Map<JsonProperty, Update> {
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
@@ -161,7 +163,6 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
                         )
                     )
                 }
-                .needsUpdateOnTyping()
                 .create()
         }
         if (annotationResult.isNotEmpty()) log.debug("Annotations created")

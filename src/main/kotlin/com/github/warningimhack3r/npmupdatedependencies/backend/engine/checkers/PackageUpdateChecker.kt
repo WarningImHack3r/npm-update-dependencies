@@ -11,9 +11,10 @@ import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
-import kotlinx.datetime.Clock
 import org.semver4j.Semver
+import kotlin.time.Clock
 import kotlin.time.Duration.Companion.minutes
+import kotlin.time.ExperimentalTime
 
 @Service(Service.Level.PROJECT)
 class PackageUpdateChecker(private val project: Project) : PackageChecker() {
@@ -76,6 +77,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
         }
     }
 
+    @OptIn(ExperimentalTime::class)
     fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
         val state = NUDState.getInstance(project)

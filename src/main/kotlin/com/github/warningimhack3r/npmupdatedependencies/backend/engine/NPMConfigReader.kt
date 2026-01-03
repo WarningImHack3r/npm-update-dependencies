@@ -6,16 +6,19 @@ import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.util.applyIf
-import com.intellij.util.io.exists
 import java.io.File
 import java.net.URI
 import kotlin.io.encoding.Base64
 import kotlin.io.path.Path
+import kotlin.io.path.exists
 
 @Service(Service.Level.PROJECT)
 class NPMConfigReader(project: Project) {
     companion object {
         private val log = logger<NPMConfigReader>()
+
+        @JvmStatic
+        fun getInstance(project: Project): NPMConfigReader = project.service()
     }
 
     private val resolver = NPMConfigResolver(project)
@@ -112,7 +115,7 @@ class NPMConfigReader(project: Project) {
                 Path(System.getenv("PREFIX") ?: "", "etc", "npmrc").takeIf { System.getenv("PREFIX") != null },
                 // builtin
                 run outer@{
-                    val helpOutput = project.service<ShellRunner>().execute(arrayOf("npm", "help")) ?: run {
+                    val helpOutput = ShellRunner.getInstance(project).execute(arrayOf("npm", "help")) ?: run {
                         log.debug("Unable to get help output, ignoring global npm configuration")
                         return@outer null
                     }

@@ -62,7 +62,7 @@ class NPMJSClient(private val project: Project) {
 
     private fun getResponseStatus(uri: URI): Int {
         log.debug("HEAD $uri")
-        val configReader = project.service<NPMConfigReader>()
+        val configReader = NPMConfigReader.getInstance(project)
         val request = HttpRequest.newBuilder(uri)
             .method(HttpMethod.Head.value, HttpRequest.BodyPublishers.noBody())
             .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())
@@ -83,7 +83,7 @@ class NPMJSClient(private val project: Project) {
         }
 
         log.debug("GET $uri")
-        val configReader = project.service<NPMConfigReader>()
+        val configReader = NPMConfigReader.getInstance(project)
         val request = HttpRequest
             .newBuilder(uri)
             .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())

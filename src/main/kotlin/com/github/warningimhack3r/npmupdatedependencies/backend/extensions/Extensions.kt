@@ -3,11 +3,7 @@ package com.github.warningimhack3r.npmupdatedependencies.backend.extensions
 import com.intellij.json.psi.JsonValue
 import kotlinx.coroutines.*
 import kotlinx.datetime.DateTimePeriod
-import kotlinx.serialization.json.JsonElement
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.*
 
 fun <T> safeConversion(block: () -> T): T? = try {
     block()

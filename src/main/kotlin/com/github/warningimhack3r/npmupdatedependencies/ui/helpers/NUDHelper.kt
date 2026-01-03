@@ -64,6 +64,7 @@ object NUDHelper {
         FileEditorManager.getInstance(project).selectedTextEditor?.let { editor ->
             PsiDocumentManager.getInstance(project).getPsiFile(editor.document)?.let { file ->
                 if (file.name == PACKAGE_JSON) {
+                    // add `, this` on 2025.3+
                     DaemonCodeAnalyzer.getInstance(project).restart(file)
                 }
             }

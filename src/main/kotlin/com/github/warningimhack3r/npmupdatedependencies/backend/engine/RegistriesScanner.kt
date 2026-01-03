@@ -88,7 +88,7 @@ class RegistriesScanner(private val project: Project) {
             return
         }
         // Get the list of registries
-        val registriesItems = project.service<NPMConfigReader>().getAllRegistries()
+        val registriesItems = NPMConfigReader.getInstance(project).getAllRegistries()
         registries = registriesItems.map { it.url }.toSet()
         registriesItems.filterIsInstance<NPMConfigReader.Registry.ScopedRegistry>().forEach { item ->
             state.packageRegistries[item.scope] = item.url

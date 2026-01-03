@@ -189,6 +189,7 @@ object ActionsCommon {
                     deprecations.remove(key)
                 }
                 if (isNotEmpty()) {
+                    // add `, this` on 2025.3+
                     DaemonCodeAnalyzer.getInstance(file.project).restart(file)
                 }
                 deprecationsCompletion(file.project)
