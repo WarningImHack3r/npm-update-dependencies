@@ -4,7 +4,6 @@ import com.intellij.ide.plugins.PluginManagerCore
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.extensions.PluginId
 
-
 object NUDConstants {
     const val PLUGIN_ID = "com.github.warningimhack3r.npmupdatedependencies"
     const val NPMJS_REGISTRY = "https://registry.npmjs.com"
