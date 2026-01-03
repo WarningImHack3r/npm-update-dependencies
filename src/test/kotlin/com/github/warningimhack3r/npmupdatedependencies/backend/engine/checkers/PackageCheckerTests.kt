@@ -7,7 +7,7 @@ class PackageCheckerTests : BasePlatformTestCase() {
         private const val DEFAULT_PACKAGE_NAME = "something"
     }
 
-    inner class TestChecker : PackageChecker() {
+    class TestChecker : PackageChecker() {
         fun realPnVFromValue(comparator: String) =
             getRealPackageAndValue(DEFAULT_PACKAGE_NAME, comparator)
     }

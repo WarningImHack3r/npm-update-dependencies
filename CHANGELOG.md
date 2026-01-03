@@ -15,6 +15,9 @@
 ### Added
 
 - Add support for Bun workspace catalogs (#182)
+- Add back experimental support for packages requiring authentication (#165)
+  - This is an accidental regression from 3.6.0
+  - The support is experimental as the CLI logic has been replicated from scratch and misses support for things like mTLS; please open an issue if you need mTLS or if some packages still don't work
 
 ### Changed
 
