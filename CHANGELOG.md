@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.7.0] - 2026-01-03
+
 ### Added
 
 - Add support for Bun workspace catalogs (#182)
@@ -389,7 +391,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.1...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/3.7.0...HEAD
+[3.7.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.1...3.7.0
 [3.6.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.5.0...v3.6.0
 [3.5.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.4.0...v3.5.0
