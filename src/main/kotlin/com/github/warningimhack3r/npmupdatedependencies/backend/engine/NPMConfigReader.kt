@@ -258,7 +258,7 @@ class NPMConfigReader(project: Project) {
          */
         internal fun belongsTo(url: URI): Boolean {
             return url.host == this.url.host &&
-                    (this.url.path.startsWith(url.path) || this.url.path.startsWith(url.path.substringBeforeLast('/'))) // meant to make `/path` match with `/path/`; the first part of the "or" condition already handles the majority of the cases
+                    (this.url.path.startsWith(url.path) || this.url.path.startsWith(url.path.removeSuffix("/"))) // meant to make `/path` match with `/path/`; the first part of the "or" condition already handles the majority of the cases
         }
 
         /**
@@ -269,7 +269,7 @@ class NPMConfigReader(project: Project) {
          */
         fun matches(url: URI): Boolean {
             return this.url.host == url.host &&
-                    (url.path.startsWith(this.url.path) || url.path.substringBeforeLast('/').startsWith(this.url.path))
+                    (url.path.startsWith(this.url.path) || url.path.removeSuffix("/").startsWith(this.url.path))
         }
     }
 

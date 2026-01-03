@@ -94,6 +94,7 @@ class NPMConfigReaderTests : BasePlatformTestCase() {
     }
 
     fun testGetHeadersMatching() {
+        // Test 1: Default working case
         assertHeadersMatching(
             "https://registry.npmjs.org/vite",
             mapOf("Authorization" to "Bearer MYTOKEN"),
@@ -104,5 +105,85 @@ class NPMConfigReaderTests : BasePlatformTestCase() {
                 )
             )
         )
+
+        // Test 2: Root registry should match any package path
+        assertHeadersMatching(
+            "https://registry.npmjs.org/some/deep/package",
+            mapOf("Authorization" to "Bearer ROOTTOKEN"),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://registry.npmjs.org/"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "ROOTTOKEN")
+            )
+        )
+
+        // Test 3: Scoped registry should match packages under its path
+        assertHeadersMatching(
+            "https://custom.registry.com/npm/private/package",
+            mapOf("Authorization" to "Bearer SCOPEDTOKEN"),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://custom.registry.com/npm/private"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "SCOPEDTOKEN")
+            )
+        )
+
+        // Test 4: Should match more specific registry over root
+        assertHeadersMatching(
+            "https://registry.npmjs.org/private/package",
+            mapOf("Authorization" to "Bearer PRIVATETOKEN"),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://registry.npmjs.org/"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "ROOTTOKEN")
+            ),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://registry.npmjs.org/private"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "PRIVATETOKEN")
+            )
+        )
+
+        // Test 5: Different host should not match
+        assertHeadersMatching(
+            "https://different.registry.com/package",
+            emptyMap(),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://registry.npmjs.org/"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "TOKEN")
+            )
+        )
+
+        // Test 6: Multi-segment path matching
+        assertHeadersMatching(
+            "https://custom.registry.com/npm/public/scoped/package",
+            mapOf("Authorization" to "Bearer MULTITOKEN"),
+            NPMConfigReader.RawRegistry(
+                url = URI("https://custom.registry.com/npm/public"),
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "MULTITOKEN")
+            )
+        )
+    }
+
+    fun testBelongsTo() {
+        // Test 1: Registry at /private belongs to root
+        val registry1 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/private"))
+        assertTrue(registry1.belongsTo(URI("https://registry.npmjs.org/")))
+
+        // Test 2: Registry at /npm/private belongs to /npm
+        val registry2 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm/private"))
+        assertTrue(registry2.belongsTo(URI("https://custom.com/npm")))
+
+        // Test 3: Registry at /npm should NOT belong to /private
+        val registry3 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm"))
+        assertFalse(registry3.belongsTo(URI("https://custom.com/private")))
+
+        // Test 4: Registry at root belongs to itself
+        val registry4 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
+        assertTrue(registry4.belongsTo(URI("https://registry.npmjs.org/")))
+
+        // Test 5: Different hosts never belong
+        val registry5 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
+        assertFalse(registry5.belongsTo(URI("https://different.com/")))
+
+        // Test 6: Trailing slash handling - /path belongs to /path/
+        val registry6 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/path"))
+        assertTrue(registry6.belongsTo(URI("https://custom.com/path/")))
     }
 }
