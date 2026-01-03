@@ -8,63 +8,71 @@ import java.io.File
 @Service(Service.Level.PROJECT)
 class ShellRunner(private val project: Project) {
     companion object {
-        private const val MAX_ATTEMPTS = 3
         private val log = logger<ShellRunner>()
     }
 
-    private val failedWindowsPrograms = mutableSetOf<String>()
+    private val isWindows by lazy {
+        System.getProperty("os.name").lowercase().contains("win", ignoreCase = true)
+    }
 
-    private fun isWindows() = System.getProperty("os.name").contains("win", ignoreCase = true)
-
-    fun execute(command: Array<String>): String? {
-        val program = command.firstOrNull() ?: return null.also {
-            log.warn("No command name provided")
+    private fun getExecutionCommand(originalCommand: Array<String>, retry: Boolean = false): Array<String>? {
+        val program = originalCommand.firstOrNull() ?: return null.also {
+            log.warn("Empty command provided")
         }
-        val isWindows = isWindows()
-        var attempts = 0
-
-        fun runCommand(): String? {
-            if (isWindows && failedWindowsPrograms.contains(program)) {
-                command[0] = "$program.cmd"
-                log.warn("(Re)trying command with .cmd extension: \"${command.joinToString(" ")}\"")
+        return when (isWindows) {
+            true -> {
+                if (!retry) return arrayOf("cmd", "/c", *originalCommand)
+                val command = arrayOf("cmd", "/c", "$program.cmd", *originalCommand.drop(1).toTypedArray())
+                log.warn("Retrying command with .cmd extension: \"${command.joinToString(" ")}\"")
+                command
             }
-            return try {
-                val platformCommand = if (isWindows) {
-                    arrayOf("cmd", "/c")
-                } else {
-                    emptyArray()
-                } + command
-                log.debug("Executing command: \"${platformCommand.joinToString(" ")}\"")
-                val process = ProcessBuilder(*platformCommand)
-                    .directory(project.basePath?.let { File(it) })
-                    .start()
-                val output = process.inputStream?.bufferedReader()?.readText()?.also {
-                    log.debug("Successfully executed \"${platformCommand.joinToString(" ")}\" with output:\n$it")
-                }
-                val error = process.errorStream?.bufferedReader()?.readText()
-                process.waitFor()
-                if (output.isNullOrBlank() && !error.isNullOrBlank()) {
-                    log.warn("Error while executing \"${platformCommand.joinToString(" ")}\":\n${error.take(150)}")
-                }
-                output
-            } catch (e: Exception) {
-                if (isWindows && !program.endsWith(".cmd")) {
-                    log.warn(
-                        "Failed to execute \"${command.joinToString(" ")}\". Trying to execute \"$program.cmd\" instead",
-                        e
-                    )
-                    failedWindowsPrograms.add(program)
-                } else log.warn("Error while executing \"${command.joinToString(" ")}\"", e)
-                null
+
+            false -> {
+                if (!retry) return originalCommand
+                val stringify = originalCommand.joinToString(" ")
+                val command = arrayOf(
+                    "sh", "-c",
+                    """
+                    [ -f ~/.zshrc ] && source ~/.zshrc
+                    [ -f ~/.bashrc ] && source ~/.bashrc
+                    [ -f ~/.profile ] && source ~/.profile
+                    $stringify
+                    """.trimIndent()
+                )
+                log.warn("Retrying command \"$stringify\" with resolved PATH")
+                command
             }
         }
+    }
 
-        while (attempts < MAX_ATTEMPTS) {
-            if (attempts > 0) log.warn("Retrying command \"${command.joinToString(" ")}\"")
-            runCommand()?.let { return it }
-            attempts++
+    fun execute(command: Array<String>, retry: Boolean = false): String? {
+        val exec = getExecutionCommand(command, retry) ?: return null
+        log.debug("Executing command: \"${exec.joinToString(" ")}\"")
+        return try {
+            val process = ProcessBuilder(*exec)
+                .directory(project.basePath?.let { File(it) })
+                .start()
+            process.waitFor()
+            val output = process.inputStream?.bufferedReader()?.readText()?.also {
+                if (it.isNotBlank())
+                    log.debug("Stdout of command \"${exec.joinToString(" ")}\":\n${it.take(200)}")
+            }
+            process.errorStream?.bufferedReader()?.readText()?.also {
+                if (it.isNotBlank())
+                    log.warn("Stderr of command \"${exec.joinToString(" ")}\":\n${it.take(200)}")
+            }
+            if (process.exitValue() != 0) throw Exception("Non-successful status code")
+            output?.ifBlank { null }
+        } catch (e: Exception) {
+            if (!retry) {
+                val res = execute(command, true)
+                if (res == null) {
+                    log.warn("Error while executing \"${exec.joinToString(" ")}\" on second attempt")
+                }
+                return res
+            }
+            log.warn("Error while executing \"${exec.joinToString(" ")}\"", e)
+            null
         }
-
-        return null
     }
 }
