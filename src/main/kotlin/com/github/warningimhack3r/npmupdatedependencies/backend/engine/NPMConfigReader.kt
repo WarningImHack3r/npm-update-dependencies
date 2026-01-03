@@ -206,6 +206,11 @@ class NPMConfigReader(project: Project) {
         val scopes: List<String> = emptyList(),
         var props: Properties = Properties()
     ) {
+        /**
+         * Represents the properties associated with a raw registry configuration.
+         *
+         * Some additional properties can be missing as they are not relevant in this context.
+         */
         data class Properties(
             var authToken: String? = null,
             var auth: String? = null,
@@ -216,6 +221,15 @@ class NPMConfigReader(project: Project) {
             var certFile: String? = null,
             var keyFile: String? = null
         ) {
+            /**
+             * Populates the appropriate field of this Properties object with the value, based on the raw key.
+             *
+             * If the raw key is not recognized, the value is discarded.
+             *
+             * @param rawKey The raw key from the configuration file
+             * @param value The value associated with the raw key
+             * @return The updated Properties object
+             */
             fun withRaw(rawKey: String, value: String): Properties {
                 when (rawKey) {
                     "_authToken", "_authtoken", "-authtoken" -> this.authToken = value
@@ -234,13 +248,21 @@ class NPMConfigReader(project: Project) {
             }
         }
 
+        /**
+         * Checks if this registry's URL is a subchild of the given URI.
+         *
+         * This method is meant to be the opposite of the `matches` method.
+         *
+         * @param url the URI to check
+         * @return true if this registry's URL is a subchild of the given URI, false otherwise
+         */
         internal fun belongsTo(url: URI): Boolean {
             return url.host == this.url.host &&
-                    (this.url.path.startsWith(url.path) || this.url.path.startsWith(url.path.substringBeforeLast('/')))
+                    (this.url.path.startsWith(url.path) || this.url.path.startsWith(url.path.substringBeforeLast('/'))) // meant to make `/path` match with `/path/`; the first part of the "or" condition already handles the majority of the cases
         }
 
         /**
-         * Checks if the given URI matches this registry's URL.
+         * Checks if the given URI has the same host and path prefix as this registry's URL.
          *
          * @param url the URI to check
          * @return true if the URI has the same host and path prefix, false otherwise
