@@ -100,9 +100,7 @@ class NPMConfigReaderTests : BasePlatformTestCase() {
             mapOf("Authorization" to "Bearer MYTOKEN"),
             NPMConfigReader.RawRegistry(
                 url = URI("https://registry.npmjs.org"),
-                props = NPMConfigReader.RawRegistry.Properties(
-                    authToken = "MYTOKEN"
-                )
+                props = NPMConfigReader.RawRegistry.Properties(authToken = "MYTOKEN")
             )
         )
 
@@ -163,27 +161,27 @@ class NPMConfigReaderTests : BasePlatformTestCase() {
 
     fun testBelongsTo() {
         // Test 1: Registry at /private belongs to root
-        val registry1 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/private"))
-        assertTrue(registry1.belongsTo(URI("https://registry.npmjs.org/")))
+        var registry = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/private"))
+        assertTrue(registry.belongsTo(URI("https://registry.npmjs.org/")))
 
         // Test 2: Registry at /npm/private belongs to /npm
-        val registry2 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm/private"))
-        assertTrue(registry2.belongsTo(URI("https://custom.com/npm")))
+        registry = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm/private"))
+        assertTrue(registry.belongsTo(URI("https://custom.com/npm")))
 
         // Test 3: Registry at /npm should NOT belong to /private
-        val registry3 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm"))
-        assertFalse(registry3.belongsTo(URI("https://custom.com/private")))
+        registry = NPMConfigReader.RawRegistry(url = URI("https://custom.com/npm"))
+        assertFalse(registry.belongsTo(URI("https://custom.com/private")))
 
         // Test 4: Registry at root belongs to itself
-        val registry4 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
-        assertTrue(registry4.belongsTo(URI("https://registry.npmjs.org/")))
+        registry = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
+        assertTrue(registry.belongsTo(URI("https://registry.npmjs.org/")))
 
         // Test 5: Different hosts never belong
-        val registry5 = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
-        assertFalse(registry5.belongsTo(URI("https://different.com/")))
+        registry = NPMConfigReader.RawRegistry(url = URI("https://registry.npmjs.org/"))
+        assertFalse(registry.belongsTo(URI("https://different.com/")))
 
         // Test 6: Trailing slash handling - /path belongs to /path/
-        val registry6 = NPMConfigReader.RawRegistry(url = URI("https://custom.com/path"))
-        assertTrue(registry6.belongsTo(URI("https://custom.com/path/")))
+        registry = NPMConfigReader.RawRegistry(url = URI("https://custom.com/path"))
+        assertTrue(registry.belongsTo(URI("https://custom.com/path/")))
     }
 }

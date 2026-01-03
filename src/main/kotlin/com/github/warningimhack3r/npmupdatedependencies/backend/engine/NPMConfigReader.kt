@@ -37,8 +37,12 @@ class NPMConfigReader(project: Project) {
             val username = raw.props.username
             val password = raw.props.password
             if (username == null || password == null) return@run // incomplete
-            val decodedPassword = Base64.decode(password).decodeToString() // password is stored in base64
-            headers["Authorization"] = "Basic ${Base64.encode("$username:$decodedPassword".encodeToByteArray())}"
+            try {
+                val decodedPassword = Base64.decode(password).decodeToString() // password is stored in base64
+                headers["Authorization"] = "Basic ${Base64.encode("$username:$decodedPassword".encodeToByteArray())}"
+            } catch (e: Exception) {
+                log.warn("Error while decoding username/password combination", e)
+            }
         }
         // for the other properties:
         // - email is unused during authentication
