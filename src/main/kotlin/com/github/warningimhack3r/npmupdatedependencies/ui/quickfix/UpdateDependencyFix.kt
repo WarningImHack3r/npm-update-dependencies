@@ -8,7 +8,6 @@ import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.QuickFixesCom
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -29,7 +28,7 @@ class UpdateDependencyFix(
     override fun getText() = if (wasNonNumeric) "Set version to $version" else {
         QuickFixesCommon.getPositionPrefix(
             kind,
-            versions.orderedAvailableKinds(service<NUDSettingsState>().defaultUpdateType!!)
+            versions.orderedAvailableKinds(NUDSettingsState.getInstance().defaultUpdateType!!)
         ) + "Update to ${kind.toString().lowercase()} version ($version)"
     }
 

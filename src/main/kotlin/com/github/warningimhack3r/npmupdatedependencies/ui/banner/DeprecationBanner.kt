@@ -6,7 +6,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecati
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.intellij.icons.AllIcons
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.fileEditor.FileEditor
 import com.intellij.openapi.project.Project
@@ -30,11 +29,11 @@ class DeprecationBanner : EditorNotificationProvider {
         file: VirtualFile
     ): Function<in FileEditor, out JComponent?>? {
         val psiFile = PsiManager.getInstance(project).findFile(file)
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         val foundDeprecations = state.deprecations.filter { deprecation ->
             deprecation.value.data?.kind == Deprecation.Kind.DEPRECATED
         }
-        if (psiFile == null || file.name != PACKAGE_JSON || foundDeprecations.isEmpty() || !service<NUDSettingsState>().showDeprecationBanner) {
+        if (psiFile == null || file.name != PACKAGE_JSON || foundDeprecations.isEmpty() || !NUDSettingsState.getInstance().showDeprecationBanner) {
             when {
                 psiFile == null -> log.warn("Leaving: cannot find PSI file for ${file.name} @ ${file.path}")
                 foundDeprecations.isEmpty() -> {
@@ -42,7 +41,7 @@ class DeprecationBanner : EditorNotificationProvider {
                     else log.warn("Leaving: deprecations not scanned yet")
                 }
 
-                !service<NUDSettingsState>().showDeprecationBanner -> log.debug("Leaving: deprecation banner is disabled")
+                !NUDSettingsState.getInstance().showDeprecationBanner -> log.debug("Leaving: deprecation banner is disabled")
             }
             return null
         }
@@ -79,7 +78,7 @@ class DeprecationBanner : EditorNotificationProvider {
 
                 // Actions
                 Deprecation.Action.orderedActions(
-                    service<NUDSettingsState>().defaultDeprecationAction
+                    NUDSettingsState.getInstance().defaultDeprecationAction
                 ).filter { availableActions.contains(it) }.forEach { action ->
                     createActionLabel(
                         action.toString() + if (deprecationsCount > 1) {
@@ -101,7 +100,7 @@ class DeprecationBanner : EditorNotificationProvider {
 
                 // Don't show again
                 createActionLabel("Don't show again") {
-                    service<NUDSettingsState>().showDeprecationBanner = false
+                    NUDSettingsState.getInstance().showDeprecationBanner = false
                     EditorNotifications.getInstance(project).updateNotifications(file)
                 }
             }

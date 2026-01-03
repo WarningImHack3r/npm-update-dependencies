@@ -7,7 +7,6 @@ import com.intellij.ide.DataManager
 import com.intellij.openapi.application.ApplicationNamesInfo
 import com.intellij.openapi.application.ModalityState
 import com.intellij.openapi.application.runInEdt
-import com.intellij.openapi.components.service
 import com.intellij.openapi.options.ex.Settings
 import com.intellij.openapi.ui.DialogBuilder
 import com.intellij.openapi.ui.DialogWrapper
@@ -122,7 +121,7 @@ class NUDSettingsComponent {
     }
 
     val panel = panel {
-        val settings = service<NUDSettingsState>()
+        val settings = NUDSettingsState.getInstance()
         group("Annotation Actions") {
             row("Default update type:") {
                 comboBox(Versions.Kind.entries.toList())

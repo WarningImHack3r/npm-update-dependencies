@@ -1,7 +1,6 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers
 
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
-import com.intellij.openapi.components.service
 
 abstract class PackageChecker {
     companion object {
@@ -46,7 +45,7 @@ abstract class PackageChecker {
                 // Anything that is not supported is not upgradable
                 !isComparatorSupported(this) -> false
                 // If the version is "static", upgradable only if it includes (ends with?) a `x` or `X`
-                ONLY_DIGIT_X_OR_DOT.matches(this) -> lowercase().contains("x") || service<NUDSettingsState>().checkStaticComparators
+                ONLY_DIGIT_X_OR_DOT.matches(this) -> lowercase().contains("x") || NUDSettingsState.getInstance().checkStaticComparators
                 // Symbols prefixes
                 startsWith("<") || startsWith("<=") -> false
                 // Anything else is considered upgradable by default

@@ -14,6 +14,11 @@ import com.intellij.util.xmlb.XmlSerializerUtil.copyBean
 
 @State(name = "NUDSettings", storages = [Storage("npm-update-dependencies.xml")])
 class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
+    companion object {
+        @JvmStatic
+        fun getInstance(): NUDSettingsState = service()
+    }
+
     private var settings = Settings()
 
     override fun getState(): Settings = settings
@@ -58,7 +63,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.unmaintainedDays = value
             ProjectManager.getInstance().openProjects.forEach { project ->
-                project.service<NUDState>().deprecations.clear()
+                NUDState.getInstance(project).deprecations.clear()
                 NUDHelper.reanalyzePackageJsonIfOpen(project)
             }
         }
@@ -92,7 +97,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.checkStaticComparators = value
             ProjectManager.getInstance().openProjects.forEach { project ->
-                project.service<NUDState>().availableUpdates.clear()
+                NUDState.getInstance(project).availableUpdates.clear()
                 NUDHelper.reanalyzePackageJsonIfOpen(project)
             }
         }
@@ -106,7 +111,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.excludedVersions = value
             ProjectManager.getInstance().openProjects.forEach { project ->
-                project.service<NUDState>().availableUpdates.clear()
+                NUDState.getInstance(project).availableUpdates.clear()
                 NUDHelper.reanalyzePackageJsonIfOpen(project)
             }
         }
@@ -115,7 +120,7 @@ class NUDSettingsState : PersistentStateComponent<NUDSettingsState.Settings> {
         set(value) {
             settings.excludedUnmaintainedPackages = value.split(",").map { it.trim() }.filter { it.isNotEmpty() }
             ProjectManager.getInstance().openProjects.forEach { project ->
-                project.service<NUDState>().deprecations.clear()
+                NUDState.getInstance(project).deprecations.clear()
                 NUDHelper.reanalyzePackageJsonIfOpen(project)
             }
         }

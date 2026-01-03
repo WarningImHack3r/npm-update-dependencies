@@ -4,7 +4,6 @@ import com.github.warningimhack3r.npmupdatedependencies.NUDConstants.NPMJS_REGIS
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NPMJSClient
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Deprecation
-import com.intellij.openapi.components.service
 import com.intellij.testFramework.fixtures.BasePlatformTestCase
 import java.lang.reflect.Method
 
@@ -19,13 +18,13 @@ class PackageDeprecationCheckerTests : BasePlatformTestCase() {
 
     private fun assertNameEquals(expectedPackage: String?, reason: String) {
         if (expectedPackage != null) {
-            project.service<NUDState>().packageRegistries[expectedPackage] = NPMJS_REGISTRY
-            project.service<NPMJSClient>().cache.put(
+            NUDState.getInstance(project).packageRegistries[expectedPackage] = NPMJS_REGISTRY
+            NPMJSClient.getInstance(project).cache.put(
                 "$NPMJS_REGISTRY/$expectedPackage/latest",
                 """{"version": "1.0.0"}"""
             )
         }
-        assertEquals(expectedPackage, getReplacementPackage(project.service<PackageDeprecationChecker>(), reason)?.name)
+        assertEquals(expectedPackage, getReplacementPackage(PackageDeprecationChecker.getInstance(project), reason)?.name)
     }
 
     fun testCheckReplacementPackage_NoPackage() {

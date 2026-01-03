@@ -22,22 +22,25 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         private val STARTING_PUNCTUATION = Regex("^\\[+")
         private val ENDING_PUNCTUATION = Regex("[,;.!?:]+$")
         private val MARKDOWN_LINK_LINK_PART = Regex("]\\([^)]+\\)")
+
+        @JvmStatic
+        fun getInstance(project: Project): PackageDeprecationChecker = project.service()
     }
 
     private fun checkUnmaintainedPackage(packageName: String, realPackageName: String): Deprecation? {
-        if (service<NUDSettingsState>().excludedUnmaintainedPackages
+        if (NUDSettingsState.getInstance().excludedUnmaintainedPackages
                 .split(",").map { it.trim() }.filter { it.isNotEmpty() }
                 .contains(packageName)
         ) {
             log.debug("No deprecation found for $packageName, but it's excluded from unmaintained check")
             return null
         }
-        if (service<NUDSettingsState>().unmaintainedDays == 0) {
+        if (NUDSettingsState.getInstance().unmaintainedDays == 0) {
             log.debug("No deprecation found for $realPackageName, unmaintained check is disabled")
             return null
         }
         log.debug("No deprecation found for $realPackageName, checking if it's unmaintained")
-        val lastUpdate = project.service<NPMJSClient>().getPackageLastModified(realPackageName) ?: return null.also {
+        val lastUpdate = NPMJSClient.getInstance(project).getPackageLastModified(realPackageName) ?: return null.also {
             log.warn("Couldn't get last modification date for $realPackageName")
         }
         val lastUpdateInstant = try {
@@ -47,7 +50,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
             return null
         }
         val now = Clock.System.now()
-        if (now > lastUpdateInstant + service<NUDSettingsState>().unmaintainedDays.days) {
+        if (now > lastUpdateInstant + NUDSettingsState.getInstance().unmaintainedDays.days) {
             log.debug("Package $realPackageName is unmaintained")
             val timeDiff = try {
                 lastUpdateInstant.periodUntil(now, TimeZone.currentSystemDefault())
@@ -67,7 +70,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
     }
 
     private fun getReplacementPackage(reason: String): Deprecation.Replacement? {
-        val npmjsClient = project.service<NPMJSClient>()
+        val npmjsClient = NPMJSClient.getInstance(project)
         return reason.replace(MARKDOWN_LINK_LINK_PART, "").split(" ").map { word ->
             word
                 .replace(STARTING_PUNCTUATION, "")
@@ -99,7 +102,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
 
     fun getDeprecationStatus(packageName: String, comparator: String): Deprecation? {
         log.info("Checking for deprecations for $packageName with comparator $comparator")
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         if (!isComparatorSupported(comparator)) {
             log.warn("Comparator $comparator is not supported")
             if (state.deprecations.containsKey(packageName)) {
@@ -117,7 +120,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
                 state.deprecations.remove(packageName)
                 return@let
             }
-            if (Clock.System.now() > deprecationState.addedAt + service<NUDSettingsState>().cacheDurationMinutes.minutes) {
+            if (Clock.System.now() > deprecationState.addedAt + NUDSettingsState.getInstance().cacheDurationMinutes.minutes) {
                 log.debug("Cached deprecation for $packageName has expired, removing it")
                 state.deprecations.remove(packageName)
                 return@let
@@ -133,7 +136,7 @@ class PackageDeprecationChecker(private val project: Project) : PackageChecker()
         val comparatorVersion = Semver.coerce(realComparator)?.version ?: "latest".also {
             log.warn("Couldn't coerce comparator $realComparator to a version, using 'latest' instead")
         }
-        val npmjsClient = project.service<NPMJSClient>()
+        val npmjsClient = NPMJSClient.getInstance(project)
         val reason = npmjsClient.getPackageDeprecation(realPackageName, comparatorVersion)
             ?: return checkUnmaintainedPackage(packageName, realPackageName)
 

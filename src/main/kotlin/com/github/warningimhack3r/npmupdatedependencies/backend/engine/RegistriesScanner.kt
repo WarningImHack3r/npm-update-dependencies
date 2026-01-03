@@ -13,6 +13,9 @@ import kotlinx.serialization.json.Json
 class RegistriesScanner(private val project: Project) {
     companion object {
         private val log = logger<RegistriesScanner>()
+
+        @JvmStatic
+        fun getInstance(project: Project): RegistriesScanner = project.service()
     }
 
     /**
@@ -27,8 +30,8 @@ class RegistriesScanner(private val project: Project) {
 
     fun scan() {
         log.info("Starting to scan registries")
-        val shellRunner = project.service<ShellRunner>()
-        val state = project.service<NUDState>()
+        val shellRunner = ShellRunner.getInstance(project)
+        val state = NUDState.getInstance(project)
         state.packageRegistries.clear()
         // Populate packageRegistries with the contents of `npm ls --json`
         shellRunner.execute(arrayOf("npm", "ls", "--json"))?.let { output ->

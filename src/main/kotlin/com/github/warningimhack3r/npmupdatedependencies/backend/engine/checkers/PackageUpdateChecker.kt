@@ -20,10 +20,13 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     companion object {
         private val log = logger<PackageUpdateChecker>()
         private val LOWERCASE_WORD = Regex("^[a-z]+$")
+
+        @JvmStatic
+        fun getInstance(project: Project): PackageUpdateChecker = project.service()
     }
 
     private fun computeMatchingTag(packageName: String, comparator: String): Pair<Update.Channel, Semver>? {
-        val allTags = project.service<NPMJSClient>().getAllTags(packageName) ?: return null
+        val allTags = NPMJSClient.getInstance(project).getAllTags(packageName) ?: return null
         val coercedComparator = Semver.coerce(comparator) ?: return null
         val sortedTagsPairs = allTags.mapValues { (_, v) ->
             Semver.coerce(v)
@@ -59,7 +62,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
     }
 
     private fun getVersionExcludingFilter(packageName: String, version: Semver): String? {
-        return service<NUDSettingsState>().excludedVersions[packageName]?.let { excludedVersions ->
+        return NUDSettingsState.getInstance().excludedVersions[packageName]?.let { excludedVersions ->
             log.debug("Excluded versions for $packageName: $excludedVersions")
             excludedVersions.firstOrNull { excludedVersion ->
                 version.satisfies(excludedVersion).also { satisfies ->
@@ -75,14 +78,14 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
 
     fun checkAvailableUpdates(packageName: String, comparator: String): Update? {
         log.info("Checking for updates for $packageName with comparator $comparator")
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         if (!isComparatorUpgradable(comparator)) {
             log.warn("Comparator $comparator is not upgradable")
             if (state.availableUpdates.containsKey(packageName)) {
                 log.debug("Removing cached versions for $packageName")
                 state.availableUpdates.remove(packageName)
             }
-            if (!service<NUDSettingsState>().suggestReplacingTags) {
+            if (!NUDSettingsState.getInstance().suggestReplacingTags) {
                 log.debug("Suggesting replacing tags is disabled")
                 return null
             }
@@ -91,7 +94,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 when {
                     LOWERCASE_WORD.matches(this) -> {
                         log.debug("Comparator $comparator is a tag, fetching version from tag")
-                        val versionFromTag = project.service<NPMJSClient>().getVersionFromTag(
+                        val versionFromTag = NPMJSClient.getInstance(project).getVersionFromTag(
                             packageName, this
                         )
                         val potentialVersion = Semver.coerce(versionFromTag) ?: return null.also {
@@ -104,7 +107,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                     equals("*") || isEmpty() -> {
                         log.debug("Comparator $comparator is a wildcard, fetching latest version")
                         val latestVersion =
-                            project.service<NPMJSClient>().getVersionFromTag(packageName, "latest")?.let {
+                            NPMJSClient.getInstance(project).getVersionFromTag(packageName, "latest")?.let {
                                 Semver.coerce(it)
                             } ?: return null.also {
                                 log.warn("No latest version found for $packageName with wildcard comparator")
@@ -128,7 +131,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
                 return@let
             }
             if (Clock.System.now() >
-                updateState.addedAt + service<NUDSettingsState>().cacheDurationMinutes.minutes
+                updateState.addedAt + NUDSettingsState.getInstance().cacheDurationMinutes.minutes
             ) {
                 log.debug("Cached versions for $packageName have expired, removing them")
                 state.availableUpdates.remove(packageName)
@@ -148,7 +151,7 @@ class PackageUpdateChecker(private val project: Project) : PackageChecker() {
         } ?: log.warn("No cached versions found in cache for $packageName")
 
         // Check if an update is available
-        val npmjsClient = project.service<NPMJSClient>()
+        val npmjsClient = NPMJSClient.getInstance(project)
         val (realPackageName, realComparator) = getRealPackageAndValue(packageName, comparator)
         if (realPackageName != packageName) {
             log.debug("Real package name for $packageName is $realPackageName (comparator: $realComparator)")

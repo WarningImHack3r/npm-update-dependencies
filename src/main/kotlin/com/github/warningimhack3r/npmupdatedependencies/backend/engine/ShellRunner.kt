@@ -1,6 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
 import com.intellij.openapi.components.Service
+import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import java.io.File
@@ -9,6 +10,9 @@ import java.io.File
 class ShellRunner(private val project: Project) {
     companion object {
         private val log = logger<ShellRunner>()
+
+        @JvmStatic
+        fun getInstance(project: Project): ShellRunner = project.service()
     }
 
     private val isWindows by lazy {

@@ -11,7 +11,6 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction
 import com.intellij.codeInsight.intention.preview.IntentionPreviewInfo
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -45,8 +44,8 @@ class DeprecatedDependencyFix(
             actionType,
             Deprecation.Action.orderedActions(
                 when (kind) {
-                    Deprecation.Kind.UNMAINTAINED -> service<NUDSettingsState>().defaultUnmaintainedAction
-                    Deprecation.Kind.DEPRECATED -> service<NUDSettingsState>().defaultDeprecationAction
+                    Deprecation.Kind.UNMAINTAINED -> NUDSettingsState.getInstance().defaultUnmaintainedAction
+                    Deprecation.Kind.DEPRECATED -> NUDSettingsState.getInstance().defaultDeprecationAction
                 }
             )
                 .filter { it !in excludedActionsFromOrder }
@@ -89,7 +88,8 @@ class DeprecatedDependencyFix(
                         property.nameElement.replace(newName)
                         property.value?.replace(newVersion)
                     }
-                    if (service<NUDSettingsState>().autoReorderDependencies) ActionsCommon.reorderAllDependencies(file)
+                    if (NUDSettingsState.getInstance().autoReorderDependencies)
+                        ActionsCommon.reorderAllDependencies(file)
                 }
             }
 
@@ -109,11 +109,11 @@ class DeprecatedDependencyFix(
             }
 
             Deprecation.Action.IGNORE -> {
-                service<NUDSettingsState>().excludedUnmaintainedPackages += ",${property.name}"
+                NUDSettingsState.getInstance().excludedUnmaintainedPackages += ",${property.name}"
                 DaemonCodeAnalyzer.getInstance(project).restart(file)
             }
         }
-        project.service<NUDState>().deprecations.remove(property.name)
+        NUDState.getInstance(project).deprecations.remove(property.name)
         ActionsCommon.deprecationsCompletion(project)
     }
 }

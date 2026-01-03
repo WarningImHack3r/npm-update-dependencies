@@ -11,6 +11,10 @@ import com.jetbrains.rd.util.concurrentMapOf
 
 @Service(Service.Level.PROJECT)
 class NUDState(private val project: Project) {
+    companion object {
+        @JvmStatic
+        fun getInstance(project: Project): NUDState = project.service()
+    }
 
     /**
      * Invalidates all caches, effectively resetting the state of the plugin.
@@ -28,8 +32,8 @@ class NUDState(private val project: Project) {
         scannedDeprecations = 0
         foundPackageManager = null
 
-        project.service<RegistriesScanner>().scanned = false
-        project.service<NPMJSClient>().cache.apply {
+        RegistriesScanner.getInstance(project).scanned = false
+        NPMJSClient.getInstance(project).cache.apply {
             cleanUp()
             invalidateAll()
         }

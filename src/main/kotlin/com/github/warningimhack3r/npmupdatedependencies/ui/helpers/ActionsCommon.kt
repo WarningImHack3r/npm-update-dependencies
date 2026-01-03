@@ -11,7 +11,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer
 import com.intellij.json.psi.JsonProperty
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
@@ -50,7 +49,7 @@ object ActionsCommon {
     }
 
     fun updateAllDependencies(file: PsiFile, kind: Versions.Kind) {
-        val availableUpdates = file.project.service<NUDState>().availableUpdates
+        val availableUpdates = NUDState.getInstance(file.project).availableUpdates
         getAllDependencies(file)
             .mapNotNull { property ->
                 availableUpdates[property.name]?.data?.let { update ->
@@ -77,7 +76,7 @@ object ActionsCommon {
     fun updatePackageManager(file: PsiFile) {
         getPackageManager(file)?.let { property ->
             val packageManager = property.value?.stringValue()?.substringBefore("@") ?: return
-            val targetVersion = file.project.service<NUDState>()
+            val targetVersion = NUDState.getInstance(file.project)
                 .availableUpdates[packageManager]?.data?.versions?.latest ?: return
             val newElement = NUDHelper.createElement(file.project, "\"$packageManager@$targetVersion\"", "JSON")
             NUDHelper.safeFileWrite(file, "Update $packageManager to $targetVersion") {
@@ -87,7 +86,7 @@ object ActionsCommon {
     }
 
     fun replaceAllDeprecations(file: PsiFile) {
-        val deprecations = file.project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(file.project).deprecations
         getAllDependencies(file)
             .mapNotNull { property ->
                 deprecations[property.name]?.data?.let { deprecation ->
@@ -108,7 +107,7 @@ object ActionsCommon {
                             property.value?.replace(newVersionElement)
                         }
                     }
-                    if (service<NUDSettingsState>().autoReorderDependencies) reorderAllDependencies(file)
+                    if (NUDSettingsState.getInstance().autoReorderDependencies) reorderAllDependencies(file)
                 }
                 deprecationsCompletion(file.project)
             }
@@ -145,7 +144,7 @@ object ActionsCommon {
     }
 
     fun deleteAllDeprecations(file: PsiFile, predicate: (DataState<Deprecation>) -> Boolean = { true }) {
-        val deprecations = file.project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(file.project).deprecations
         val deprecationsToRemove = deprecations.filter { it.value.data != null && predicate(it.value) }
         getAllDependencies(file)
             .filter { property ->
@@ -177,14 +176,14 @@ object ActionsCommon {
     }
 
     fun ignoreAllDeprecations(file: PsiFile, predicate: (DataState<Deprecation>) -> Boolean = { true }) {
-        val deprecations = file.project.service<NUDState>().deprecations
+        val deprecations = NUDState.getInstance(file.project).deprecations
         val deprecationsToIgnore = deprecations.filter { it.value.data != null && predicate(it.value) }
         getAllDependencies(file)
             .filter { property ->
                 deprecationsToIgnore.containsKey(property.name)
             }.run {
                 if (isNotEmpty()) {
-                    service<NUDSettingsState>().excludedUnmaintainedPackages += ",${joinToString(",") { it.name }}"
+                    NUDSettingsState.getInstance().excludedUnmaintainedPackages += ",${joinToString(",") { it.name }}"
                 }
                 deprecationsToIgnore.forEach { (key, _) ->
                     deprecations.remove(key)

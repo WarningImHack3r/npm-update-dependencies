@@ -5,7 +5,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DefaultActionGroup
-import com.intellij.openapi.components.service
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.project.DumbAwareAction
@@ -120,7 +119,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             }
         }
 
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         return JBPopupFactory.getInstance().createActionGroupPopup(
             "Available Changes",
             DefaultActionGroup().apply {
@@ -159,8 +158,8 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
     }
 
     override fun getSelectedValue(): String? {
-        if (!service<NUDSettingsState>().showStatusBarWidget) return null
-        val state = project.service<NUDState>()
+        if (!NUDSettingsState.getInstance().showStatusBarWidget) return null
+        val state = NUDState.getInstance(project)
         return when (currentStatus) {
             Status.UNAVAILABLE -> null
             Status.GATHERING_REGISTRIES -> "Gathering registries..."
@@ -171,7 +170,7 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
             Status.READY -> {
                 val outdated = state.availableUpdates.filter { it.value.data != null }.size
                 val deprecated = state.deprecations.filter { it.value.data != null }.size
-                when (service<NUDSettingsState>().statusBarMode) {
+                when (NUDSettingsState.getInstance().statusBarMode) {
                     StatusBarMode.FULL -> when {
                         outdated == 0 && deprecated == 0 -> null
                         outdated == 0 -> "$deprecated deprecation${if (deprecated == 1) "" else "s"}"
@@ -194,9 +193,9 @@ class WidgetBar(project: Project) : EditorBasedWidget(project), StatusBarWidget.
 
     // Custom
     fun update() {
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         currentStatus = when {
-            project.isDisposed || !service<NUDSettingsState>().showStatusBarWidget -> Status.UNAVAILABLE
+            project.isDisposed || !NUDSettingsState.getInstance().showStatusBarWidget -> Status.UNAVAILABLE
             state.isScanningForRegistries -> Status.GATHERING_REGISTRIES
             state.isScanningForUpdates && state.isScanningForDeprecations -> Status.SCANNING_PACKAGES
             state.isScanningForUpdates -> Status.SCANNING_FOR_UPDATES

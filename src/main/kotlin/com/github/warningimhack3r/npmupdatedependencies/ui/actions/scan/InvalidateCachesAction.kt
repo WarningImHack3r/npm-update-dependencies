@@ -4,7 +4,6 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
 import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 
 class InvalidateCachesAction : AnAction() {
@@ -18,14 +17,14 @@ class InvalidateCachesAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled = e.project?.let { project ->
-            val state = project.service<NUDState>()
+            val state = NUDState.getInstance(project)
             state.availableUpdates.isNotEmpty() || state.deprecations.isNotEmpty()
         } == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {
         log.debug("Cache invalidation requested")
-        val state = e.project?.service<NUDState>() ?: run {
+        val state = e.project?.let { NUDState.getInstance(it) } ?: run {
             log.warn("No project found")
             return
         }

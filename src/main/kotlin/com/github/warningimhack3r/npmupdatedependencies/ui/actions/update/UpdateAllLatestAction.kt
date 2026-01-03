@@ -7,7 +7,6 @@ import com.intellij.openapi.actionSystem.ActionUpdateThread
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.components.service
 
 class UpdateAllLatestAction : AnAction() {
     override fun getActionUpdateThread(): ActionUpdateThread {
@@ -16,7 +15,7 @@ class UpdateAllLatestAction : AnAction() {
 
     override fun update(e: AnActionEvent) {
         e.presentation.isEnabled =
-            e.project?.service<NUDState>()?.availableUpdates?.isNotEmpty() == true
+            e.project?.let { NUDState.getInstance(it) }?.availableUpdates?.isNotEmpty() == true
     }
 
     override fun actionPerformed(e: AnActionEvent) {

@@ -8,7 +8,6 @@ import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsStat
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.NUDHelper
 import com.intellij.codeInsight.hint.HintManager
-import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.fileEditor.FileDocumentManagerListener
@@ -27,7 +26,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
     override fun beforeDocumentSaving(document: Document) {
         if (!project.isInitialized) return
-        val state = project.service<NUDState>()
+        val state = NUDState.getInstance(project)
         // Initial checks
         val file = try {
             PsiDocumentManager.getInstance(project).getPsiFile(document) ?: return
@@ -42,7 +41,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         val hasUnmaintained = state.deprecations.filter {
             it.value.data?.kind == Deprecation.Kind.UNMAINTAINED
         }.isNotEmpty()
-        if (file.name != PACKAGE_JSON || !service<NUDSettingsState>().autoFixOnSave
+        if (file.name != PACKAGE_JSON || !NUDSettingsState.getInstance().autoFixOnSave
             || (!hasUpdates && !hasDeprecations)
         ) return
 
@@ -53,14 +52,14 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
         if (hasUpdates) {
             actionsToPerform.add {
                 ActionsCommon.updateAllDependencies(file, Versions.Kind.entries.first {
-                    it == service<NUDSettingsState>().defaultUpdateType
+                    it == NUDSettingsState.getInstance().defaultUpdateType
                 })
             }
         }
 
         // Fix deprecations if any
         if (hasDeprecations) {
-            when (service<NUDSettingsState>().defaultDeprecationAction) {
+            when (NUDSettingsState.getInstance().defaultDeprecationAction) {
                 Deprecation.Action.REPLACE -> actionsToPerform.add {
                     ActionsCommon.replaceAllDeprecations(file)
                 }
@@ -79,7 +78,7 @@ class OnSaveListener(val project: Project) : FileDocumentManagerListener {
 
         // Fix unmaintained if any
         if (hasUnmaintained) {
-            when (service<NUDSettingsState>().defaultUnmaintainedAction) {
+            when (NUDSettingsState.getInstance().defaultUnmaintainedAction) {
                 Deprecation.Action.REMOVE -> actionsToPerform.add {
                     ActionsCommon.deleteAllDeprecations(file) {
                         it.data?.kind == Deprecation.Kind.UNMAINTAINED
