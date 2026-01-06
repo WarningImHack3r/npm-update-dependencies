@@ -123,6 +123,7 @@ class NPMConfigReader(project: Project) {
                     val rawPath = helpOutput.trim().lines().firstOrNull { line ->
                         npmHelpPathRegex.matches(line)
                     }?.split(" ")?.get(1)
+                    log.debug("Found npm installation directory at: $rawPath")
                     rawPath?.let { path -> Path(path, "npmrc") }
                 }
             ).filter { path ->
@@ -144,6 +145,7 @@ class NPMConfigReader(project: Project) {
                 parseConfig(path)
             }
             parsed = true
+            log.debug("Parsed registries, ${registries.size} registries found:\n${registries.joinToString("\n")}")
         }
 
         /**
@@ -201,9 +203,7 @@ class NPMConfigReader(project: Project) {
          */
         fun getRawRegistries(): List<RawRegistry> {
             ensureConfigsParsed()
-            return registries.also {
-                log.debug("Parsed registries, ${registries.size} registries found:\n${registries.joinToString("\n")}")
-            }
+            return registries
         }
     }
 
