@@ -56,7 +56,6 @@ class ShellRunner(private val project: Project) {
             val process = ProcessBuilder(*exec)
                 .directory(project.basePath?.let { File(it) })
                 .start()
-            process.waitFor()
             val output = process.inputStream?.bufferedReader()?.readText()?.also {
                 if (it.isNotBlank())
                     log.debug("Stdout of command \"${exec.joinToString(" ")}\":\n${it.take(200)}")
@@ -65,6 +64,7 @@ class ShellRunner(private val project: Project) {
                 if (it.isNotBlank())
                     log.warn("Stderr of command \"${exec.joinToString(" ")}\":\n${it.take(200)}")
             }
+            process.waitFor()
             if (process.exitValue() != 0) throw Exception("Non-successful status code")
             output?.ifBlank { null }
         } catch (e: Exception) {

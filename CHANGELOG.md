@@ -12,6 +12,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+- Fix shell commands hanging on Windows, regression from 3.7.0 (#186)
+
 ## [3.7.0] - 2026-01-03
 
 ### Added
