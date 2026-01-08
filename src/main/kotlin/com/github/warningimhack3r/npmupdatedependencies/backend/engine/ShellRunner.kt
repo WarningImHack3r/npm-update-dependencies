@@ -1,9 +1,12 @@
 package com.github.warningimhack3r.npmupdatedependencies.backend.engine
 
+import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.components.Service
 import com.intellij.openapi.components.service
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.project.Project
+import com.intellij.psi.search.FilenameIndex
+import com.intellij.psi.search.GlobalSearchScope
 import java.io.File
 
 @Service(Service.Level.PROJECT)
@@ -17,6 +20,26 @@ class ShellRunner(private val project: Project) {
 
     private val isWindows by lazy {
         System.getProperty("os.name").lowercase().contains("win", ignoreCase = true)
+    }
+
+    private val packageJsonDirectory by lazy {
+        val fileName = "package.json"
+        runReadAction {
+            FilenameIndex.getVirtualFilesByName(
+                fileName,
+                GlobalSearchScope.projectScope(project)
+            )
+        }.filter { file ->
+            !file.path.contains("/node_modules/")
+                    && !file.path.contains("/.git/")
+                    && !file.parent.name.startsWith('.')
+        }.sortedBy { file ->
+            fileName.toRegex().find(file.path)?.range?.first ?: Int.MAX_VALUE
+        }.also {
+            log.debug("Found ${it.size} file(s) named $fileName: $it")
+        }.firstOrNull()?.parent?.path?.also { path ->
+            log.debug("Directory for $fileName: $path")
+        }
     }
 
     private fun getExecutionCommand(originalCommand: Array<String>, retry: Boolean = false): Array<String>? {
@@ -54,7 +77,7 @@ class ShellRunner(private val project: Project) {
         log.debug("Executing command: \"${exec.joinToString(" ")}\"")
         return try {
             val process = ProcessBuilder(*exec)
-                .directory(project.basePath?.let { File(it) })
+                .directory(packageJsonDirectory?.let { File(it) })
                 .start()
             val output = process.inputStream?.bufferedReader()?.readText()?.also {
                 if (it.isNotBlank())

@@ -18,6 +18,8 @@
 - Fix crash with HTTP calls to registry without config info (#187)
 - Avoid duplicate slashes in registry URLs
 - Ensure URLs parsed from configs are properly recognized when using additional whitespaces
+- Ensure shell commands are executed from where the package.json is located
+  - This fixes some npm commands to return empty results when the package.json is not in the project's root directory
 
 ## [3.7.0] - 2026-01-03
 
