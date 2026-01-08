@@ -62,17 +62,22 @@ class NPMJSClient(private val project: Project) {
 
     private fun getResponseStatus(uri: URI): Int {
         log.debug("HEAD $uri")
-        val configReader = NPMConfigReader.getInstance(project)
-        val request = HttpRequest.newBuilder(uri)
+        val headersList = NPMConfigReader.getInstance(project)
+            .getHeaders(uri)
+            .asStringsList()
+        var builder = HttpRequest.newBuilder(uri)
             .method(HttpMethod.Head.value, HttpRequest.BodyPublishers.noBody())
-            .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())
-            .build()
+        if (headersList.isNotEmpty()) {
+            builder = builder.headers(*headersList.toTypedArray())
+        }
+        val request = builder.build()
         try {
             val response = httpClient.send(request, HttpResponse.BodyHandlers.discarding())
             return response.statusCode()
         } catch (_: Exception) {
-            log.warn("Failed to fetch $uri, returning Internal Server Error")
-            return HttpStatusCode.InternalServerError.value
+            val error = HttpStatusCode.InternalServerError
+            log.warn("Failed to fetch $uri, returning ${error.description}")
+            return error.value
         }
     }
 
@@ -83,11 +88,14 @@ class NPMJSClient(private val project: Project) {
         }
 
         log.debug("GET $uri")
-        val configReader = NPMConfigReader.getInstance(project)
-        val request = HttpRequest
-            .newBuilder(uri)
-            .headers(*configReader.getHeaders(uri).asStringsList().toTypedArray())
-            .build()
+        val headersList = NPMConfigReader.getInstance(project)
+            .getHeaders(uri)
+            .asStringsList()
+        var builder = HttpRequest.newBuilder(uri)
+        if (headersList.isNotEmpty()) {
+            builder = builder.headers(*headersList.toTypedArray())
+        }
+        val request = builder.build()
         val response = httpClient.send(request, HttpResponse.BodyHandlers.ofString())
         if (response.statusCode() != HttpStatusCode.OK.value) {
             throw Exception("Non-ok status code from $uri: ${response.statusCode()}")
