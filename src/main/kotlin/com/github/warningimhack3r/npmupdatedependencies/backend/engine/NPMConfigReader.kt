@@ -79,7 +79,7 @@ class NPMConfigReader(project: Project) {
             }
             ?.let { headersForRegistry(it) }
             ?.also { log.debug("Headers for URL: ${it.map}") }
-            ?: Headers(emptyMap()).also { log.debug("No matching registry found") }
+            ?: Headers(emptyMap()).also { log.debug("No matching registry found while trying to get headers") }
     }
 
     /**
@@ -101,6 +101,7 @@ class NPMConfigReader(project: Project) {
             private val npmHelpPathRegex = Regex("""^npm@[\d.]+ \S+$""")
             private val scopeRegex = Regex("""^(@\S+):registry=(\S+)$""")
             private val valueRegex = Regex("""^//(\S+):(\w+)=(\S+)$""")
+            private val trailingSlashRegex = Regex("""/$""")
         }
 
         private var parsed = false
@@ -131,7 +132,7 @@ class NPMConfigReader(project: Project) {
                 if (!exists) log.debug("npm config location not found: $path")
                 exists
             }.map { path -> path.toAbsolutePath().toString() }.also {
-                log.debug("npm config locations found: ${it.joinToString(", ")}")
+                log.debug("npm config location(s) found: ${it.joinToString(", ")}")
             }.asReversed() // ensure the priority is correct and it goes from wider to narrower
         }
         private val registries = mutableListOf<RawRegistry>()
@@ -172,7 +173,11 @@ class NPMConfigReader(project: Project) {
                 }
                 valueRegex.find(line)?.destructured?.let { (fragment, key, value) ->
                     var parsed =
-                        URI("https://$fragment") // irrelevant scheme as it won't get saved; only for comparison purposes
+                        URI(
+                            "https://${ // irrelevant scheme as it won't get saved; only for comparison purposes
+                                fragment.replace(trailingSlashRegex, "")
+                            }"
+                        )
                     if (parsed.host == npmRegistryUri.host
                         || parsed.host == npmRegistryUri.host.replace(Regex("""\.\w+$"""), ".org")
                     ) {

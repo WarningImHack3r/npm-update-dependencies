@@ -16,6 +16,7 @@
 
 - Fix shell commands hanging on Windows, regression from 3.7.0 (#186)
 - Fix crash with HTTP calls to registry without config info (#187)
+- Avoid duplicate slashes in registry URLs
 
 ## [3.7.0] - 2026-01-03
 
