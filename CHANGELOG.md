@@ -12,6 +12,8 @@
 
 ## [Unreleased]
 
+## [3.7.1] - 2026-01-09
+
 ### Fixed
 
 - Fix shell commands hanging on Windows, regression from 3.7.0 (#186)
@@ -401,7 +403,8 @@
 
 - Initial release
 
-[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/3.7.0...HEAD
+[Unreleased]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/3.7.1...HEAD
+[3.7.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/3.7.0...3.7.1
 [3.7.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.1...3.7.0
 [3.6.1]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.6.0...v3.6.1
 [3.6.0]: https://github.com/WarningImHack3r/npm-update-dependencies/compare/v3.5.0...v3.6.0
