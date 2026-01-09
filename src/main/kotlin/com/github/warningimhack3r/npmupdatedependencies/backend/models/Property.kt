@@ -6,4 +6,6 @@ data class Property(
     val jsonProperty: JsonProperty,
     val name: String,
     val comparator: String?
-)
+) {
+    override fun toString() = name
+}

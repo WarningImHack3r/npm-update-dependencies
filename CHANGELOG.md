@@ -20,6 +20,7 @@
 - Ensure URLs parsed from configs are properly recognized when using additional whitespaces
 - Ensure shell commands are executed from where the package.json is located
   - This fixes some npm commands to return empty results when the package.json is not in the project's root directory
+- Prevent a rare case where the deprecation progress count in the status bar is lower than expected
 
 ## [3.7.0] - 2026-01-03
 

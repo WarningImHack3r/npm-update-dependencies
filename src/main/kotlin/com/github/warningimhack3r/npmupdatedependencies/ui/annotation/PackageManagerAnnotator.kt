@@ -1,13 +1,13 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdatePackageManagerFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -50,15 +50,8 @@ class PackageManagerAnnotator : DumbAware, ExternalAnnotator<
         if (collectedInfo == null) return null
         val (project, property) = collectedInfo
 
+        AnnotatorsCommon.beforeAnnotate(project)
         val state = NUDState.getInstance(project)
-        val registriesScanner = RegistriesScanner.getInstance(project)
-        if (!registriesScanner.scanned && !state.isScanningForRegistries) {
-            log.debug("Registries not scanned yet, scanning now")
-            state.isScanningForRegistries = true
-            registriesScanner.scan()
-            state.isScanningForRegistries = false
-            log.debug("Registries scanned")
-        }
 
         log.info("Starting checking for package manager update")
         state.foundPackageManager = null

@@ -1,9 +1,7 @@
 package com.github.warningimhack3r.npmupdatedependencies.ui.annotation
 
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.NUDState
-import com.github.warningimhack3r.npmupdatedependencies.backend.engine.RegistriesScanner
 import com.github.warningimhack3r.npmupdatedependencies.backend.engine.checkers.PackageUpdateChecker
-import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.parallelMap
 import com.github.warningimhack3r.npmupdatedependencies.backend.extensions.stringValue
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.DataState
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Property
@@ -11,6 +9,7 @@ import com.github.warningimhack3r.npmupdatedependencies.backend.models.Update
 import com.github.warningimhack3r.npmupdatedependencies.backend.models.Versions.Kind
 import com.github.warningimhack3r.npmupdatedependencies.settings.NUDSettingsState
 import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.ActionsCommon
+import com.github.warningimhack3r.npmupdatedependencies.ui.helpers.AnnotatorsCommon
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.BlacklistVersionFix
 import com.github.warningimhack3r.npmupdatedependencies.ui.quickfix.UpdateDependencyFix
 import com.intellij.codeInspection.ProblemHighlightType
@@ -23,7 +22,6 @@ import com.intellij.openapi.project.DumbAware
 import com.intellij.openapi.project.Project
 import com.intellij.psi.PsiFile
 import com.intellij.util.applyIf
-import kotlinx.coroutines.delay
 import org.semver4j.Semver
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
@@ -46,68 +44,49 @@ class UpdatesAnnotator : DumbAware, ExternalAnnotator<
         val (project, info) = collectedInfo
         if (info.isEmpty()) return emptyMap()
 
+        AnnotatorsCommon.beforeAnnotate(project)
+
         val state = NUDState.getInstance(project)
-        val registriesScanner = RegistriesScanner.getInstance(project)
-        if (!registriesScanner.scanned && !state.isScanningForRegistries) {
-            log.debug("Registries not scanned yet, scanning now")
-            state.isScanningForRegistries = true
-            registriesScanner.scan()
-            state.isScanningForRegistries = false
-            log.debug("Registries scanned")
-        }
-
         val updateChecker = PackageUpdateChecker.getInstance(project)
-        val maxParallelism = NUDSettingsState.getInstance().maxParallelism
-        var activeTasks = 0
 
+        state.isScanningForUpdates = true
         log.debug("Scanning for updates...")
-        return info
-            .also { properties ->
-                // Remove from the cache all properties that are no longer in the file
-                val fileDependenciesNames = properties.map { property -> property.name }
-                state.availableUpdates.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
-                // Update the status bar widget
-                state.totalPackages = properties.size
-                state.scannedUpdates = 0
-                state.isScanningForUpdates = true
-                log.debug("Starting batching ${info.size} dependencies for updates")
-            }.parallelMap { property ->
-                if (maxParallelism < 100) {
-                    while (activeTasks >= maxParallelism) {
-                        // Wait for the active tasks count to decrease
-                        delay(50)
-                    }
-                    activeTasks++
-                    log.debug("Task $activeTasks/$maxParallelism started: ${property.name}")
-                }
-                val value = property.comparator ?: return@parallelMap null.also {
-                    log.debug("Empty comparator for ${property.name}, skipping")
-                    state.scannedUpdates++
-                    activeTasks--
-                }
-
-                val update = updateChecker.checkAvailableUpdates(property.name, value)
-                state.availableUpdates[property.name] = state.availableUpdates[property.name].let { currentState ->
-                    if (currentState == null || currentState.data != update) DataState(
-                        data = update,
-                        addedAt = Clock.System.now(),
-                        comparator = value
-                    ) else currentState
-                }
-                val coerced = Semver.coerce(value)
-                val updateAvailable =
-                    update != null && ((coerced != null && !update.versions.isEqualToAny(coerced)) || coerced == null)
-                log.debug("Task finished for ${property.name}, update found: $updateAvailable")
-                state.scannedUpdates++
-                activeTasks--
-
-                if (updateAvailable) {
-                    property.jsonProperty to update
-                } else null
-            }.filterNotNull().toMap().also {
-                log.debug("Updates scanned, ${it.size} found out of ${info.size}")
-                state.isScanningForUpdates = false
+        // Remove from the cache all properties that are no longer in the file
+        val fileDependenciesNames = info.map { property -> property.name }
+        state.availableUpdates.keys.removeAll { key -> !fileDependenciesNames.contains(key) }
+        // Update the status bar widget
+        state.totalPackages = info.size
+        state.scannedUpdates = 0
+        log.debug("Starting batching ${info.size} dependencies for updates")
+        return AnnotatorsCommon.runParallelTasks(
+            info,
+            NUDSettingsState.getInstance().maxParallelism.let { if (it == 100) null else it },
+            { state.scannedUpdates++ }
+        ) task@{ property ->
+            val value = property.comparator ?: return@task null.also {
+                log.debug("Empty comparator for ${property.name}, skipping")
             }
+
+            val update = updateChecker.checkAvailableUpdates(property.name, value)
+            state.availableUpdates[property.name] = state.availableUpdates[property.name].let { currentState ->
+                if (currentState == null || currentState.data != update) DataState(
+                    data = update,
+                    addedAt = Clock.System.now(),
+                    comparator = value
+                ) else currentState
+            }
+            val coerced = Semver.coerce(value)
+            val updateAvailable =
+                update != null && ((coerced != null && !update.versions.isEqualToAny(coerced)) || coerced == null)
+
+            log.debug("Update found: $updateAvailable")
+            if (updateAvailable) {
+                property.jsonProperty to update
+            } else null
+        }.filterNotNull().toMap().also {
+            log.debug("Updates scanned, ${it.size} found out of ${info.size}")
+            state.isScanningForUpdates = false
+        }
     }
 
     override fun apply(file: PsiFile, annotationResult: Map<JsonProperty, Update>, holder: AnnotationHolder) {
