@@ -34,18 +34,18 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@v2.0.0
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 21
@@ -85,18 +85,18 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@v2.0.0
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 21
@@ -121,7 +121,7 @@ jobs:
 
       # Upload the Kover report to CodeCov
       - name: Upload Code Coverage Report
-        uses: codecov/codecov-action@v6
+        uses: codecov/codecov-action@v7
         with:
           files: ${{ github.workspace }}/build/reports/kover/report.xml
           token: ${{ secrets.CODECOV_TOKEN }}
@@ -139,28 +139,28 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@v2.0.0
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
         with:
           ref: ${{ github.event.pull_request.head.sha }} # to check out the actual pull request commit, not the merge commit
           fetch-depth: 0 # a full history is required for pull request analysis
 
       # Set up the Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 21
 
       # Run Qodana inspections
       - name: Qodana - Code Inspection
-        uses: JetBrains/qodana-action@v2025.3.2
+        uses: JetBrains/qodana-action@v2026.2.1
         with:
           cache-default-branch-only: true
 
@@ -173,18 +173,18 @@ jobs:
 
       # Free GitHub Actions Environment Disk Space
       - name: Maximize Build Space
-        uses: jlumbroso/free-disk-space@v1.3.1
+        uses: jlumbroso/free-disk-space@v2.0.0
         with:
           tool-cache: false
           large-packages: false
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 21
@@ -222,11 +222,11 @@ jobs:
 
       # Check out the current repository
       - name: Fetch Sources
-        uses: actions/checkout@v6
+        uses: actions/checkout@v7
 
       # Set up the Java environment for the next steps
       - name: Setup Java
-        uses: actions/setup-java@v5
+        uses: actions/setup-java@v6
         with:
           distribution: zulu
           java-version: 21
